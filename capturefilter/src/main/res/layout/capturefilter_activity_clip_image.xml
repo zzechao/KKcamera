@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/rl_top"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/ic_img_capture_bg"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/iv_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:paddingLeft="15dp"
+            android:src="@mipmap/btn_03_camera_close" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/activity_clip_title"
+            android:textColor="@color/ic_img_white"
+            android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/iv_clip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:paddingRight="15dp"
+            android:layout_centerVertical="true"
+            android:src="@mipmap/btn_03_camera_ok" />
+    </RelativeLayout>
+
+    <com.imay.photopicker.view.SquareLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/white">
+        <com.imay.capturefilter.widget.ClipImageView
+            android:id="@+id/clip_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="matrix"
+            app:civClipCircle="false" />
+    </com.imay.photopicker.view.SquareLayout>
+
+    <com.imay.capturefilter.widget.ICAutoAdjustRecylerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:background="@color/ic_img_capture_bg" />
+</LinearLayout>

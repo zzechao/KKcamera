@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:orientation="vertical">
+
+    <com.imay.capturefilter.widget.ClipImageView
+        android:id="@+id/clip_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="matrix"
+        app:civClipCircle="false"
+        app:civMaskColor="@android:color/transparent" />
+
+    <TextView
+        android:id="@+id/picker_iv_use"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="80dp"
+        android:background="@mipmap/btn_03view_use3x"
+        android:clickable="true"
+        android:gravity="center"
+        android:text="@string/picker_image_use"
+        android:textColor="@color/picker_text_selector" />
+
+    <TextView
+        android:id="@+id/picker_iv_give_up"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="80dp"
+        android:background="@mipmap/btn_03view_giveup3x"
+        android:clickable="true"
+        android:gravity="center"
+        android:text="@string/picker_image_give_up"
+        android:textColor="@color/picker_text_selector" />
+
+</RelativeLayout>

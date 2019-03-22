@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ProgressWheel="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#AA000000"
+    android:orientation="vertical">
+
+    <com.imay.capturefilter.widget.ProgressWheel
+        android:id="@+id/progressBar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="130dp"
+        ProgressWheel:pwBarColor="#FF0080"
+        ProgressWheel:pwBarLength="10dp"
+        ProgressWheel:pwBarWidth="10dp"
+        ProgressWheel:pwCircleColor="@android:color/transparent"
+        ProgressWheel:pwContourColor="#B2FFFFFF"
+        ProgressWheel:pwRimWidth="0dp"
+        ProgressWheel:pwTextColor="@android:color/transparent"
+        ProgressWheel:pwTextSize="12sp" />
+
+    <TextView
+        android:id="@+id/progressBar_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/progressBar"
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_load"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/progressBar_text"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/ic_mov_msg_string"
+        android:textColor="@android:color/white"
+        android:textSize="13sp" />
+
+</RelativeLayout>

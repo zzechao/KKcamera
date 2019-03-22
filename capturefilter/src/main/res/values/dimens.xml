@@ -1,0 +1,11 @@
+<resources>
+    <!--标题栏高度-->
+    <dimen name="title_bar_height">45dp</dimen>
+    <!--图片按钮边距-->
+    <dimen name="image_button_padding">4dp</dimen>
+
+    <dimen name="picker_item_photo_rule">4dp</dimen>
+    <dimen name="picker_item_photo_rule1">2dp</dimen>
+
+    <dimen name="picker_item_directory_height">80dp</dimen>
+</resources>

@@ -1,0 +1,112 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/rl_top"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/ic_img_capture_bg"
+        android:gravity="center_vertical"
+        android:visibility="visible">
+
+        <ImageView
+            android:id="@+id/iv_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:paddingLeft="15dp"
+            android:src="@mipmap/btn_03_camera_close" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/iv_grid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:padding="5dp"
+                android:src="@drawable/btn_framing_selecter"
+                android:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/iv_flash"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:padding="5dp"
+                android:src="@mipmap/btn_03_camera_flash_clos" />
+
+            <ImageView
+                android:id="@+id/iv_switch_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="15dp"
+                android:padding="5dp"
+                android:src="@mipmap/btn_03_camera_flip" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.imay.capturefilter.widget.IMMagicCameraView
+            android:id="@+id/glsurfaceview_camera"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.imay.capturefilter.widget.ICAutoAdjustRecylerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_alignParentBottom="true"
+            android:background="#77ffffff"
+            android:visibility="visible" />
+
+        <com.imay.capturefilter.widget.ICGridView
+            android:id="@+id/imay_capture_gridview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/iv_focus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/btn_focus"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ic_img_capture_bg">
+
+        <ImageView
+            android:id="@+id/iv_btn_sys_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:padding="10dp"
+            android:src="@drawable/btn_album_selecter" />
+
+        <ImageView
+            android:id="@+id/iv_btn_capture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/btn_capture_selecter" />
+    </RelativeLayout>
+</LinearLayout>

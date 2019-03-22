@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".view.activity.MainActivity">
+
+    <com.imay.capturefilter.widget.SquareLayout
+        android:id="@+id/im_square"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/black">
+
+        <viewset.com.kkcamera.view.activity.AutoFitTextureView
+            android:id="@+id/im_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </com.imay.capturefilter.widget.SquareLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/transparent"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/bt_1to1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1:1" />
+
+        <Button
+            android:id="@+id/bt_screen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="fullscreen" />
+    </LinearLayout>
+
+</FrameLayout>

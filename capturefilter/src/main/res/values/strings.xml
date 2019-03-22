@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">ImayCaptureFilter</string>
+
+    <string name="IC_img_msg_source_error">导入原始图片数据丢失！</string>
+    <string name="IC_img_msg_create">正在处理，请稍候...</string>
+    <string name="IC_img_msg_filter_loading">正在处理，请稍候...</string>
+    <string name="IC_img_msg_cilp">正在处理，请稍候...</string>
+    <string name="IC_img_msg_error">拍摄失败</string>
+
+    <string name="note_msg_record_1">点击拍摄按钮可重新拍摄</string>
+    <string name="ic_mov_msg_string">视频正在处理中</string>
+
+    <string name="activity_clip_title">编辑照片</string>
+
+    <string name="ic_filter_original">原图</string>
+    <string name="ic_filter_beautify">美颜</string>
+    <string name="ic_filter_1977">维也纳</string>
+    <string name="ic_filter_amaro">静谧</string>
+    <string name="ic_filter_brannan">破晓</string>
+    <string name="ic_filter_earlybird">复古</string>
+    <string name="ic_filter_hefe">色彩</string>
+    <string name="ic_filter_hudson">霜降</string>
+
+    <string name="ic_filter_inkwell">默片</string>
+    <string name="ic_filter_lomo">胶片</string>
+    <string name="ic_filter_lordkelvin">黄昏</string>
+    <string name="ic_filter_nashville">初夏</string>
+    <string name="ic_filter_rise">森系</string>
+
+    <string name="ic_filter_sierra">清新</string>
+    <string name="ic_filter_sutro">奈良</string>
+    <string name="ic_filter_toaster">时光</string>
+    <string name="ic_filter_valencia">优雅</string>
+
+    <string name="ic_filter_walden">流年</string>
+    <string name="ic_filter_xproii">新潮</string>
+
+    <string name="message_denied">权限被限制,请开启权限</string>
+
+    <string name="picker_all_image">相机胶卷</string>
+
+    <string name="transitionview1">transitionview1</string>
+
+    <string name="picker_image_count">%1$d张</string>
+
+    <string name="picker_image_use">使用</string>
+    <string name="picker_image_give_up">放弃</string>
+
+    <string name="dialog_camera">拍照</string>
+    <string name="dialog_picker">相册中选择</string>
+</resources>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rl_picker_camera"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/iv_camera_img"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@mipmap/ioc_00logo" />
+
+    <com.imay.capturefilter.widget.MagicCameraView
+        android:id="@+id/glsurfaceview_camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true" />
+
+    <ImageView
+        android:id="@+id/iv_close"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="10dp"
+        android:padding="5dp"
+        android:src="@mipmap/btn_03_camera_close" />
+
+    <ImageView
+        android:id="@+id/iv_switch_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="10dp"
+        android:padding="5dp"
+        android:src="@mipmap/btn_03_camera_flip" />
+
+    <ImageView
+        android:id="@+id/iv_flash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="10dp"
+        android:layout_toLeftOf="@+id/iv_switch_camera"
+        android:padding="5dp"
+        android:src="@mipmap/btn_03_camera_flash_clos" />
+
+    <ImageView
+        android:id="@+id/iv_beauty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="10dp"
+        android:layout_toLeftOf="@+id/iv_flash"
+        android:clickable="true"
+        android:padding="5dp"
+        android:src="@drawable/picker_beauty_selecter" />
+
+    <ImageView
+        android:id="@+id/iv_btn_sys_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="35dp"
+        android:layout_marginLeft="40dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:src="@drawable/btn_album_selecter" />
+
+    <ImageView
+        android:id="@+id/iv_btn_take_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:src="@drawable/btn_capture_selecter_picker" />
+
+    <ImageView
+        android:id="@+id/iv_focus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/btn_focus"
+        android:visibility="gone"/>
+
+</RelativeLayout>

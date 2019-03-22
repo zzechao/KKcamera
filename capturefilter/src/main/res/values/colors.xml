@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_img_capture_bg">#000000</color>
+    <color name="ic_img_white">#ffffff</color>
+    <color name="ic_img_filter_selected">#FF0080</color>
+    <color name="ic_img_viewfinder_mask">#B2000000</color>
+    <color name="ic_img_transparent_background">#C0000000</color>
+
+    <color name="capture_bg">#1a191f</color>
+
+    <color name="bg_title_bar">#000000</color>
+
+    <color name="divider_ff">#FFFFFF</color>
+
+    <color name="picker_text_40">#282828</color>
+    <color name="picker_text_80">#505050</color>
+    <color name="picker_text_120">#787878</color>
+    <color name="picker_common_primary">#f3f3f3</color>
+
+    <color name="colorPrimary">#282828</color>
+    <color name="colorPrimaryDark">#282828</color>
+    <color name="colorAccent">#282828</color>
+</resources>
