@@ -10,7 +10,7 @@ import android.widget.FrameLayout;
 
 public class SquareLayout extends FrameLayout {
 
-    public int stats = ONCEONONCE;
+    public int stats = FULL_SCREEN;
 
     public static final int FULL_SCREEN = 1;
     public static final int ONCEONONCE = 2;

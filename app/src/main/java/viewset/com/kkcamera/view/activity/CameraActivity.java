@@ -5,8 +5,11 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -26,6 +29,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
+import android.os.MessageQueue;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -39,7 +45,9 @@ import android.view.View;
 
 import com.imay.capturefilter.widget.SquareLayout;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -66,6 +74,7 @@ public class CameraActivity extends AppCompatActivity {
     Unbinder unbinder;
 
     private String mCameraId;
+    private Size mPreTextureViewSize;
     private Size mPreviewSize;
     private CameraDevice.StateCallback stateCallback;
     private CameraDevice mCameraDevice;
@@ -76,6 +85,8 @@ public class CameraActivity extends AppCompatActivity {
 
     private Handler backgroundHandler;
     private HandlerThread handlerThread;
+
+    private Handler mainHandler = new Handler();
 
     private static final SparseIntArray ORIENTATION = new SparseIntArray();
 
@@ -90,26 +101,21 @@ public class CameraActivity extends AppCompatActivity {
 
     private static final int STATE_PREVIEW = 0;
 
-    private static final int STATE_WAITING_LOCK = 1;
-
-    private static final int STATE_WAITING_PRECAPTURE = 2;
-
-    private static final int STATE_WAITING_NON_PRECAPTURE = 3;
-
-    private static final int STATE_PICTURE_TAKEN = 4;
 
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            Log.e("ttt", "onSurfaceTextureAvailable");
+            Log.e("ttt", "onSurfaceTextureAvailable" + width + "---" + height);
+            mPreTextureViewSize = new Size(width, height);
             openCamera(width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            Log.e("ttt", "onSurfaceTextureSizeChanged");
+            Log.e("ttt", "onSurfaceTextureSizeChanged" + width + "---" + height);
+            mPreTextureViewSize = new Size(width, height);
             configureTransform(width, height);
         }
 
@@ -145,30 +151,38 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            Activity activity = this;
-            if (null == mTextureView || null == mPreviewSize || null == activity) {
-                return;
-            }
-            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            Matrix matrix = new Matrix();
-            RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
-            RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
-            float centerX = viewRect.centerX();
-            float centerY = viewRect.centerY();
-            if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
-                bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
-                matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
-                float scale = Math.max(
-                        (float) viewHeight / mPreviewSize.getHeight(),
-                        (float) viewWidth / mPreviewSize.getWidth());
-                matrix.postScale(scale, scale, centerX, centerY);
-                matrix.postRotate(90 * (rotation - 2), centerX, centerY);
-            } else if (Surface.ROTATION_180 == rotation) {
-                matrix.postRotate(180, centerX, centerY);
-            }
-            mTextureView.setTransform(matrix);
+        Log.e("ttt", "configureTransform--" + viewWidth + "----" + viewHeight);
+        Log.e("ttt", "configureTransform--mPreviewSize--" + mPreviewSize.getWidth() + "---" + mPreviewSize.getHeight());
+        Activity activity = this;
+        if (null == mTextureView || null == mPreviewSize) {
+            return;
         }
+        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        Matrix matrix = new Matrix();
+        RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+        float centerX = viewRect.centerX();
+        float centerY = viewRect.centerY();
+        Log.e("ttt", "rotation--" + rotation);
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+            float scale = Math.max(
+                    (float) viewHeight / mPreviewSize.getHeight(),
+                    (float) viewWidth / mPreviewSize.getWidth());
+            Log.e("ttt", scale + "--configureTransform-");
+            matrix.postScale(scale, scale, centerX, centerY);
+            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+        } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postRotate(180, centerX, centerY);
+        } else if (Surface.ROTATION_0 == rotation) { // 1:1 和 全屏的切换裁剪
+            Log.e("ttt", bufferRect.top + "---" + bufferRect.bottom);
+            Log.e("ttt", centerY - bufferRect.centerY() + "---");
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            Log.e("ttt", bufferRect.top + "---" + bufferRect.bottom);
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+        }
+        mTextureView.setTransform(matrix);
     }
 
     @Override
@@ -208,7 +222,6 @@ public class CameraActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         startBackgroundThread();
-
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
@@ -222,6 +235,11 @@ public class CameraActivity extends AppCompatActivity {
         closeCamera();
         stopBackgroundThread();
         super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     private void startBackgroundThread() {
@@ -257,11 +275,6 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
         unbinder.unbind();
@@ -288,8 +301,8 @@ public class CameraActivity extends AppCompatActivity {
                     }
                     //根据TextureView的尺寸设置预览尺寸
                     Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
+                    Log.e("ttt", Arrays.toString(sizes));
                     mPreviewSize = getOptimalSize(sizes, width, height);
-                    mPreviewSize = new Size(mPreviewSize.getHeight(), mPreviewSize.getWidth());
                     Log.e("ttt", width + "---" + height + "---" + mPreviewSize.getWidth() + "---" + mPreviewSize.getHeight());
                     mCameraId = cameraId;
                     break;
@@ -309,7 +322,9 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onImageAvailable(ImageReader reader) {
                 Log.e("ttt", "onImageAvailable");
-                backgroundHandler.post(new ImageSaver(reader.acquireNextImage()));
+                Rect viewRect = new Rect(0, 0, mPreTextureViewSize.getWidth(), mPreTextureViewSize.getHeight());
+                Rect bufferRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+                backgroundHandler.post(new ImageSaver(reader.acquireNextImage(), viewRect, bufferRect));
             }
         }, backgroundHandler);
     }
@@ -318,8 +333,6 @@ public class CameraActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             return null;
         }
-        Log.e("ttt", Arrays.toString(sizes));
-        List<Size> enough = new ArrayList<>();
         List<Size> bigEnough = new ArrayList<>();
         List<Size> notBigEnough = new ArrayList<>();
         float t = width > height ? width * 1f / height : height * 1f / width;
@@ -332,10 +345,6 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
 
-        // Pick the smallest of those big enough. If there is no one big enough, pick the
-        // largest of those not big enough.
-        Log.e("ttt", Arrays.toString(bigEnough.toArray()));
-        Log.e("ttt", Arrays.toString(notBigEnough.toArray()));
         if (bigEnough.size() > 0) {
             return Collections.min(bigEnough, new CompareSizesByArea());
         } else if (notBigEnough.size() > 0) {
@@ -374,8 +383,8 @@ public class CameraActivity extends AppCompatActivity {
                 //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
                 setupCamera(width, height);
                 setupImageReader(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 configureTransform(width, height);
+                //mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
                 manager.openCamera(mCameraId, stateCallback, backgroundHandler);
             } catch (CameraAccessException e) {
@@ -433,6 +442,8 @@ public class CameraActivity extends AppCompatActivity {
 
     public static class ImageSaver implements Runnable {
         private Image mImage;
+        private Rect mViewRect;
+        private Rect mBufferRect;
 
         public ImageSaver(Image image) {
             mImage = image;
@@ -440,18 +451,58 @@ public class CameraActivity extends AppCompatActivity {
 
         public final String PIC_DIR_NAME = "1.jpg"; //在系统的图片文件夹下创建了一个相册文件夹，名为“myPhotos"，所有的图片都保存在该文件夹下。
 
+        public ImageSaver(Image image, Rect viewRect, Rect bufferRect) {
+            this(image);
+            mViewRect = viewRect;
+            mBufferRect = bufferRect;
+
+            Log.e("ttt", mViewRect.toString());
+            Log.e("ttt", mBufferRect.toString());
+        }
+
         @Override
         public void run() {
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] data = new byte[buffer.remaining()];
             buffer.get(data);
-            File imageFile = new File(Environment.getExternalStoragePublicDirectory(
+            final File imageFile = new File(Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_PICTURES), PIC_DIR_NAME);
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(imageFile);
                 fos.write(data, 0, data.length);
                 fos.flush();
+
+
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        BufferedOutputStream bos = null;
+                        try {
+                            FileInputStream in = new FileInputStream(imageFile);
+                            Bitmap bitmap = BitmapFactory.decodeStream(in);
+                            int left = mBufferRect.centerX() - mViewRect.width() / 2;
+                            int top = mBufferRect.centerY() - mViewRect.height() / 2;
+                            bitmap = Bitmap.createBitmap(bitmap, left, top, mViewRect.width(), mViewRect.height());
+                            bos = new BufferedOutputStream(new FileOutputStream(imageFile));
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                            bos.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            if (bos != null) {
+                                try {
+                                    bos.close();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                });
+
+
             } catch (IOException e) {
                 Log.e("ttt", e.getMessage());
             } finally {
@@ -463,20 +514,6 @@ public class CameraActivity extends AppCompatActivity {
                     }
                 }
             }
-        }
-    }
-
-    private void runPrecaptureSequence() {
-        try {
-            // This is how to tell the camera to trigger.
-            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                    CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
-            // Tell #mCaptureCallback to wait for the precapture sequence to be set.
-            mState = STATE_WAITING_PRECAPTURE;
-            mPreviewSession.capture(mCaptureRequestBuilder.build(), mCaptureCallback,
-                    backgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
         }
     }
 
@@ -537,39 +574,7 @@ public class CameraActivity extends AppCompatActivity {
         private void process(CaptureResult result) {
             switch (mState) {
                 case STATE_PREVIEW: {
-                    // We have nothing to do when the camera preview is working normally.
-                    break;
-                }
-                case STATE_WAITING_LOCK: {
-                    Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    if (afState == null) {
-                        Log.e("ttt", "1process-STATE_WAITING_LOCK" + afState);
-                    } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
-                        // CONTROL_AE_STATE can be null on some devices
-                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                        if (aeState == null ||
-                                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                            mState = STATE_PICTURE_TAKEN;
-                            Log.e("ttt", "2process-STATE_WAITING_LOCK" + afState);
-                            captureStillPicture();
-                        } else {
-                            Log.e("ttt", "3process-STATE_WAITING_LOCK" + afState);
-                            runPrecaptureSequence();
-                        }
-                    }
-                    break;
-                }
-                case STATE_WAITING_PRECAPTURE: {
-                    // CONTROL_AE_STATE can be null on some devices
 
-                    Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                    Log.e("ttt", "4process-STATE_WAITING_PRECAPTURE" + aeState);
-                    if (aeState == null ||
-                            aeState == CaptureResult.CONTROL_AE_STATE_PRECAPTURE ||
-                            aeState == CaptureRequest.CONTROL_AE_STATE_FLASH_REQUIRED) {
-                        mState = STATE_WAITING_NON_PRECAPTURE;
-                    }
                     break;
                 }
             }
