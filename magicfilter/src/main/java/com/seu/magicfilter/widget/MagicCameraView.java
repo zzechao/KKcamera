@@ -152,6 +152,7 @@ public class MagicCameraView extends MagicBaseView {
 
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+            // 不断接收到camera的数据流然后调用requestRender刷新onDrawFrame进行画布更新
             Log.e("ttt2", "onFrameAvailable--requestRender");
             requestRender();
         }
@@ -176,8 +177,10 @@ public class MagicCameraView extends MagicBaseView {
         }
         cameraInputFilter.onInputSizeChanged(imageWidth, imageHeight);
         adjustSize(info.orientation, info.isFront, true);
-        if (surfaceTexture != null)
+        if (surfaceTexture != null) {
+            // 把surfaceTexture纹理设置到camera里，因为surfaceTexture.setOnFrameAvailableListener的关系，所以不断接受数据
             CameraEngine.startPreview(surfaceTexture);
+        }
     }
 
     @Override
