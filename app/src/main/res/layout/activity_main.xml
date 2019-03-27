@@ -17,4 +17,10 @@
         android:layout_height="wrap_content"
         android:text="video" />
 
+    <Button
+        android:id="@+id/button_magic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="magic" />
+
 </LinearLayout>

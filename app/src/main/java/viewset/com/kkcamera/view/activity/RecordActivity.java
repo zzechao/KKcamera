@@ -68,7 +68,7 @@ import butterknife.OnClick;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
 
-public class CameraActivity extends AppCompatActivity {
+public class RecordActivity extends AppCompatActivity {
 
     @BindView(R.id.im_camera)
     AutoFitTextureView mTextureView;
@@ -395,7 +395,7 @@ public class CameraActivity extends AppCompatActivity {
      * @param height
      */
     private void openCamera(int width, int height) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 
             //检查权限
             try {

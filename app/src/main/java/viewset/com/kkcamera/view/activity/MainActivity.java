@@ -25,6 +25,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.button_video)
     Button btVideo;
 
+    @BindView(R.id.button_magic)
+    Button btMagic;
+
     Unbinder unbinder;
 
     @Override
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.button_camera, R.id.button_video})
+    @OnClick({R.id.button_camera, R.id.button_video,R.id.button_magic})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_camera:
@@ -48,6 +51,19 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(this, CameraActivity.class));
                 }
                 break;
+            case R.id.button_video:
+
+                break;
+            case R.id.button_magic:
+                if (PermissionChecker.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_DENIED || PermissionChecker.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        == PackageManager.PERMISSION_DENIED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            2);
+                } else {
+                    startActivity(new Intent(this, MagicActivity.class));
+                }
+                break;
         }
     }
 
@@ -55,7 +71,15 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
         if (grantResults.length != 1 || grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startActivity(new Intent(this, CameraActivity.class));
+            switch (requestCode){
+                case 1:
+                    startActivity(new Intent(this, CameraActivity.class));
+                    break;
+                case 2:
+                    startActivity(new Intent(this, MagicActivity.class));
+                    break;
+            }
+
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
