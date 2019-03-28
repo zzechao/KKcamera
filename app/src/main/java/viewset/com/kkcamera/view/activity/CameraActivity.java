@@ -22,10 +22,10 @@ import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -40,12 +40,11 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 
-import com.imay.capturefilter.filter.base.gpuimage.GPUImageFilter;
-import com.imay.capturefilter.filter.base.gpuimage.OpenGlUtils;
 import com.imay.capturefilter.widget.SquareLayout;
 
 import java.io.BufferedOutputStream;
@@ -60,11 +59,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnTouch;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
 
@@ -91,6 +89,8 @@ public class CameraActivity extends AppCompatActivity {
     private Handler backgroundHandler;
     private HandlerThread handlerThread;
 
+    private int mFacing = CameraCharacteristics.LENS_FACING_BACK;
+
     private static final SparseIntArray ORIENTATION = new SparseIntArray();
 
     static {
@@ -104,29 +104,11 @@ public class CameraActivity extends AppCompatActivity {
 
     private static final int STATE_PREVIEW = 0;
 
-    /**
-     * 所选择的滤镜，类型为MagicBaseGroupFilter
-     * 1.mCameraInputFilter将SurfaceTexture中YUV数据绘制到FrameBuffer
-     * 2.filter将FrameBuffer中的纹理绘制到屏幕中
-     */
-    protected GPUImageFilter filter;
-
-    /**
-     * SurfaceTexure纹理id
-     */
-    protected int textureId = OpenGlUtils.NO_TEXTURE;
-
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
             = new TextureView.SurfaceTextureListener() {
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            GLES20.glDisable(GL10.GL_DITHER);
-            GLES20.glClearColor(0,0, 0, 0);
-            GLES20.glEnable(GL10.GL_CULL_FACE);
-            GLES20.glEnable(GL10.GL_DEPTH_TEST);
-
-
             Log.e("ttt", "onSurfaceTextureAvailable" + width + "---" + height);
             mPreTextureViewSize = new Size(width, height);
             openCamera(width, height);
@@ -134,8 +116,6 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            GLES20.glViewport(0,0,width, height);
-
             Log.e("ttt", "onSurfaceTextureSizeChanged" + width + "---" + height);
             mPreTextureViewSize = new Size(width, height);
             configureTransform(width, height);
@@ -148,12 +128,12 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture texture) {
-        }
 
+        }
     };
 
 
-    @OnClick({R.id.bt_screen, R.id.bt_1to1, R.id.bt_takephoto})
+    @OnClick({R.id.bt_screen, R.id.bt_1to1, R.id.bt_takephoto, R.id.bt_switch})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.bt_screen:
@@ -165,7 +145,49 @@ public class CameraActivity extends AppCompatActivity {
             case R.id.bt_takephoto:
                 takePhoto();
                 break;
+            case R.id.bt_switch:
+                switchCamera();
+                break;
         }
+    }
+
+    @OnTouch(R.id.im_camera)
+    public boolean onViewTouch(View view, MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                switch (view.getId()) {
+                    case R.id.im_camera:
+                        int x = (int) event.getX();
+                        int y = (int) event.getY();
+                        Rect rect = new Rect(-5 + x, -5 + y, 5 + x, 5 + y);
+                        MeteringRectangle[] rectangles = new MeteringRectangle[]{new MeteringRectangle(rect, 1000)};
+                        mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, rectangles);
+                        mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_AUTO);
+                        mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, rectangles);
+                        mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
+                        mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                        break;
+                }
+                break;
+        }
+        return false;
+    }
+
+    private void restartCamera() {
+        closeCamera();
+        mPreviewSize = null;
+        mCameraId = null;
+        if (mTextureView.isAvailable()) {
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+        } else {
+            mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
+    }
+
+    private void switchCamera() {
+        mFacing = mFacing == CameraCharacteristics.LENS_FACING_BACK ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK;
+        restartCamera();
     }
 
     private void takePhoto() {
@@ -185,23 +207,18 @@ public class CameraActivity extends AppCompatActivity {
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
-        Log.e("ttt", "rotation--" + rotation);
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
             float scale = Math.max(
                     (float) viewHeight / mPreviewSize.getHeight(),
                     (float) viewWidth / mPreviewSize.getWidth());
-            Log.e("ttt", scale + "--configureTransform-");
             matrix.postScale(scale, scale, centerX, centerY);
             matrix.postRotate(90 * (rotation - 2), centerX, centerY);
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         } else if (Surface.ROTATION_0 == rotation) { // 1:1 和 全屏的切换裁剪
-            Log.e("ttt", bufferRect.top + "---" + bufferRect.bottom);
-            Log.e("ttt", centerY - bufferRect.centerY() + "---");
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
-            Log.e("ttt", bufferRect.top + "---" + bufferRect.bottom);
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
         }
         mTextureView.setTransform(matrix);
@@ -214,31 +231,27 @@ public class CameraActivity extends AppCompatActivity {
 
         unbinder = ButterKnife.bind(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            stateCallback = new CameraDevice.StateCallback() {
-                @Override
-                public void onOpened(CameraDevice cameraDevice) {
-                    Log.e("ttt1", "onOpened");
-                    mCameraDevice = cameraDevice;
-                    //开启预览
-                    startPreview();
-                }
 
-                @Override
-                public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-                    Log.e("ttt1", "onDisconnected");
-                    cameraDevice.close();
-                    mCameraDevice = null;
-                }
+        stateCallback = new CameraDevice.StateCallback() {
+            @Override
+            public void onOpened(CameraDevice cameraDevice) {
+                mCameraDevice = cameraDevice;
+                //开启预览
+                startPreview();
+            }
 
-                @Override
-                public void onError(@NonNull CameraDevice cameraDevice, int error) {
-                    Log.e("ttt1", "onError");
-                    cameraDevice.close();
-                    mCameraDevice = null;
-                }
-            };
-        }
+            @Override
+            public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+                cameraDevice.close();
+                mCameraDevice = null;
+            }
+
+            @Override
+            public void onError(@NonNull CameraDevice cameraDevice, int error) {
+                cameraDevice.close();
+                mCameraDevice = null;
+            }
+        };
 
     }
 
@@ -315,9 +328,10 @@ public class CameraActivity extends AppCompatActivity {
                         = manager.getCameraCharacteristics(cameraId);
                 //默认打开后置摄像头
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                if (facing != null && facing != mFacing) {
                     continue;
                 }
+                Log.e("ttt", mFacing + "---");
                 //获取StreamConfigurationMap，它是管理摄像头支持的所有输出格式和尺寸
                 StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
@@ -395,27 +409,24 @@ public class CameraActivity extends AppCompatActivity {
      * @param height
      */
     private void openCamera(int width, int height) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-
-            //检查权限
-            try {
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    //requestCameraPermission();
-                    return;
-                }
-                //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
-                if (mPreviewSize == null && TextUtils.isEmpty(mCameraId)) {
-                    setupCamera(width, height);
-                }
-                setupImageReader(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                configureTransform(width, height);
-                //mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-                manager.openCamera(mCameraId, stateCallback, backgroundHandler);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
+        //检查权限
+        try {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                //requestCameraPermission();
+                return;
             }
+            //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
+            if (TextUtils.isEmpty(mCameraId)) {
+                setupCamera(width, height);
+            }
+            setupImageReader(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            configureTransform(width, height);
+            //mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            manager.openCamera(mCameraId, stateCallback, backgroundHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 
@@ -514,7 +525,7 @@ public class CameraActivity extends AppCompatActivity {
                             int top;
                             if (mBitmapRect.width() < mViewRect.width() || mBitmapRect.height() < mViewRect.height()) {
                                 if (mBitmapRect.width() > mViewRect.width() || mBitmapRect.height() > mViewRect.height()) {
-                                    Log.e("ttt2","--1--");
+                                    Log.e("ttt2", "--1--");
                                     return;
                                 }
                                 float k = mViewRect.width() * 1f / mViewRect.height();
@@ -528,7 +539,7 @@ public class CameraActivity extends AppCompatActivity {
                                 bos = new BufferedOutputStream(new FileOutputStream(imageFile));
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
                                 bos.flush();
-                            }else {
+                            } else {
                                 left = mBufferRect.centerX() - mViewRect.width() / 2;
                                 top = mBufferRect.centerY() - mViewRect.height() / 2;
                                 if (left < 0 || top < 0) {
