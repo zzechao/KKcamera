@@ -16,6 +16,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
+import viewset.com.kkcamera.view.activity.opengl.OpenglActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.button_camera, R.id.button_video,R.id.button_magic})
+    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_camera:
@@ -64,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(this, MagicActivity.class));
                 }
                 break;
+            case R.id.button_opengl:
+                startActivity(new Intent(this, OpenglActivity.class));
+                break;
         }
     }
 
@@ -71,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
         if (grantResults.length != 1 || grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            switch (requestCode){
+            switch (requestCode) {
                 case 1:
                     startActivity(new Intent(this, CameraActivity.class));
                     break;

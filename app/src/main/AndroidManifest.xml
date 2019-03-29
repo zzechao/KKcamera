@@ -38,6 +38,10 @@
         <activity
             android:name=".view.activity.MagicActivity"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".view.activity.opengl.OpenglActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
