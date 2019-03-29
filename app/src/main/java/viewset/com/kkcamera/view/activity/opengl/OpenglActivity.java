@@ -10,6 +10,10 @@ import butterknife.ButterKnife;
 import viewset.com.kkcamera.R;
 import viewset.com.kkcamera.view.widget.GLTextureView;
 
+/**
+ * https://blog.csdn.net/junzia/article/details/52801772
+ * https://blog.csdn.net/code_better/article/details/52093948
+ */
 public class OpenglActivity extends AppCompatActivity {
 
 
