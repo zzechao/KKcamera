@@ -3,30 +3,40 @@ package viewset.com.kkcamera.view.activity.opengl;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class OvalRender implements GLSurfaceView.Renderer {
+public class TriangleRenderWithCameraColor implements GLSurfaceView.Renderer {
 
     private FloatBuffer vertexBuffer;
 
-    float triangleCoords[];
+    float triangleCoords[] = {
+            0.5f, 0.5f, 0.0f, // top
+            -0.5f, -0.5f, 0.0f, // bottom left
+            0.5f, -0.5f, 0.0f  // bottom right
+    };
 
-    int r = 1;
+    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
+
+    static final int COORDS_PER_VERTEX = 3;
+
+    //顶点个数
+    private final int vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
 
     private final String vertexShaderCode =
             "attribute vec4 vPosition;" +
                     "uniform mat4 vMatrix;" +
+                    "varying  vec4 vColor;" +
+                    "attribute vec4 aColor;" +
                     "void main() {" +
                     "  gl_Position = vMatrix*vPosition;" +
+                    "  vColor = aColor;" +
                     "}";
 
     private final String fragmentShaderCode =
@@ -36,42 +46,33 @@ public class OvalRender implements GLSurfaceView.Renderer {
                     "  gl_FragColor = vColor;" +
                     "}";
 
+    //float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
+
+    //设置颜色
+    float color[] = {
+            0.0f, 1.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f, 1.0f
+    };
+
+    private FloatBuffer colorBuffer;
+
     private int mProgram;
+
+    private int mMatrixHandler;
+
+    private int mPositionHandle;
+
+    private int mColorHandle;
 
     private float[] mViewMatrix = new float[16];
     private float[] mProjectMatrix = new float[16];
     private float[] mMVPMatrix = new float[16];
 
-    private int mMatrixHandler;
-    private int mPositionHandle;
-    private int mColorHandle;
-
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
-
-    static final int COORDS_PER_VERTEX = 3;
-
-    //顶点个数
-    private int vertexCount;
-
-    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        triangleCoords = new float[360 * 3 + 3 + 3];
-        triangleCoords[0] = 0.0f;             //设置圆心坐标
-        triangleCoords[1] = 0.0f;
-        triangleCoords[2] = 0.0f;
-        for (int i = 0; i <= 360; i++) {
-            float x = (float) (r * Math.cos(i * (Math.PI / 180f)));
-            float y = (float) (r * Math.sin(i * (Math.PI / 180f)));
-            float z = 0f;
-            triangleCoords[3 * (i + 1)] = x;
-            triangleCoords[3 * (i + 1) + 1] = y;
-            triangleCoords[3 * (i + 1) + 2] = z;
-        }
-
-        vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
-
+        //将背景设置为灰色
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         //申请底层空间
         ByteBuffer bb = ByteBuffer.allocateDirect(
@@ -82,6 +83,13 @@ public class OvalRender implements GLSurfaceView.Renderer {
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(triangleCoords);
         vertexBuffer.position(0);
+
+        ByteBuffer dd = ByteBuffer.allocateDirect(
+                color.length * 4);
+        dd.order(ByteOrder.nativeOrder());
+        colorBuffer = dd.asFloatBuffer();
+        colorBuffer.put(color);
+        colorBuffer.position(0);
 
         //顶点着色器
         int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
@@ -103,20 +111,26 @@ public class OvalRender implements GLSurfaceView.Renderer {
         GLES20.glAttachShader(mProgram, fragmentShader);
         //连接到着色器程序
         GLES20.glLinkProgram(mProgram);
+
+        // 让OpenGL来验证一下我们的shader program，并获取验证的状态
+        GLES20.glValidateProgram(mProgram);
+        int[] status = new int[1];
+        GLES20.glGetProgramiv(mProgram, GLES20.GL_VALIDATE_STATUS, status, 0);
+        Log.d("ttt", "validate shader program: " + GLES20.glGetProgramInfoLog(mProgram));
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        // 渲染窗口大小发生改变的处理
         GLES20.glViewport(0, 0, width, height);
         //计算宽高比
         float ratio = (float) width / height;
         //设置透视投影
-        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 2, 8);
+        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
         //设置相机位置
         Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
         //计算变换矩阵
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
-
     }
 
     @Override
@@ -132,23 +146,23 @@ public class OvalRender implements GLSurfaceView.Renderer {
 
         //获取顶点着色器的vPosition成员句柄
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
-
         //启用三角形顶点的句柄
         GLES20.glEnableVertexAttribArray(mPositionHandle);
-
         //准备三角形的坐标数据
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
                 vertexStride, vertexBuffer);
 
         //获取片元着色器的vColor成员的句柄
-        mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-
+        mColorHandle = GLES20.glGetAttribLocation(mProgram, "aColor");
         //设置绘制三角形的颜色
-        GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+        GLES20.glEnableVertexAttribArray(mColorHandle);
+        GLES20.glVertexAttribPointer(mColorHandle, 4,
+                GLES20.GL_FLOAT, false,
+                4 * 4, colorBuffer);
 
         //绘制三角形
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertexCount);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
         //禁止顶点数组的句柄
         GLES20.glDisableVertexAttribArray(mPositionHandle);
     }

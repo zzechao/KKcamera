@@ -7,20 +7,39 @@ import android.opengl.Matrix;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class OvalRender implements GLSurfaceView.Renderer {
+public class SquareRender implements GLSurfaceView.Renderer {
 
     private FloatBuffer vertexBuffer;
 
-    float triangleCoords[];
+    float triangleCoords[] = {
+            -0.5f, 0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f, // bottom left
+            0.5f, -0.5f, 0.0f,  // bottom right
+            0.5f, 0.5f, 0.0f // top
+    };
 
-    int r = 1;
+    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
+
+    static final int COORDS_PER_VERTEX = 3;
+
+    private float[] mViewMatrix = new float[16];
+    private float[] mProjectMatrix = new float[16];
+    private float[] mMVPMatrix = new float[16];
+
+    private int mMatrixHandler;
+
+    short index[] = {
+            0, 1, 2, 0, 2, 3
+    };
+
+    //顶点个数
+    private final int vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
 
     private final String vertexShaderCode =
             "attribute vec4 vPosition;" +
@@ -36,52 +55,35 @@ public class OvalRender implements GLSurfaceView.Renderer {
                     "  gl_FragColor = vColor;" +
                     "}";
 
+    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
+
     private int mProgram;
 
-    private float[] mViewMatrix = new float[16];
-    private float[] mProjectMatrix = new float[16];
-    private float[] mMVPMatrix = new float[16];
-
-    private int mMatrixHandler;
     private int mPositionHandle;
+
     private int mColorHandle;
 
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
-
-    static final int COORDS_PER_VERTEX = 3;
-
-    //顶点个数
-    private int vertexCount;
-
-    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
+    private ShortBuffer indexBuffer;
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        triangleCoords = new float[360 * 3 + 3 + 3];
-        triangleCoords[0] = 0.0f;             //设置圆心坐标
-        triangleCoords[1] = 0.0f;
-        triangleCoords[2] = 0.0f;
-        for (int i = 0; i <= 360; i++) {
-            float x = (float) (r * Math.cos(i * (Math.PI / 180f)));
-            float y = (float) (r * Math.sin(i * (Math.PI / 180f)));
-            float z = 0f;
-            triangleCoords[3 * (i + 1)] = x;
-            triangleCoords[3 * (i + 1) + 1] = y;
-            triangleCoords[3 * (i + 1) + 2] = z;
-        }
-
-        vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
-
+        //将背景设置为灰色
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         //申请底层空间
         ByteBuffer bb = ByteBuffer.allocateDirect(
                 triangleCoords.length * 4);
         bb.order(ByteOrder.nativeOrder());
-
         //将坐标数据转换为FloatBuffer，用以传入给OpenGL ES程序
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(triangleCoords);
         vertexBuffer.position(0);
+
+        // 将顶点的链接顺序转换为ShortBuffer，012，023
+        ByteBuffer cc = ByteBuffer.allocateDirect(index.length * 2);
+        cc.order(ByteOrder.nativeOrder());
+        indexBuffer = cc.asShortBuffer();
+        indexBuffer.put(index);
+        indexBuffer.position(0);
 
         //顶点着色器
         int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
@@ -108,15 +110,15 @@ public class OvalRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
+
         //计算宽高比
         float ratio = (float) width / height;
         //设置透视投影
-        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 2, 8);
+        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
         //设置相机位置
         Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
         //计算变换矩阵
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
-
     }
 
     @Override
@@ -144,11 +146,11 @@ public class OvalRender implements GLSurfaceView.Renderer {
         //获取片元着色器的vColor成员的句柄
         mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
 
-        //设置绘制三角形的颜色
+        //设置绘制正方形的颜色
         GLES20.glUniform4fv(mColorHandle, 1, color, 0);
 
-        //绘制三角形
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertexCount);
+        //绘制正方形，通过012，023绘制出两个三角形，组合成一个正方形
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
         //禁止顶点数组的句柄
         GLES20.glDisableVertexAttribArray(mPositionHandle);
     }

@@ -28,7 +28,7 @@ public class OpenglActivity extends AppCompatActivity {
         setContentView(R.layout.activity_opengl);
         ButterKnife.bind(this);
 
-        renderer = new OvalRender();
+        renderer = new TriangleRenderWithCameraColor();
 
         mGLView.setEGLContextClientVersion(2);
         mGLView.setRenderer(renderer);
