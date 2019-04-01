@@ -7,81 +7,90 @@ import android.opengl.Matrix;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class OvalRender implements GLSurfaceView.Renderer {
+public class ConeRender implements GLSurfaceView.Renderer {
 
-    private FloatBuffer vertexBuffer;
+    private FloatBuffer vertexBuffer, colorBuffer;
+    private ShortBuffer indexBuffer;
 
-    float triangleCoords[];
-
-    int r = 1;
+    private float[] mViewMatrix = new float[16];
+    private float[] mProjectMatrix = new float[16];
+    private float[] mMVPMatrix = new float[16];
 
     private final String vertexShaderCode =
-            "attribute vec4 vPosition;" +
-                    "uniform mat4 vMatrix;" +
-                    "void main() {" +
-                    "  gl_Position = vMatrix*vPosition;" +
+            "uniform mat4 vMatrix;" +
+                    "varying vec4 vColor;" +
+                    "attribute vec4 vPosition;" +
+                    "void main(){" +
+                    "    gl_Position=vMatrix*vPosition;" +
+                    "    if(vPosition.z!=0.0){" +
+                    "        vColor=vec4(0.0,0.0,0.0,1.0);" +
+                    "    }else{" +
+                    "        vColor=vec4(0.9,0.9,0.9,1.0);" +
+                    "    }" +
                     "}";
 
     private final String fragmentShaderCode =
             "precision mediump float;" +
-                    "uniform vec4 vColor;" +
+                    "varying vec4 vColor;" +
                     "void main() {" +
                     "  gl_FragColor = vColor;" +
                     "}";
 
     private int mProgram;
 
-    private float[] mViewMatrix = new float[16];
-    private float[] mProjectMatrix = new float[16];
-    private float[] mMVPMatrix = new float[16];
+    float[] conePositions;
+
+    float height = 3f;
+    float r = 1f;
+
+    static final int COORDS_PER_VERTEX = 3;
+    private int vertexCount;
 
     private int mMatrixHandler;
     private int mPositionHandle;
     private int mColorHandle;
 
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
-
-    static final int COORDS_PER_VERTEX = 3;
-
-    //顶点个数
-    private int vertexCount;
-
-    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
-
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        triangleCoords = new float[360 * 3 + 3 + 3];
-        triangleCoords[0] = 0.0f;             //设置圆心坐标
-        triangleCoords[1] = 0.0f;
-        triangleCoords[2] = 0.0f;
+        conePositions = new float[360 * 3 + 3 + 3];
+        conePositions[0] = 0.0f;             //设置圆心坐标
+        conePositions[1] = 0.0f;
+        conePositions[2] = height;
         for (int i = 0; i <= 360; i++) {
             float x = (float) (r * Math.cos(i * (Math.PI / 180f)));
             float y = (float) (r * Math.sin(i * (Math.PI / 180f)));
             float z = 0f;
-            triangleCoords[3 * (i + 1)] = x;
-            triangleCoords[3 * (i + 1) + 1] = y;
-            triangleCoords[3 * (i + 1) + 2] = z;
+            conePositions[3 * (i + 1)] = x;
+            conePositions[3 * (i + 1) + 1] = y;
+            conePositions[3 * (i + 1) + 2] = z;
         }
 
-        vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
+        vertexCount = conePositions.length / COORDS_PER_VERTEX;
 
+        //将背景设置为灰色
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
         //申请底层空间
         ByteBuffer bb = ByteBuffer.allocateDirect(
-                triangleCoords.length * 4);
+                conePositions.length * 4);
         bb.order(ByteOrder.nativeOrder());
         //将坐标数据转换为FloatBuffer，用以传入给OpenGL ES程序
         vertexBuffer = bb.asFloatBuffer();
-        vertexBuffer.put(triangleCoords);
+        vertexBuffer.put(conePositions);
         vertexBuffer.position(0);
+
+        //颜色着色器
+//        ByteBuffer dd = ByteBuffer.allocateDirect(
+//                color.length * 4);
+//        dd.order(ByteOrder.nativeOrder());
+//        colorBuffer = dd.asFloatBuffer();
+//        colorBuffer.put(color);
+//        colorBuffer.position(0);
 
         //顶点着色器
         int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
@@ -107,13 +116,17 @@ public class OvalRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        // 渲染窗口大小发生改变的处理
         GLES20.glViewport(0, 0, width, height);
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+
         //计算宽高比
         float ratio = (float) width / height;
         //设置透视投影
-        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 2, 8);
+        Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 17);
         //设置相机位置
-        Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        Matrix.setLookAtM(mViewMatrix, 0, 1.0f, -10.0f, -4.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
         //计算变换矩阵
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
     }
@@ -121,29 +134,29 @@ public class OvalRender implements GLSurfaceView.Renderer {
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        // 执行渲染工作
         //将程序加入到OpenGLES2.0环境
         GLES20.glUseProgram(mProgram);
 
+        //获取变换矩阵vMatrix成员句柄
         mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(mMatrixHandler, 1, false, mMVPMatrix, 0);
 
-        //获取顶点着色器的vPosition成员句柄
+        //
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
-
         //启用三角形顶点的句柄
         GLES20.glEnableVertexAttribArray(mPositionHandle);
-
-        //准备三角形的坐标数据
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
-                vertexStride, vertexBuffer);
+                COORDS_PER_VERTEX * 4, vertexBuffer);
 
         //获取片元着色器的vColor成员的句柄
-        mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
-        //设置绘制三角形的颜色
-        GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+//        mColorHandle = GLES20.glGetAttribLocation(mProgram, "aColor");
+//        //设置绘制三角形的颜色
+//        GLES20.glEnableVertexAttribArray(mColorHandle);
+//        GLES20.glVertexAttribPointer(mColorHandle, 4,
+//                GLES20.GL_FLOAT, false,
+//                0, colorBuffer);
 
         //绘制三角形
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertexCount);
