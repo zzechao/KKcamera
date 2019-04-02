@@ -7,9 +7,6 @@ import android.opengl.Matrix;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -55,16 +52,18 @@ public class OvalRender implements GLSurfaceView.Renderer {
 
     float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
 
+    private float height = 0.0f;
+
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         triangleCoords = new float[360 * 3 + 3 + 3];
         triangleCoords[0] = 0.0f;             //设置圆心坐标
         triangleCoords[1] = 0.0f;
-        triangleCoords[2] = 0.0f;
+        triangleCoords[2] = height;
         for (int i = 0; i <= 360; i++) {
             float x = (float) (r * Math.cos(i * (Math.PI / 180f)));
             float y = (float) (r * Math.sin(i * (Math.PI / 180f)));
-            float z = 0f;
+            float z = height;
             triangleCoords[3 * (i + 1)] = x;
             triangleCoords[3 * (i + 1) + 1] = y;
             triangleCoords[3 * (i + 1) + 2] = z;
@@ -120,7 +119,7 @@ public class OvalRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        //GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         // 执行渲染工作
         //将程序加入到OpenGLES2.0环境
         GLES20.glUseProgram(mProgram);
@@ -149,5 +148,13 @@ public class OvalRender implements GLSurfaceView.Renderer {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, vertexCount);
         //禁止顶点数组的句柄
         GLES20.glDisableVertexAttribArray(mPositionHandle);
+    }
+
+    public void setMatrix(float[] matrix){
+        this.mMVPMatrix=matrix;
+    }
+
+    public void setHeight(float height) {
+        this.height = height;
     }
 }
