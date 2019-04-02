@@ -30,4 +30,10 @@
         android:layout_height="wrap_content"
         android:text="opengl" />
 
+    <Button
+        android:id="@+id/button_texture2d"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="texture2d" />
+
 </LinearLayout>

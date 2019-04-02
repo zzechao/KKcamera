@@ -1,4 +1,4 @@
-package viewset.com.kkcamera.view.activity.opengl;
+package viewset.com.kkcamera.view.activity.opengl.render;
 
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;

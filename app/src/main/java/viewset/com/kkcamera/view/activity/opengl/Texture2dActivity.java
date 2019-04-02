@@ -1,54 +1,53 @@
 package viewset.com.kkcamera.view.activity.opengl;
 
-import android.opengl.GLSurfaceView;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+
+import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
-import viewset.com.kkcamera.view.activity.opengl.render.BallRender;
 import viewset.com.kkcamera.view.widget.GLTextureView;
 
-/**
- * https://blog.csdn.net/junzia/article/details/52801772
- * https://blog.csdn.net/code_better/article/details/52093948
- */
-public class OpenglActivity extends AppCompatActivity {
+public class Texture2dActivity extends AppCompatActivity {
 
-
-    @BindView(R.id.gltexture)
-    GLTextureView mGLView;
-
-    GLSurfaceView.Renderer renderer;
+    @BindView(R.id.gltexture2d)
+    GLTextureView glTextureView;
 
     private Unbinder unbinder;
+
+    private Bitmap bitmap;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_opengl);
+        setContentView(R.layout.activity_texture2d);
+        ButterKnife.bind(this);
+
         unbinder = ButterKnife.bind(this);
 
-        renderer = new BallRender();
-
-        mGLView.setEGLContextClientVersion(2);
-        mGLView.setRenderer(renderer);
-        mGLView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        try {
+            bitmap = BitmapFactory.decodeStream(getResources().getAssets().open("texture/fengj.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mGLView.onResume();
+        glTextureView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mGLView.onPause();
+        glTextureView.onPause();
     }
 
     @Override

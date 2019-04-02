@@ -1,4 +1,4 @@
-package viewset.com.kkcamera.view.activity.opengl;
+package viewset.com.kkcamera.view.activity.opengl.render;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;

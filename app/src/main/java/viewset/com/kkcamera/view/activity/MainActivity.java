@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl})
+    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl,R.id.button_texture2d})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_camera:
