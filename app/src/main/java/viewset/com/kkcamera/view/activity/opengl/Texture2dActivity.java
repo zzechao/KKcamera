@@ -14,12 +14,11 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
 import viewset.com.kkcamera.view.activity.opengl.texture.Texture2dRender;
-import viewset.com.kkcamera.view.widget.GLTextureView;
 
 public class Texture2dActivity extends AppCompatActivity {
 
     @BindView(R.id.gltexture2d)
-    GLTextureView glTextureView;
+    GLSurfaceView glTextureView;
 
     private Unbinder unbinder;
 
@@ -38,9 +37,9 @@ public class Texture2dActivity extends AppCompatActivity {
             glTextureView.setEGLContextClientVersion(2);
             glTextureView.setRenderer(mRenderer);
             glTextureView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
             Bitmap bitmap = BitmapFactory.decodeStream(getResources().getAssets().open("texture/timg.jpeg"));
             mRenderer.setBitmap(bitmap);
-            glTextureView.requestRender();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -49,11 +48,13 @@ public class Texture2dActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        glTextureView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        glTextureView.onPause();
     }
 
     @Override

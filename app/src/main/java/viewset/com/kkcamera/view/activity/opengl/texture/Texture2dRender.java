@@ -65,21 +65,15 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
 
     private int mTextureId;
 
-    private EGLConfig mConfig;
-    private int mWidth;
-    private int mHeight;
-    private boolean refreshFlag = false;
 
     public void setBitmap(Bitmap bitmap) {
         Log.e("ttt", "setBitmap");
         mBitmap = bitmap;
-        refreshFlag = true;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Log.e("ttt", "onSurfaceCreated--" + (mBitmap != null));
-        mConfig = config;
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
 
@@ -105,8 +99,6 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         Log.e("ttt", "onSurfaceChanged--" + (mBitmap != null));
-        mWidth = width;
-        mHeight = height;
         GLES20.glViewport(0, 0, width, height);
 
         if (mBitmap != null && !mBitmap.isRecycled()) {

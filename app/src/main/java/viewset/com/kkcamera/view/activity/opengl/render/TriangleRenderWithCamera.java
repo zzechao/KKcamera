@@ -60,6 +60,7 @@ public class TriangleRenderWithCamera implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Log.e("ttt", "onSurfaceCreated");
         //将背景设置为灰色
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         //申请底层空间
@@ -102,6 +103,7 @@ public class TriangleRenderWithCamera implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        Log.e("ttt", "onSurfaceChanged");
         // 渲染窗口大小发生改变的处理
         GLES20.glViewport(0, 0, width, height);
         //计算宽高比
@@ -116,6 +118,7 @@ public class TriangleRenderWithCamera implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        Log.e("ttt", "onDrawFrame");
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         // 执行渲染工作
         //将程序加入到OpenGLES2.0环境

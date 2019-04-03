@@ -52,6 +52,7 @@ public class TriangleRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Log.e("ttt", "onSurfaceCreated");
         //将背景设置为灰色
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         //申请底层空间
@@ -84,22 +85,18 @@ public class TriangleRender implements GLSurfaceView.Renderer {
         GLES20.glAttachShader(mProgram, fragmentShader);
         //连接到着色器程序
         GLES20.glLinkProgram(mProgram);
-
-        // 让OpenGL来验证一下我们的shader program，并获取验证的状态
-        GLES20.glValidateProgram(mProgram);
-        int[] status = new int[1];
-        GLES20.glGetProgramiv(mProgram, GLES20.GL_VALIDATE_STATUS, status, 0);
-        Log.d("ttt", "validate shader program: " + GLES20.glGetProgramInfoLog(mProgram));
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        Log.e("ttt", "onSurfaceChanged");
         // 渲染窗口大小发生改变的处理
         GLES20.glViewport(0, 0, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        Log.e("ttt", "onDrawFrame");
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         // 执行渲染工作
         //将程序加入到OpenGLES2.0环境
