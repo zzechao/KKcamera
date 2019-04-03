@@ -128,7 +128,7 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
                 }
             }
             //设置相机位置
-            Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+            Matrix.setLookAtM(mViewMatrix, 0, 0, 0, -7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             //计算变换矩阵
             Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
         }
@@ -139,6 +139,9 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
         Log.e("ttt", "onDrawFrame--");
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glUseProgram(mProgram);
+
+        GLES20.glUniform1i(mTextureHanle, 0);
+        mTextureId = createTexture();
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(mMatrixHandle, 1, false, mMVPMatrix, 0);
@@ -153,8 +156,6 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
         //传入纹理坐标
         GLES20.glVertexAttribPointer(mCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, bCoord);
 
-        GLES20.glUniform1i(mTextureHanle, 0);
-        mTextureId = createTexture();
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }

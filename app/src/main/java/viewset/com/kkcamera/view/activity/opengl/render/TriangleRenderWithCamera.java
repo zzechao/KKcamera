@@ -43,7 +43,7 @@ public class TriangleRenderWithCamera implements GLSurfaceView.Renderer {
                     "  gl_FragColor = vColor;" +
                     "}";
 
-    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
+    float color[] = {0.0f, 1.0f, 0.0f, 1.0f}; //白色
 
     private int mProgram;
 

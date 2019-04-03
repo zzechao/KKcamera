@@ -49,13 +49,11 @@ public class Texture2dActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        glTextureView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        glTextureView.onPause();
     }
 
     @Override
