@@ -3,6 +3,7 @@ package viewset.com.kkcamera.view.activity.opengl.render;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -64,6 +65,8 @@ public class CubeRender implements GLSurfaceView.Renderer {
             1f, 0f, 1f, 1f,
             1f, 0f, 1f, 1f,
     };
+
+    private float[] mRotationMatrix = new float[16];
 
     private int mProgram;
 
@@ -140,10 +143,6 @@ public class CubeRender implements GLSurfaceView.Renderer {
         float ratio = (float) width / height;
         //设置透视投影
         Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 17);
-        //设置相机位置
-        Matrix.setLookAtM(mViewMatrix, 0, 5.0f, 5f, 10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-        //计算变换矩阵
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
     }
 
     @Override
@@ -151,11 +150,6 @@ public class CubeRender implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         //将程序加入到OpenGLES2.0环境
         GLES20.glUseProgram(mProgram);
-
-        //获取变换矩阵vMatrix成员句柄
-        mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
-        //指定vMatrix的值
-        GLES20.glUniformMatrix4fv(mMatrixHandler, 1, false, mMVPMatrix, 0);
 
         //
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
@@ -172,6 +166,17 @@ public class CubeRender implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(mColorHandle, 4,
                 GLES20.GL_FLOAT, false,
                 0, colorBuffer);
+
+        //设置相机位置
+        Matrix.setLookAtM(mViewMatrix, 0, 5.0f, 5f, 10f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+        //计算变换矩阵
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
+
+        //获取变换矩阵vMatrix成员句柄
+        mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
+        //指定vMatrix的值
+        GLES20.glUniformMatrix4fv(mMatrixHandler, 1, false, mMVPMatrix, 0);
+
 
         //绘制正方形，通过012，023绘制出两个三角形，组合成一个正方形
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
