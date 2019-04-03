@@ -2,6 +2,7 @@ package viewset.com.kkcamera.view.activity.opengl;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -12,6 +13,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
+import viewset.com.kkcamera.view.activity.opengl.texture.Texture2dRender;
 import viewset.com.kkcamera.view.widget.GLTextureView;
 
 public class Texture2dActivity extends AppCompatActivity {
@@ -21,7 +23,7 @@ public class Texture2dActivity extends AppCompatActivity {
 
     private Unbinder unbinder;
 
-    private Bitmap bitmap;
+    Texture2dRender mRenderer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,7 +34,13 @@ public class Texture2dActivity extends AppCompatActivity {
         unbinder = ButterKnife.bind(this);
 
         try {
-            bitmap = BitmapFactory.decodeStream(getResources().getAssets().open("texture/fengj.png"));
+            mRenderer = new Texture2dRender();
+            glTextureView.setEGLContextClientVersion(2);
+            glTextureView.setRenderer(mRenderer);
+            glTextureView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            Bitmap bitmap = BitmapFactory.decodeStream(getResources().getAssets().open("texture/timg.jpeg"));
+            mRenderer.setBitmap(bitmap);
+            glTextureView.requestRender();
         } catch (IOException e) {
             e.printStackTrace();
         }

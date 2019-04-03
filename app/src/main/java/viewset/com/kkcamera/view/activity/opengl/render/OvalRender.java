@@ -83,16 +83,9 @@ public class OvalRender implements GLSurfaceView.Renderer {
         vertexBuffer.position(0);
 
         //顶点着色器
-        int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
-        //将资源加入到着色器中，并编译
-        GLES20.glShaderSource(vertexShader, vertexShaderCode);
-        GLES20.glCompileShader(vertexShader);
-
+        int vertexShader = RenderUtil.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
         //片元着色器
-        int fragmentShader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-        //将资源加入到着色器中
-        GLES20.glShaderSource(fragmentShader, fragmentShaderCode);
-        GLES20.glCompileShader(fragmentShader);
+        int fragmentShader = RenderUtil.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
 
         //创建一个空的OpenGLES程序
         mProgram = GLES20.glCreateProgram();
@@ -102,6 +95,13 @@ public class OvalRender implements GLSurfaceView.Renderer {
         GLES20.glAttachShader(mProgram, fragmentShader);
         //连接到着色器程序
         GLES20.glLinkProgram(mProgram);
+
+        //获取相机的vMatrix成员句柄
+        mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
+        //获取顶点着色器的vPosition成员句柄
+        mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
+        //获取片元着色器的vColor成员的句柄
+        mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
     }
 
     @Override
@@ -124,23 +124,16 @@ public class OvalRender implements GLSurfaceView.Renderer {
         //将程序加入到OpenGLES2.0环境
         GLES20.glUseProgram(mProgram);
 
-        mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(mMatrixHandler, 1, false, mMVPMatrix, 0);
 
-        //获取顶点着色器的vPosition成员句柄
-        mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
-
         //启用三角形顶点的句柄
         GLES20.glEnableVertexAttribArray(mPositionHandle);
-
         //准备三角形的坐标数据
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
                 vertexStride, vertexBuffer);
 
-        //获取片元着色器的vColor成员的句柄
-        mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
         //设置绘制三角形的颜色
         GLES20.glUniform4fv(mColorHandle, 1, color, 0);
 
@@ -150,8 +143,8 @@ public class OvalRender implements GLSurfaceView.Renderer {
         GLES20.glDisableVertexAttribArray(mPositionHandle);
     }
 
-    public void setMatrix(float[] matrix){
-        this.mMVPMatrix=matrix;
+    public void setMatrix(float[] matrix) {
+        this.mMVPMatrix = matrix;
     }
 
     public void setHeight(float height) {
