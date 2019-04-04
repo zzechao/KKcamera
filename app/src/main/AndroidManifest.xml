@@ -44,8 +44,8 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".view.activity.opengl.Texture2dActivity"
-            android:screenOrientation="portrait" />
+            android:name=".view.activity.opengl.EgTexture2dActivity"
+            android:screenOrientation="sensor" />
     </application>
 
 </manifest>

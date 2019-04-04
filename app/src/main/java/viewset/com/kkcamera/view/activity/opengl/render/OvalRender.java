@@ -11,6 +11,8 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
+
 public class OvalRender implements GLSurfaceView.Renderer {
 
     private FloatBuffer vertexBuffer;
@@ -81,20 +83,9 @@ public class OvalRender implements GLSurfaceView.Renderer {
         vertexBuffer = bb.asFloatBuffer();
         vertexBuffer.put(triangleCoords);
         vertexBuffer.position(0);
-
-        //顶点着色器
-        int vertexShader = RenderUtil.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-        //片元着色器
-        int fragmentShader = RenderUtil.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
-
+        
         //创建一个空的OpenGLES程序
-        mProgram = GLES20.glCreateProgram();
-        //将顶点着色器加入到程序
-        GLES20.glAttachShader(mProgram, vertexShader);
-        //将片元着色器加入到程序中
-        GLES20.glAttachShader(mProgram, fragmentShader);
-        //连接到着色器程序
-        GLES20.glLinkProgram(mProgram);
+        mProgram = OpenGlUtils.loadProgram(vertexShaderCode, fragmentShaderCode);
 
         //获取相机的vMatrix成员句柄
         mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");

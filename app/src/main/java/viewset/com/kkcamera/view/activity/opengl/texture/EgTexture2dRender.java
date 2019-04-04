@@ -14,9 +14,9 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import viewset.com.kkcamera.view.activity.opengl.render.RenderUtil;
+public class EgTexture2dRender implements GLSurfaceView.Renderer {
 
-public class Texture2dRender implements GLSurfaceView.Renderer {
+    ColorFilter filter;
 
     private final String vertexShaderCode =
             "attribute vec4 vPosition;" +
@@ -49,6 +49,7 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
             1.0f, 0.0f,
             1.0f, 1.0f,
     };
+
     private FloatBuffer bPos, bCoord;
 
     private int mProgram;
@@ -63,7 +64,7 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
     private float[] mProjectMatrix = new float[16];
     private float[] mMVPMatrix = new float[16];
 
-    private int mTextureId;
+    private int mTextureId = OpenGlUtils.NO_TEXTURE;
 
 
     public void setBitmap(Bitmap bitmap) {
@@ -73,7 +74,6 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        Log.e("ttt", "onSurfaceCreated--" + (mBitmap != null));
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
 
@@ -89,7 +89,8 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
         bCoord.put(sCoord);
         bCoord.position(0);
 
-        mProgram = RenderUtil.createProgram(vertexShaderCode, fragmentShaderCode);
+        mProgram = OpenGlUtils.loadProgram(vertexShaderCode, fragmentShaderCode);
+
         mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
         mCoordinateHandle = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         mMatrixHandle = GLES20.glGetUniformLocation(mProgram, "vMatrix");
@@ -133,7 +134,7 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
         GLES20.glUseProgram(mProgram);
 
         GLES20.glUniform1i(mTextureHanle, 0);
-        mTextureId = createTexture();
+        mTextureId = OpenGlUtils.loadTexture(mBitmap, mTextureId);
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(mMatrixHandle, 1, false, mMVPMatrix, 0);
@@ -147,7 +148,6 @@ public class Texture2dRender implements GLSurfaceView.Renderer {
         GLES20.glEnableVertexAttribArray(mCoordinateHandle);
         //传入纹理坐标
         GLES20.glVertexAttribPointer(mCoordinateHandle, 2, GLES20.GL_FLOAT, false, 0, bCoord);
-
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }

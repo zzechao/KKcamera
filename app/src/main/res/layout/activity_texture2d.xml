@@ -7,5 +7,14 @@
     <android.opengl.GLSurfaceView
         android:id="@+id/gltexture2d"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <com.imay.capturefilter.widget.ICAutoAdjustRecylerView
+        android:id="@+id/recycler"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_gravity="bottom"
+        android:background="#77ffffff"
+        android:visibility="gone" />
 </LinearLayout>

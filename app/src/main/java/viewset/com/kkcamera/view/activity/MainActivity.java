@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -17,7 +16,7 @@ import butterknife.OnClick;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
 import viewset.com.kkcamera.view.activity.opengl.OpenglActivity;
-import viewset.com.kkcamera.view.activity.opengl.Texture2dActivity;
+import viewset.com.kkcamera.view.activity.opengl.EgTexture2dActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, OpenglActivity.class));
                 break;
             case R.id.button_texture2d:
-                startActivity(new Intent(this, Texture2dActivity.class));
+                startActivity(new Intent(this, EgTexture2dActivity.class));
                 break;
         }
     }
