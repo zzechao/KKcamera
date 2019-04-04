@@ -126,6 +126,9 @@ public class Texture2dFilterActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View v) {
+            for (FilterState.Filter filter : filters) {
+                filter.setSelected(false);
+            }
             filters[position].setSelected(true);
             mAdapter.notifyDataSetChanged();
             mRenderer.setFilter(filters[position]);

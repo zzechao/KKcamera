@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,6 +14,7 @@ import java.nio.FloatBuffer;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import viewset.com.kkcamera.view.activity.opengl.texture.ColorTexture2dFilterRender;
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
 public abstract class ColorFilter implements GLSurfaceView.Renderer {
@@ -46,9 +48,9 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     private int glMatrix;
     private int glTexture;
 
-    private Bitmap mBitmap;
-
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
+
+    private ColorTexture2dFilterRender mRender;
 
     public ColorFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.sh", context.getResources()),
@@ -71,6 +73,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Log.e("ttt", "onSurfaceCreated");
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 
         glPosition = GLES20.glGetAttribLocation(mProgram, "vPosition");
@@ -83,9 +86,11 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        if (mBitmap != null && !mBitmap.isRecycled()) {
-            int w = mBitmap.getWidth();
-            int h = mBitmap.getHeight();
+        Bitmap bitmap = mRender.getBitmap();
+        Log.e("ttt", "onSurfaceChanged--" + bitmap.isRecycled());
+        if (!bitmap.isRecycled()) {
+            int w = bitmap.getWidth();
+            int h = bitmap.getHeight();
             float sWH = w / (float) h;
             float sWidthHeight = width / (float) height;
             if (width > height) {
@@ -110,10 +115,11 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        Log.e("ttt", "onDrawFrame--" + mRender.getBitmap().isRecycled());
         GLES20.glUseProgram(mProgram);
 
         GLES20.glUniform1i(glTexture, 0);
-        mTextureId = OpenGlUtils.loadTexture(mBitmap, mTextureId);
+        mTextureId = OpenGlUtils.loadTexture(mRender.getBitmap(), mTextureId, false);
 
         glOnDrawFrame();
 
@@ -134,29 +140,20 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     }
 
     /**
-     * 设置图片
-     *
-     * @param bitmap
-     */
-    public void setBitmap(Bitmap bitmap) {
-        mBitmap = bitmap;
-    }
-
-    /**
      * 销毁
      */
     public void realse() {
-        if (mBitmap != null) {
-            mBitmap.recycle();
-            mBitmap = null;
-        }
         mTextureId = OpenGlUtils.NO_TEXTURE;
+        mRender = null;
     }
 
     /**
      * 初始化
+     *
+     * @param render
      */
-    public void init() {
+    public void init(ColorTexture2dFilterRender render) {
+        mRender = render;
         ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
         bb.order(ByteOrder.nativeOrder());
         bPos = bb.asFloatBuffer();

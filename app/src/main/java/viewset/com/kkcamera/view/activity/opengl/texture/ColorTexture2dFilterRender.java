@@ -15,10 +15,15 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
 
     ColorFilter colorFilter;
     Context mContext;
+    EGLConfig mConfig;
+    int mWidth, mHeight;
+    boolean isFilterChange;
+    Bitmap mBitmap;
 
     public ColorTexture2dFilterRender(Context context) {
         mContext = context;
-        colorFilter = new ColorFilter(context) {
+        isFilterChange = false;
+        colorFilter = new ColorFilter(mContext) {
             @Override
             public void glOnSufaceCreated(int program) {
 
@@ -29,15 +34,20 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
 
             }
         };
-        colorFilter.init();
+        colorFilter.init(this);
     }
 
     public void setBitmap(Bitmap bitmap) {
-        colorFilter.setBitmap(bitmap);
+        mBitmap = bitmap;
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        mConfig = config;
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
         colorFilter.onSurfaceCreated(gl, config);
@@ -45,24 +55,45 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        mWidth = width;
+        mHeight = height;
         GLES20.glViewport(0, 0, width, height);
         colorFilter.onSurfaceChanged(gl, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        if (isFilterChange && mWidth != 0 && mHeight != 0) {
+            colorFilter.onSurfaceCreated(gl, mConfig);
+            colorFilter.onSurfaceChanged(gl, mWidth, mHeight);
+            isFilterChange = false;
+        }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         colorFilter.onDrawFrame(gl);
     }
 
     public void setFilter(FilterState.Filter filter) {
-        if (filter == FilterState.Filter.GRAY) {
-            if (colorFilter != null) {
-                colorFilter.realse();
-                colorFilter = null;
-            }
-            colorFilter = new GrayFilter(mContext);
-            colorFilter.init();
+        if (colorFilter != null) {
+            colorFilter.realse();
+            colorFilter = null;
         }
+        if (filter == FilterState.Filter.NONE) {
+            colorFilter = new ColorFilter(mContext) {
+                @Override
+                public void glOnSufaceCreated(int program) {
+
+                }
+
+                @Override
+                public void glOnDrawFrame() {
+
+                }
+            };
+            colorFilter.init(this);
+        } else if (filter == FilterState.Filter.GRAY) {
+            colorFilter = new GrayFilter(mContext);
+            colorFilter.init(this);
+        }
+        isFilterChange = true;
     }
 }
