@@ -21,11 +21,15 @@ import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
-import viewset.com.kkcamera.view.activity.opengl.texture.EgTexture2dRender;
+import viewset.com.kkcamera.view.activity.opengl.texture.ColorTexture2dFilterRender;
 import viewset.com.kkcamera.view.activity.opengl.texture.FilterState;
 
+/**
+ * 添加滤镜的TextureFilter
+ */
 public class Texture2dFilterActivity extends AppCompatActivity {
 
     @BindView(R.id.gltexture2d)
@@ -36,7 +40,7 @@ public class Texture2dFilterActivity extends AppCompatActivity {
 
     private Unbinder unbinder;
 
-    EgTexture2dRender mRenderer;
+    ColorTexture2dFilterRender mRenderer;
 
     private RecyclerView.Adapter mAdapter;
 
@@ -56,7 +60,7 @@ public class Texture2dFilterActivity extends AppCompatActivity {
         unbinder = ButterKnife.bind(this);
 
         try {
-            mRenderer = new EgTexture2dRender();
+            mRenderer = new ColorTexture2dFilterRender(this);
             glTextureView.setEGLContextClientVersion(2);
             glTextureView.setRenderer(mRenderer);
             glTextureView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -95,17 +99,38 @@ public class Texture2dFilterActivity extends AppCompatActivity {
                     textView.setSelected(false);
                 }
                 textView.setText(filter.name());
+                textView.setOnClickListener(new OnItemClickListener(i));
             }
 
             @Override
             public int getItemCount() {
                 return filters.length;
             }
+
+
         };
+
 
         mRecyclerView.setAdapter(mAdapter);
         filters[0].setSelected(true);
         mAdapter.notifyItemChanged(0);
+    }
+
+    class OnItemClickListener implements View.OnClickListener {
+
+        int position;
+
+        public OnItemClickListener(int i) {
+            position = i;
+        }
+
+        @Override
+        public void onClick(View v) {
+            filters[position].setSelected(true);
+            mAdapter.notifyDataSetChanged();
+            mRenderer.setFilter(filters[position]);
+            glTextureView.requestRender();
+        }
     }
 
     @Override

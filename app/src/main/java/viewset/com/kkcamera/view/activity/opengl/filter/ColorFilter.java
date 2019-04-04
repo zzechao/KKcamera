@@ -1,5 +1,6 @@
-package viewset.com.kkcamera.view.activity.opengl.texture;
+package viewset.com.kkcamera.view.activity.opengl.filter;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -11,6 +12,8 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
 public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
@@ -47,6 +50,11 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
 
+    public ColorFilter(Context context) {
+        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.sh", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.sh", context.getResources()));
+    }
+
     public ColorFilter(String vertexShader, String fragmentShader) {
         mVertexShader = vertexShader;
         mFragmentShader = fragmentShader;
@@ -57,12 +65,12 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
      *
      * @param program
      */
-    public abstract void glGetProgramSet(int program);
+    public abstract void glOnSufaceCreated(int program);
+
+    public abstract void glOnDrawFrame();
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-        GLES20.glEnable(GLES20.GL_TEXTURE_2D);
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 
         glPosition = GLES20.glGetAttribLocation(mProgram, "vPosition");
@@ -70,26 +78,11 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "vTexture");
 
-        ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
-        bb.order(ByteOrder.nativeOrder());
-        bPos = bb.asFloatBuffer();
-        bPos.put(sPos);
-        bPos.position(0);
-
-        ByteBuffer cc = ByteBuffer.allocateDirect(sCoord.length * 4);
-        cc.order(ByteOrder.nativeOrder());
-        bCoord = cc.asFloatBuffer();
-        bCoord.put(sCoord);
-        bCoord.position(0);
-
-        glGetProgramSet(mProgram);
+        glOnSufaceCreated(mProgram);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        GLES20.glViewport(0, 0, width, height);
-
-
         if (mBitmap != null && !mBitmap.isRecycled()) {
             int w = mBitmap.getWidth();
             int h = mBitmap.getHeight();
@@ -117,11 +110,12 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glUseProgram(mProgram);
 
         GLES20.glUniform1i(glTexture, 0);
         mTextureId = OpenGlUtils.loadTexture(mBitmap, mTextureId);
+
+        glOnDrawFrame();
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
@@ -137,5 +131,42 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, bCoord);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    /**
+     * 设置图片
+     *
+     * @param bitmap
+     */
+    public void setBitmap(Bitmap bitmap) {
+        mBitmap = bitmap;
+    }
+
+    /**
+     * 销毁
+     */
+    public void realse() {
+        if (mBitmap != null) {
+            mBitmap.recycle();
+            mBitmap = null;
+        }
+        mTextureId = OpenGlUtils.NO_TEXTURE;
+    }
+
+    /**
+     * 初始化
+     */
+    public void init() {
+        ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        bPos = bb.asFloatBuffer();
+        bPos.put(sPos);
+        bPos.position(0);
+
+        ByteBuffer cc = ByteBuffer.allocateDirect(sCoord.length * 4);
+        cc.order(ByteOrder.nativeOrder());
+        bCoord = cc.asFloatBuffer();
+        bCoord.put(sCoord);
+        bCoord.position(0);
     }
 }

@@ -17,6 +17,8 @@ import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
 import viewset.com.kkcamera.view.activity.opengl.OpenglActivity;
 import viewset.com.kkcamera.view.activity.opengl.EgTexture2dActivity;
+import viewset.com.kkcamera.view.activity.opengl.Texture2dFilterActivity;
+import viewset.com.kkcamera.view.activity.opengl.texture.ColorTexture2dFilterRender;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl, R.id.button_texture2d})
+    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl, R.id.button_texture2d, R.id.button_texture2dfilter})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_camera:
@@ -70,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.button_texture2d:
                 startActivity(new Intent(this, EgTexture2dActivity.class));
+                break;
+            case R.id.button_texture2dfilter:
+                startActivity(new Intent(this, Texture2dFilterActivity.class));
                 break;
         }
     }
