@@ -10,6 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import viewset.com.kkcamera.view.activity.opengl.filter.ColorFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.GrayFilter;
+import viewset.com.kkcamera.view.activity.opengl.filter.I1977Filter;
 
 public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
 
@@ -50,6 +51,9 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         mConfig = config;
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
+        if (colorFilter == null) {
+            return;
+        }
         colorFilter.onSurfaceCreated(gl, config);
     }
 
@@ -58,11 +62,17 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         mWidth = width;
         mHeight = height;
         GLES20.glViewport(0, 0, width, height);
+        if (colorFilter == null) {
+            return;
+        }
         colorFilter.onSurfaceChanged(gl, width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
+        if (colorFilter == null) {
+            return;
+        }
         if (isFilterChange && mWidth != 0 && mHeight != 0) {
             colorFilter.onSurfaceCreated(gl, mConfig);
             colorFilter.onSurfaceChanged(gl, mWidth, mHeight);
@@ -92,6 +102,9 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             colorFilter.init(this);
         } else if (filter == FilterState.Filter.GRAY) {
             colorFilter = new GrayFilter(mContext);
+            colorFilter.init(this);
+        } else if (filter == FilterState.Filter.I1977) {
+            colorFilter = new I1977Filter(mContext);
             colorFilter.init(this);
         }
         isFilterChange = true;

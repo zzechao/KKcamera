@@ -49,7 +49,8 @@ public class Texture2dFilterActivity extends AppCompatActivity {
             FilterState.Filter.GRAY,
             FilterState.Filter.COOL,
             FilterState.Filter.WARM,
-            FilterState.Filter.BLUR};
+            FilterState.Filter.BLUR,
+            FilterState.Filter.I1977};
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -98,7 +99,7 @@ public class Texture2dFilterActivity extends AppCompatActivity {
                 } else {
                     textView.setSelected(false);
                 }
-                textView.setText(filter.name());
+                textView.setText(filter.getName());
                 textView.setOnClickListener(new OnItemClickListener(i));
             }
 

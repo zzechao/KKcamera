@@ -1,5 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
     android:gravity="center"
@@ -7,16 +7,17 @@
 
     <TextView
         android:id="@+id/tv_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:paddingLeft="15dp"
-        android:layout_gravity="center_vertical"
         android:paddingRight="15dp"
         android:shadowColor="#8A000000"
         android:shadowDx="2"
         android:shadowDy="2"
         android:shadowRadius="1"
-        android:textColor="@color/cpb_filter_selector"
-        android:text="Testlalalal" />
+        android:text="Testlalalal"
+        android:textColor="@color/cpb_filter_selector" />
 
 </LinearLayout>
