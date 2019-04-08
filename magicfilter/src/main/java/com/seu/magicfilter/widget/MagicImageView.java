@@ -53,7 +53,7 @@ public class MagicImageView extends MagicBaseView{
     public void onDrawFrame(GL10 gl) {
         super.onDrawFrame(gl);
         if(textureId == OpenGlUtils.NO_TEXTURE)
-            textureId = OpenGlUtils.loadTexture(getBitmap(), OpenGlUtils.NO_TEXTURE);
+            textureId = OpenGlUtils.loadTexture(originBitmap, OpenGlUtils.NO_TEXTURE);
         if(filter == null)
             imageInput.onDrawFrame(textureId, gLCubeBuffer, gLTextureBuffer);
         else
@@ -84,9 +84,9 @@ public class MagicImageView extends MagicBaseView{
     }
 
     public void setBitmap(Bitmap bitmap){
-        if(_bitmapHandler != null)
-            freeBitmap();
-        _bitmapHandler = MagicJni.jniStoreBitmapData(bitmap);
+        //if(_bitmapHandler != null)
+            //freeBitmap();
+        //_bitmapHandler = MagicJni.jniStoreBitmapData(bitmap);
         originBitmap = bitmap;
     }
 

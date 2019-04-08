@@ -1,6 +1,6 @@
 precision mediump float;
 
- varying vec2 aCoordinate;
+ varying mediump vec2 aCoordinate;
 
  uniform sampler2D vTexture;
  uniform sampler2D inputImageTexture2;
