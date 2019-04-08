@@ -48,7 +48,7 @@ public class OpenGlUtils {
      */
     public static int loadTexture(final Bitmap img, final int usedTexId) {
         if (img != null && !img.isRecycled()) {
-            return loadTexture(img, usedTexId, true);
+            return loadTexture(img, usedTexId, false);
         } else {
             return NO_TEXTURE;
         }

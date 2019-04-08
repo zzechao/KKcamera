@@ -10,7 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import viewset.com.kkcamera.view.activity.opengl.filter.ColorFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.GrayFilter;
-import viewset.com.kkcamera.view.activity.opengl.filter.I1977Filter;
+import viewset.com.kkcamera.view.activity.opengl.filter.N1977Filter;
 
 public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
 
@@ -116,7 +116,7 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             colorFilter = new GrayFilter(mContext);
             colorFilter.init(this);
         } else if (filter == FilterState.Filter.I1977) {
-            colorFilter = new I1977Filter(mContext);
+            colorFilter = new N1977Filter(mContext);
             colorFilter.init(this);
         }
         isFilterChange = true;

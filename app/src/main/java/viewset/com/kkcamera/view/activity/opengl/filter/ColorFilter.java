@@ -48,13 +48,14 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     private int glMatrix;
     private int glTexture;
 
-    private int mTextureId = OpenGlUtils.NO_TEXTURE;
+    protected Context mContext;
 
     private ColorTexture2dFilterRender mRender;
 
     public ColorFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.sh", context.getResources()),
                 OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.sh", context.getResources()));
+        mContext = context;
     }
 
     public ColorFilter(String vertexShader, String fragmentShader) {
@@ -132,8 +133,12 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         Log.e("ttt", "onDrawFrame--" + mRender.getBitmap().isRecycled());
         GLES20.glUseProgram(mProgram);
 
-        GLES20.glUniform1i(glTexture, 0);
-        mTextureId = OpenGlUtils.loadTexture(mRender.getBitmap(), mTextureId, false);
+        int textureId = OpenGlUtils.loadTexture(mRender.getBitmap(), OpenGlUtils.NO_TEXTURE);
+        if (textureId != OpenGlUtils.NO_TEXTURE) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+            GLES20.glUniform1i(glTexture, 0);
+        }
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
@@ -160,7 +165,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
      * 销毁
      */
     public void realse() {
-        mTextureId = OpenGlUtils.NO_TEXTURE;
+        GLES20.glDeleteProgram(mProgram);
         mRender = null;
     }
 
