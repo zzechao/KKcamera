@@ -8,7 +8,12 @@ precision mediump float;
  void main()
  {
 
-     vec4 nColor = texture2D(vTexture, aCoordinate);
+     vec3 texel = texture2D(vTexture, aCoordinate).rgb;
 
-     gl_FragColor = nColor;
+     texel = vec3(
+                  texture2D(inputImageTexture2, vec2(texel.r, .16666)).r,
+                  texture2D(inputImageTexture2, vec2(texel.g, .5)).g,
+                  texture2D(inputImageTexture2, vec2(texel.b, .83333)).b);
+
+     gl_FragColor = vec4(texel, 1.0);
  }
