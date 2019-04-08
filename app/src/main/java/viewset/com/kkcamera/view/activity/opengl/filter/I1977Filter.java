@@ -17,7 +17,13 @@ public class I1977Filter extends ColorFilter {
     }
 
     @Override
-    public void glOnDrawFrame() {
+    protected void onDrawArraysPre() {
 
     }
+
+    @Override
+    protected void onDrawArraysAfter() {
+
+    }
+
 }

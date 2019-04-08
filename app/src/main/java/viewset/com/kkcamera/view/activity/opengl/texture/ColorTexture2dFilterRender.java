@@ -31,9 +31,15 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             }
 
             @Override
-            public void glOnDrawFrame() {
+            protected void onDrawArraysPre() {
 
             }
+
+            @Override
+            protected void onDrawArraysAfter() {
+
+            }
+
         };
         colorFilter.init(this);
     }
@@ -95,9 +101,15 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
                 }
 
                 @Override
-                public void glOnDrawFrame() {
+                protected void onDrawArraysPre() {
 
                 }
+
+                @Override
+                protected void onDrawArraysAfter() {
+
+                }
+
             };
             colorFilter.init(this);
         } else if (filter == FilterState.Filter.GRAY) {

@@ -60,6 +60,18 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     public ColorFilter(String vertexShader, String fragmentShader) {
         mVertexShader = vertexShader;
         mFragmentShader = fragmentShader;
+
+        ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        bPos = bb.asFloatBuffer();
+        bPos.put(sPos);
+        bPos.position(0);
+
+        ByteBuffer cc = ByteBuffer.allocateDirect(sCoord.length * 4);
+        cc.order(ByteOrder.nativeOrder());
+        bCoord = cc.asFloatBuffer();
+        bCoord.put(sCoord);
+        bCoord.position(0);
     }
 
     /**
@@ -69,7 +81,9 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
      */
     public abstract void glOnSufaceCreated(int program);
 
-    public abstract void glOnDrawFrame();
+    protected abstract void onDrawArraysPre();
+
+    protected abstract void onDrawArraysAfter();
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -121,8 +135,6 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         GLES20.glUniform1i(glTexture, 0);
         mTextureId = OpenGlUtils.loadTexture(mRender.getBitmap(), mTextureId, false);
 
-        glOnDrawFrame();
-
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
 
@@ -136,7 +148,12 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         //传入纹理坐标
         GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, bCoord);
 
+        onDrawArraysPre();
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GLES20.glDisableVertexAttribArray(glPosition);
+        GLES20.glDisableVertexAttribArray(glCoordinate);
+        onDrawArraysAfter();
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     }
 
     /**
@@ -154,16 +171,5 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
      */
     public void init(ColorTexture2dFilterRender render) {
         mRender = render;
-        ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
-        bb.order(ByteOrder.nativeOrder());
-        bPos = bb.asFloatBuffer();
-        bPos.put(sPos);
-        bPos.position(0);
-
-        ByteBuffer cc = ByteBuffer.allocateDirect(sCoord.length * 4);
-        cc.order(ByteOrder.nativeOrder());
-        bCoord = cc.asFloatBuffer();
-        bCoord.put(sCoord);
-        bCoord.position(0);
     }
 }

@@ -24,8 +24,13 @@ public class GrayFilter extends ColorFilter {
     }
 
     @Override
-    public void glOnDrawFrame() {
+    protected void onDrawArraysPre() {
         GLES20.glUniform1i(glChangeType, FilterState.Filter.GRAY.getType());
         GLES20.glUniform3fv(glChangeColor, 1, FilterState.Filter.GRAY.data(), 0);
+    }
+
+    @Override
+    protected void onDrawArraysAfter() {
+
     }
 }
