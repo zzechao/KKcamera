@@ -18,8 +18,8 @@ public class N1977Filter extends ColorFilter {
     private int glColorChange;
 
     public N1977Filter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.sh", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/n1977_fragment.sh", context.getResources()));
+        super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/n1977_fragment.glsl", context.getResources()));
         mContext = context;
     }
 

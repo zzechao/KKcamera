@@ -16,8 +16,8 @@ public class GrayFilter extends ColorFilter {
     private int glChangeColor;
 
     public GrayFilter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.sh", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/half_color_fragment.sh", context.getResources()));
+        super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/half_color_fragment.glsl", context.getResources()));
     }
 
     @Override

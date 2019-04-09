@@ -54,8 +54,8 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     protected int mTextureId;
 
     public ColorFilter(Context context) {
-        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.sh", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.sh", context.getResources()));
+        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.glsl", context.getResources()));
         mContext = context;
     }
 
@@ -95,7 +95,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         glPosition = GLES20.glGetAttribLocation(mProgram, "vPosition");
         glCoordinate = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
-        glTexture = GLES20.glGetUniformLocation(mProgram, "vTexture");
+        glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
 
         glOnSufaceCreated(mProgram);
     }
