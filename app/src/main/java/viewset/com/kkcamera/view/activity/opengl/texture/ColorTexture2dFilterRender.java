@@ -13,7 +13,7 @@ import viewset.com.kkcamera.view.activity.opengl.filter.BlurFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.ColorFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.CoolFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.GrayFilter;
-import viewset.com.kkcamera.view.activity.opengl.filter.MeTestFilter;
+import viewset.com.kkcamera.view.activity.opengl.filter.MyTestFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.N1977Filter;
 import viewset.com.kkcamera.view.activity.opengl.filter.ShadowFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.WarmFilter;
@@ -132,7 +132,7 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         } else if (filter == FilterState.Filter.SHADOW) {
             colorFilter = new ShadowFilter(mContext);
         } else if (filter == FilterState.Filter.ME) {
-            colorFilter = new MeTestFilter(mContext);
+            colorFilter = new MyTestFilter(mContext);
         }
         if (colorFilter != null) {
             colorFilter.init(this);

@@ -40,7 +40,7 @@ public class N1977Filter extends ColorFilter {
     @Override
     protected void onDrawArraysPre() {
         inputTextureHandles[0] = OpenGlUtils.loadTexture(mContext, "image/n1977map.png");
-        inputTextureHandles[1] = OpenGlUtils.loadTexture(mContext, "image/n1977blowout.png");
+        inputTextureHandles[1] = OpenGlUtils.loadTexture(mContext, "image/shadow.png");
         for (int i = 0; i < inputTextureHandles.length
                 && inputTextureHandles[i] != OpenGlUtils.NO_TEXTURE; i++) {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + (i + 3));
