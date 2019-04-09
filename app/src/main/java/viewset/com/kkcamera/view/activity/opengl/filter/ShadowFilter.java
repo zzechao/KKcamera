@@ -6,8 +6,8 @@ import android.opengl.GLES20;
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
 public class ShadowFilter extends ColorFilter {
-    private int inputTextureUniformLocations2;
-    private int inputTextureHandles2;
+    private int inputTextureUniformLocation2;
+    private int inputTextureHandle2;
 
     public ShadowFilter(Context context) {
         super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.glsl", context.getResources()),
@@ -17,21 +17,25 @@ public class ShadowFilter extends ColorFilter {
 
     @Override
     public void glOnSufaceCreated(int program) {
-        inputTextureUniformLocations2 = GLES20.glGetUniformLocation(program, "inputImageTexture2");
+        inputTextureUniformLocation2 = GLES20.glGetUniformLocation(program, "inputImageTexture2");
     }
 
     @Override
     protected void onDrawArraysPre() {
-        inputTextureHandles2 = OpenGlUtils.loadTexture(mContext, "image/shadow.png");
-        if (inputTextureHandles2 != OpenGlUtils.NO_TEXTURE) {
+        inputTextureHandle2 = OpenGlUtils.loadTexture(mContext, "image/shadow.png");
+        if (inputTextureHandle2 != OpenGlUtils.NO_TEXTURE) {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE3);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTextureHandles2);
-            GLES20.glUniform1i(inputTextureUniformLocations2, 3);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, inputTextureHandle2);
+            GLES20.glUniform1i(inputTextureUniformLocation2, 3);
         }
     }
 
     @Override
     protected void onDrawArraysAfter() {
-
+        if (inputTextureHandle2 != OpenGlUtils.NO_TEXTURE) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE3);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        }
     }
 }

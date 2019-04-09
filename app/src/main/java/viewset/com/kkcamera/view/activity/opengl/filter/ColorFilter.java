@@ -160,11 +160,11 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
         onDrawArraysPre();
 
-        if (mTextureId != OpenGlUtils.NO_TEXTURE) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureId);
-            GLES20.glUniform1i(glTexture, 0);
-        }
+//        if (mTextureId != OpenGlUtils.NO_TEXTURE) {
+//            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+//            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureId);
+//            GLES20.glUniform1i(glTexture, 0);
+//        }
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);

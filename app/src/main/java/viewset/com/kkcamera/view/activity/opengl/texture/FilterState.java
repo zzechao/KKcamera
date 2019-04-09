@@ -11,12 +11,17 @@ public class FilterState {
         MAGN("放大镜", 4, new float[]{0.0f, 0.0f, 0.4f}),
         N1977("N1977", 2, new float[]{0.16666f, 0.5f, 0.83333f}),
         BEAUTY("美颜", 2, new float[]{}),
-        SHADOW("自制阴影", 2, new float[]{});
+        SHADOW("自制阴影", 2, new float[]{}),
+        ME("自制");
 
         private String name;
         private int vChangeType;
         private float[] data;
         private boolean selected = false;
+
+        Filter(String name) {
+            this.name = name;
+        }
 
         Filter(String name, int vChangeType, float[] data) {
             this.name = name;
