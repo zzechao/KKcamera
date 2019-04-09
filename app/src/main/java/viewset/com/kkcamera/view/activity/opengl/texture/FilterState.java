@@ -10,7 +10,8 @@ public class FilterState {
         BLUR("模糊", 3, new float[]{0.006f, 0.004f, 0.002f}),
         MAGN("放大镜", 4, new float[]{0.0f, 0.0f, 0.4f}),
         N1977("N1977", 2, new float[]{0.16666f, 0.5f, 0.83333f}),
-        BEAUTY("美颜", 2, new float[]{});
+        BEAUTY("美颜", 2, new float[]{}),
+        SHADOW("自制阴影", 2, new float[]{});
 
         private String name;
         private int vChangeType;

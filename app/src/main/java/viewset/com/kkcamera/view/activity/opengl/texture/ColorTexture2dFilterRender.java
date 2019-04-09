@@ -14,6 +14,7 @@ import viewset.com.kkcamera.view.activity.opengl.filter.ColorFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.CoolFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.GrayFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.N1977Filter;
+import viewset.com.kkcamera.view.activity.opengl.filter.ShadowFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.WarmFilter;
 
 public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
@@ -123,10 +124,12 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             colorFilter = new BeautyFilter(mContext);
         } else if (filter == FilterState.Filter.COOL) {
             colorFilter = new CoolFilter(mContext);
-        }else if(filter == FilterState.Filter.WARM){
+        } else if (filter == FilterState.Filter.WARM) {
             colorFilter = new WarmFilter(mContext);
-        }else if(filter == FilterState.Filter.BLUR){
+        } else if (filter == FilterState.Filter.BLUR) {
             colorFilter = new BlurFilter(mContext);
+        } else if (filter == FilterState.Filter.SHADOW) {
+            colorFilter = new ShadowFilter(mContext);
         }
         if (colorFilter != null) {
             colorFilter.init(this);
