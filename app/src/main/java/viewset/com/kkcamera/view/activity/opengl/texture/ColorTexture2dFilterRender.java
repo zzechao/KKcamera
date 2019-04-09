@@ -8,6 +8,7 @@ import android.opengl.GLSurfaceView;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import viewset.com.kkcamera.view.activity.opengl.filter.BeautyFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.ColorFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.GrayFilter;
 import viewset.com.kkcamera.view.activity.opengl.filter.N1977Filter;
@@ -117,6 +118,9 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             colorFilter.init(this);
         } else if (filter == FilterState.Filter.N1977) {
             colorFilter = new N1977Filter(mContext);
+            colorFilter.init(this);
+        } else if (filter == FilterState.Filter.BEAUTY) {
+            colorFilter = new BeautyFilter(mContext);
             colorFilter.init(this);
         }
         isFilterChange = true;

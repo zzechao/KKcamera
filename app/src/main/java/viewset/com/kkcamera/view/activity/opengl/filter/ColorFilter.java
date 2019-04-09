@@ -47,11 +47,15 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
     protected int glCoordinate;
     protected int glMatrix;
     protected int glTexture;
+    protected int glIsHalf;
 
     protected Context mContext;
 
     protected ColorTexture2dFilterRender mRender;
     protected int mTextureId;
+
+    protected int mInputWidth;
+    protected int mInputHeight;
 
     public ColorFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
@@ -96,12 +100,15 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         glCoordinate = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
+        glIsHalf = GLES20.glGetUniformLocation(mProgram, "vIsHalf");
 
         glOnSufaceCreated(mProgram);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        mInputWidth = width;
+        mInputHeight = height;
         Bitmap bitmap = mRender.getBitmap();
         Log.e("ttt", "onSurfaceChanged--" + bitmap.isRecycled());
         if (!bitmap.isRecycled()) {
@@ -138,6 +145,8 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
+
+        GLES20.glUniform1i(glIsHalf, 1);
 
         //启用三角形顶点的句柄
         GLES20.glEnableVertexAttribArray(glPosition);
