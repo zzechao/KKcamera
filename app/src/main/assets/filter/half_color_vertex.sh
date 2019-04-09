@@ -9,6 +9,6 @@ varying vec4 gPosition;
 void main(){
     gl_Position=vMatrix*vPosition;
     aPos=vPosition;
-    aCoordinate=vCoordinate;
+    aCoordinate=vCoordinate.xy;
     gPosition=vMatrix*vPosition;
 }

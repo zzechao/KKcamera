@@ -7,6 +7,9 @@ import android.opengl.GLES20;
 import viewset.com.kkcamera.view.activity.opengl.texture.FilterState;
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
+/**
+ * 黑白滤镜
+ */
 public class GrayFilter extends ColorFilter {
 
     private int glChangeType;

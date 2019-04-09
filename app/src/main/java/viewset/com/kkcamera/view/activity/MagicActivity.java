@@ -25,7 +25,6 @@ public class MagicActivity extends AppCompatActivity {
         setContentView(R.layout.activity_magic);
         MagicImageView magicImageView = findViewById(R.id.miv);
         new MagicEngine.Builder().build(magicImageView);
-        magicImageView.setFilter(MagicFilterType.N1977);
         Bitmap bitmap = null;
         try {
             bitmap = BitmapFactory.decodeStream(getResources().getAssets().open("texture/timg.jpeg"));

@@ -1,5 +1,7 @@
 precision mediump float;
 
+ uniform vec3 vChangeColor;
+
  varying mediump vec2 aCoordinate;
 
  uniform sampler2D vTexture;
@@ -8,12 +10,13 @@ precision mediump float;
  void main()
  {
 
-     vec3 texel = texture2D(vTexture, aCoordinate).rgb;
+     vec4 texel = texture2D(vTexture, aCoordinate);
 
-     texel = vec3(
-                  texture2D(inputImageTexture2, vec2(texel.r, .16666)).r,
-                  texture2D(inputImageTexture2, vec2(texel.g, .5)).g,
-                  texture2D(inputImageTexture2, vec2(texel.b, .83333)).b);
+     texel = vec4(
+                  texture2D(inputImageTexture2, vec2(texel.r, vChangeColor.r)).r,
+                  texture2D(inputImageTexture2, vec2(texel.g, vChangeColor.g)).g,
+                  texture2D(inputImageTexture2, vec2(texel.b, vChangeColor.b)).b,
+                  texel.a);
 
-     gl_FragColor = vec4(texel, 1.0);
+     gl_FragColor = texel;
  }

@@ -50,7 +50,7 @@ public class Texture2dFilterActivity extends AppCompatActivity {
             FilterState.Filter.COOL,
             FilterState.Filter.WARM,
             FilterState.Filter.BLUR,
-            FilterState.Filter.I1977};
+            FilterState.Filter.N1977};
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

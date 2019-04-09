@@ -115,7 +115,7 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         } else if (filter == FilterState.Filter.GRAY) {
             colorFilter = new GrayFilter(mContext);
             colorFilter.init(this);
-        } else if (filter == FilterState.Filter.I1977) {
+        } else if (filter == FilterState.Filter.N1977) {
             colorFilter = new N1977Filter(mContext);
             colorFilter.init(this);
         }

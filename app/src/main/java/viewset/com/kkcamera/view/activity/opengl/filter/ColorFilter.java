@@ -43,14 +43,15 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     private int mProgram;
 
-    private int glPosition;
-    private int glCoordinate;
-    private int glMatrix;
-    private int glTexture;
+    protected int glPosition;
+    protected int glCoordinate;
+    protected int glMatrix;
+    protected int glTexture;
 
     protected Context mContext;
 
-    private ColorTexture2dFilterRender mRender;
+    protected ColorTexture2dFilterRender mRender;
+    protected int mTextureId;
 
     public ColorFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.sh", context.getResources()),
@@ -133,12 +134,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         Log.e("ttt", "onDrawFrame--" + mRender.getBitmap().isRecycled());
         GLES20.glUseProgram(mProgram);
 
-        int textureId = OpenGlUtils.loadTexture(mRender.getBitmap(), OpenGlUtils.NO_TEXTURE);
-        if (textureId != OpenGlUtils.NO_TEXTURE) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
-            GLES20.glUniform1i(glTexture, 0);
-        }
+        mTextureId = OpenGlUtils.loadTexture(mRender.getBitmap(), OpenGlUtils.NO_TEXTURE);
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
@@ -154,6 +150,13 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, bCoord);
 
         onDrawArraysPre();
+
+        if (mTextureId != OpenGlUtils.NO_TEXTURE) {
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureId);
+            GLES20.glUniform1i(glTexture, 0);
+        }
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
