@@ -10,7 +10,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
+import viewset.com.kkcamera.view.activity.opengl.render.CubeRender;
 import viewset.com.kkcamera.view.activity.opengl.render.TriangleRender;
+import viewset.com.kkcamera.view.activity.opengl.vary.VaryRender;
 
 /**
  * https://blog.csdn.net/junzia/article/details/52801772
@@ -33,7 +35,7 @@ public class OpenglActivity extends AppCompatActivity {
         setContentView(R.layout.activity_opengl);
         unbinder = ButterKnife.bind(this);
 
-        renderer = new TriangleRender();
+        renderer = new VaryRender();
 
         mGLView.setEGLContextClientVersion(2);
         mGLView.setRenderer(renderer);

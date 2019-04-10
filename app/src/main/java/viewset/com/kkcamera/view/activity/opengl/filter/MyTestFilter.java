@@ -40,7 +40,7 @@ public class MyTestFilter extends ColorFilter {
     @Override
     protected void onDrawArraysPre() {
         inputTextureHandles[0] = OpenGlUtils.loadTexture(mContext, "image/me.png");
-        inputTextureHandles[1] = OpenGlUtils.loadTexture(mContext, "image/shadow.png");
+        inputTextureHandles[1] = OpenGlUtils.loadTexture(mContext, "image/me2.png");
         for (int i = 0; i < inputTextureHandles.length
                 && inputTextureHandles[i] != OpenGlUtils.NO_TEXTURE; i++) {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + (i + 3));

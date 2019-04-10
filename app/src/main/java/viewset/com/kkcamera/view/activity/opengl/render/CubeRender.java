@@ -110,6 +110,9 @@ public class CubeRender implements GLSurfaceView.Renderer {
         indexBuffer.put(index);
         indexBuffer.position(0);
 
+
+
+
         //顶点着色器
         int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
         //将资源加入到着色器中，并编译
