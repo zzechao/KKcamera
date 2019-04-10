@@ -195,8 +195,6 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
-        Log.e("ttt", "configureTransform--" + viewWidth + "----" + viewHeight);
-        Log.e("ttt", "configureTransform--mPreviewSize--" + mPreviewSize.getWidth() + "---" + mPreviewSize.getHeight());
         Activity activity = this;
         if (null == mTextureView || null == mPreviewSize) {
             return;
@@ -331,7 +329,6 @@ public class CameraActivity extends AppCompatActivity {
                 if (facing != null && facing != mFacing) {
                     continue;
                 }
-                Log.e("ttt", mFacing + "---");
                 //获取StreamConfigurationMap，它是管理摄像头支持的所有输出格式和尺寸
                 StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
@@ -339,9 +336,7 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 //根据TextureView的尺寸设置预览尺寸
                 Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
-                Log.e("ttt", Arrays.toString(sizes));
                 mPreviewSize = getOptimalSize(sizes, width, height);
-                Log.e("ttt", width + "---" + height + "---" + mPreviewSize.getWidth() + "---" + mPreviewSize.getHeight());
                 mCameraId = cameraId;
                 break;
             }
