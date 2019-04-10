@@ -78,6 +78,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     @Override
     public void onPause() {
         super.onPause();
+        kkCamera.closeCamera();
         kkCamera.stopBackgroundThread();
     }
 

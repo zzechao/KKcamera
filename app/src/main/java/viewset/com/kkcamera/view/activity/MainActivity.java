@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl, R.id.button_texture2d, R.id.button_texture2dfilter})
+    @OnClick({R.id.button_camera, R.id.button_video, R.id.button_magic, R.id.button_opengl, R.id.button_texture2d, R.id.button_texture2dfilter, R.id.button_glcamera})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.button_camera:
@@ -75,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.button_texture2dfilter:
                 startActivity(new Intent(this, Texture2dFilterActivity.class));
+                break;
+            case R.id.button_glcamera:
+                startActivity(new Intent(this, GLCameraActivity.class));
                 break;
         }
     }

@@ -50,6 +50,10 @@
         <activity
             android:name=".view.activity.opengl.Texture2dFilterActivity"
             android:screenOrientation="sensor" />
+
+        <activity
+            android:name=".view.activity.GLCameraActivity"
+            android:screenOrientation="sensor" />
     </application>
 
 </manifest>

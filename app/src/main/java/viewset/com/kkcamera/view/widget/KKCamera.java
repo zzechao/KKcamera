@@ -301,4 +301,22 @@ public class KKCamera {
             e.printStackTrace();
         }
     }
+
+    /**
+     * 扣除
+     */
+    public void closeCamera() {
+        if (null != mPreviewSession) {
+            mPreviewSession.close();
+            mPreviewSession = null;
+        }
+        if (null != mCameraDevice) {
+            mCameraDevice.close();
+            mCameraDevice = null;
+        }
+        if (null != mImageReader) {
+            mImageReader.close();
+            mImageReader = null;
+        }
+    }
 }
