@@ -8,8 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
 public abstract class BaseFilter {
@@ -43,6 +41,9 @@ public abstract class BaseFilter {
     protected int glIsHalf;
 
     protected Context mContext;
+
+    private int mTextureType = 0;      //默认使用Texture2D0
+    private int mTextureId = 0;
 
     public BaseFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
@@ -91,7 +92,7 @@ public abstract class BaseFilter {
         glOnSufaceCreated(mProgram);
     }
 
-    public void onDrawFrame(int textureId) {
+    public void onDrawFrame() {
         GLES20.glUseProgram(mProgram);
 
         //指定vMatrix的值
@@ -111,17 +112,31 @@ public abstract class BaseFilter {
 
         onDrawArraysPre();
 
-        if (textureId != OpenGlUtils.NO_TEXTURE) {
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
-            GLES20.glUniform1i(glTexture, 0);
-        }
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + getTextureType());
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, getTextureId());
+        GLES20.glUniform1i(glTexture, getTextureType());
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
         onDrawArraysAfter();
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+    }
+
+    public final void setTextureType(int type) {
+        mTextureType = type;
+    }
+
+    public final int getTextureType() {
+        return mTextureType;
+    }
+
+    public final int getTextureId() {
+        return mTextureId;
+    }
+
+    public final void setTextureId(int textureId) {
+        mTextureId = textureId;
     }
 
     /**

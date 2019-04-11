@@ -28,7 +28,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     private int cameraId;
 
-    private boolean useCamera2 = true;
+    private boolean useCamera2 = false;
 
     public KKGLSurfaceView(Context context) {
         this(context, null);
