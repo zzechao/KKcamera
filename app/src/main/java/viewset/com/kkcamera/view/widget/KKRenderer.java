@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 
 
 import com.seu.magicfilter.filter.base.MagicCameraInputFilter;
+import com.seu.magicfilter.utils.MagicParams;
 import com.seu.magicfilter.utils.TextureRotationUtil;
 
 import java.nio.ByteBuffer;
@@ -27,14 +29,12 @@ public class KKRenderer implements GLSurfaceView.Renderer {
 
     protected Context mContext;
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
-    private GLSurfaceView mSufaceView;
     private SurfaceTexture mSurfaceTexture;
 
     private float[] transformMatrix = new float[16];
 
 
-    public KKRenderer(GLSurfaceView glSurfaceView, Context context) {
-        mSufaceView = glSurfaceView;
+    public KKRenderer( Context context) {
         mContext = context;
 
         gLCubeBuffer = ByteBuffer.allocateDirect(TextureRotationUtil.CUBE.length * 4)
@@ -56,20 +56,16 @@ public class KKRenderer implements GLSurfaceView.Renderer {
         GLES20.glEnable(GL10.GL_CULL_FACE);
         GLES20.glEnable(GL10.GL_DEPTH_TEST);
 
-        if (cameraInputFilter == null)
+        if (cameraInputFilter == null) {
+            MagicParams.context = mContext;
             cameraInputFilter = new MagicCameraInputFilter();
+        }
         cameraInputFilter.init();
 
         if (mTextureId == OpenGlUtils.NO_TEXTURE) {
             mTextureId = OpenGlUtils.getExternalOESTextureID();
             if (mTextureId != OpenGlUtils.NO_TEXTURE) {
                 mSurfaceTexture = new SurfaceTexture(mTextureId);
-                mSurfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-                    @Override
-                    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
-                        mSufaceView.requestRender();
-                    }
-                });
             }
         }
     }

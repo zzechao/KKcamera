@@ -39,6 +39,7 @@ public class GLCameraActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        kkcamera.onDestroy();
         unbinder.unbind();
     }
 }

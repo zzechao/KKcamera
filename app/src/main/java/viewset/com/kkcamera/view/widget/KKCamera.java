@@ -1,11 +1,13 @@
 package viewset.com.kkcamera.view.widget;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -16,12 +18,12 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
@@ -33,7 +35,7 @@ import java.util.List;
 
 import viewset.com.kkcamera.view.activity.CameraActivity;
 
-
+@TargetApi(21)
 public class KKCamera {
 
     private Context mContext;
@@ -151,7 +153,12 @@ public class KKCamera {
                 }
                 //根据TextureView的尺寸设置预览尺寸
                 Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
-                mPreviewSize = getOptimalSize(sizes, width, height);
+                Log.e("ttt", Arrays.toString(sizes));
+
+                //mPreviewSize = getOptimalSize(sizes, width, height);
+                //mPreviewSize = new Size(960, 720);
+                mPreviewSize = getPropPreviewSize(Arrays.asList(sizes), 1.778f, 720);
+                Log.e("ttt", Arrays.toString(new Size[]{mPreviewSize}));
                 mCameraId = cameraId;
                 break;
             }
@@ -319,4 +326,45 @@ public class KKCamera {
             mImageReader = null;
         }
     }
+
+    public Handler getCameraHandler() {
+        return cameraHandler;
+    }
+
+    private Size getPropPreviewSize(List<Size> list, float th, int minWidth) {
+        Collections.sort(list, sizeComparator);
+
+        int i = 0;
+        for (Size s : list) {
+            if ((s.getWidth() >= minWidth) && equalRate(s, th)) {
+                break;
+            }
+            i++;
+        }
+        if (i == list.size()) {
+            i = 0;
+        }
+        return list.get(i);
+    }
+
+    private static boolean equalRate(Size s, float rate) {
+        float r = (float) (s.getWidth()) / (float) (s.getHeight());
+        if (Math.abs(r - rate) <= 0.03) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private Comparator<Size> sizeComparator = new Comparator<Size>() {
+        public int compare(Size lhs, Size rhs) {
+            if (lhs.getHeight() == rhs.getHeight()) {
+                return 0;
+            } else if (lhs.getHeight() > rhs.getHeight()) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }
+    };
 }
