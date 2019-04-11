@@ -10,9 +10,9 @@ import java.nio.FloatBuffer;
 
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
-public abstract class BaseFilter {
+public class BaseFilter {
 
-    private FloatBuffer bPos, bCoord;
+    private FloatBuffer mVerBuffer, mTexBuffer;
     private String mVertexShader;
     private String mFragmentShader;
 
@@ -57,27 +57,16 @@ public abstract class BaseFilter {
 
         ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
         bb.order(ByteOrder.nativeOrder());
-        bPos = bb.asFloatBuffer();
-        bPos.put(sPos);
-        bPos.position(0);
+        mVerBuffer = bb.asFloatBuffer();
+        mVerBuffer.put(sPos);
+        mVerBuffer.position(0);
 
         ByteBuffer cc = ByteBuffer.allocateDirect(sCoord.length * 4);
         cc.order(ByteOrder.nativeOrder());
-        bCoord = cc.asFloatBuffer();
-        bCoord.put(sCoord);
-        bCoord.position(0);
+        mTexBuffer = cc.asFloatBuffer();
+        mTexBuffer.put(sCoord);
+        mTexBuffer.position(0);
     }
-
-    /**
-     * 设置其他着色器的变量
-     *
-     * @param program
-     */
-    public abstract void glOnSufaceCreated(int program);
-
-    protected abstract void onDrawArraysPre();
-
-    protected abstract void onDrawArraysAfter();
 
     public void onSurfaceCreated() {
         Log.e("ttt", "onSurfaceCreated");
@@ -88,39 +77,30 @@ public abstract class BaseFilter {
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
         glIsHalf = GLES20.glGetUniformLocation(mProgram, "vIsHalf");
-
-        glOnSufaceCreated(mProgram);
     }
 
     public void onDrawFrame() {
+        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+
         GLES20.glUseProgram(mProgram);
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
 
-        GLES20.glUniform1i(glIsHalf, 1);
-
-        //启用三角形顶点的句柄
-        GLES20.glEnableVertexAttribArray(glPosition);
-        //传入顶点坐标
-        GLES20.glVertexAttribPointer(glPosition, 2, GLES20.GL_FLOAT, false, 0, bPos);
-
-        //启用纹理坐标的句柄
-        GLES20.glEnableVertexAttribArray(glCoordinate);
-        //传入纹理坐标
-        GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, bCoord);
-
-        onDrawArraysPre();
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + getTextureType());
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + mTextureType);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, getTextureId());
         GLES20.glUniform1i(glTexture, getTextureType());
 
+        GLES20.glUniform1i(glIsHalf, 0);
+
+        GLES20.glEnableVertexAttribArray(glPosition);
+        GLES20.glVertexAttribPointer(glPosition, 2, GLES20.GL_FLOAT, false, 0, mVerBuffer);
+        GLES20.glEnableVertexAttribArray(glCoordinate);
+        GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, mTexBuffer);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
-        onDrawArraysAfter();
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     }
 
     public final void setTextureType(int type) {

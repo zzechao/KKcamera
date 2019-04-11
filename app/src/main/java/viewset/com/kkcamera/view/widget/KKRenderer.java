@@ -36,23 +36,7 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     public KKRenderer(Context context) {
         mContext = context;
 
-        baseFilter = new BaseFilter(mContext) {
-            @Override
-            public void glOnSufaceCreated(int program) {
-
-            }
-
-            @Override
-            protected void onDrawArraysPre() {
-
-            }
-
-            @Override
-            protected void onDrawArraysAfter() {
-
-            }
-        };
-
+        baseFilter = new BaseFilter(mContext);
     }
 
     @Override
@@ -84,14 +68,14 @@ public class KKRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         if (mSurfaceTexture != null) {
             //更新数据，其实也是消耗数据，将上一帧的数据处理或者抛弃掉，要不然SurfaceTexture是接收不到最新数据
             mSurfaceTexture.updateTexImage();
-
-            baseFilter.onDrawFrame();
+            mSurfaceTexture.getTransformMatrix(mMVPMatrix);
+            baseFilter.setMatrix(mMVPMatrix);
         }
+
+        baseFilter.onDrawFrame();
     }
 
     public SurfaceTexture getSurfaceTexture() {
