@@ -30,7 +30,6 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     private boolean useCamera2 = true;
 
-
     public KKGLSurfaceView(Context context) {
         this(context, null);
     }
@@ -55,7 +54,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
             kkCamera.setCameraCallback(new KKCamera.CameraCallback() {
                 @Override
                 public void configureTransform(int viewWidth, int viewHeight, int previewWidth, int previewHeight) {
-
+                    renderer.setPreviewSize(previewWidth, previewHeight);
                 }
 
                 @Override
@@ -75,6 +74,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         if (mCamera != null && !isSetParm) {
             open(cameraId);
             stickerInit();
+            renderer.setPreviewSize(dataWidth, dataHeight);
         }
         SurfaceTexture texture = renderer.getSurfaceTexture();
         if (texture != null) {
