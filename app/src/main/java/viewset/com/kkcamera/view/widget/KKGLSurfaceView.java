@@ -3,32 +3,30 @@ package viewset.com.kkcamera.view.widget;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
+import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.os.Build;
 import android.util.AttributeSet;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import viewset.com.kkcamera.view.activity.camera.CameraController;
+import viewset.com.kkcamera.view.activity.camera.KitkatCamera;
 
 public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
+    /**
+     * Camera1
+     */
+    private int cameraId = 0;
+    private KitkatCamera mCamera1;
+
+    /**
+     * Camera2
+     */
     private KKRenderer renderer;
+    private KKCamera mCamera2;
 
-    private int mWidth, mHeight;
-
-    private CameraController mCamera;
-    private KKCamera kkCamera;
-
-    private int dataWidth;
-    private int dataHeight;
-
-    private boolean isSetParm = false;
-
-    private int cameraId;
-
-    private boolean useCamera2 = false;
+    private boolean useCamera2 = true;
 
     public KKGLSurfaceView(Context context) {
         this(context, null);
@@ -41,74 +39,79 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     private void init() {
-        renderer = new KKRenderer(getContext());
         setEGLContextClientVersion(2);
         setRenderer(this);
-        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        setPreserveEGLContextOnPause(true);//保存Context当pause时
-        setCameraDistance(100);//相机距离
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
 
         // 大于21使用camera2
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP && useCamera2) {
-            kkCamera = new KKCamera(getContext());
-            kkCamera.setCameraCallback(new KKCamera.CameraCallback() {
+        if (useCamera2) {
+            mCamera2 = new KKCamera(getContext());
+            mCamera2.setCameraCallback(new KKCamera.CameraCallback() {
                 @Override
-                public void configureTransform(int viewWidth, int viewHeight, int previewWidth, int previewHeight) {
+                public void configureTransform(int previewWidth, int previewHeight) {
                     renderer.setPreviewSize(previewWidth, previewHeight);
                 }
 
                 @Override
                 public void deviceOpened() {
-                    kkCamera.startPreview(renderer.getSurfaceTexture());
+                    mCamera2.startPreview(renderer.getSurfaceTexture());
                 }
             });
+            renderer = new KKRenderer(getContext());
         } else {
             /**初始化相机的管理类*/
-            mCamera = new CameraController();
+            mCamera1 = new KitkatCamera();
+            renderer = new KKRenderer(getContext());
         }
+
+
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        renderer.onSurfaceCreated(gl, config);
-        if (mCamera != null && !isSetParm) {
-            open(cameraId);
-            stickerInit();
-            renderer.setPreviewSize(dataWidth, dataHeight);
-        }
-        SurfaceTexture texture = renderer.getSurfaceTexture();
-        if (texture != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && kkCamera != null) {
-                texture.setOnFrameAvailableListener(this, kkCamera.getCameraHandler());
-            } else {
-                texture.setOnFrameAvailableListener(this);
-            }
+        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        GLES20.glEnable(GLES20.GL_TEXTURE_2D);
+        if (useCamera2) {
+            renderer.onSurfaceCreated(gl, config);
+            mCamera2.openCamera();
+            renderer.getSurfaceTexture().setOnFrameAvailableListener(this);
+        } else {
+            renderer.onSurfaceCreated(gl, config);
+            mCamera1.open(cameraId);
+            Point point = mCamera1.getPreviewSize();
+            renderer.setPreviewSize(point.x, point.y);
+            mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
+            renderer.getSurfaceTexture().setOnFrameAvailableListener(this);
+            mCamera1.preview();
         }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        renderer.onSurfaceChanged(gl, width, height);
-        if (kkCamera != null) {
-            mWidth = width;
-            mHeight = height;
-            kkCamera.openCamera(mWidth, mHeight);
+        GLES20.glViewport(0, 0, width, height);
+        if (useCamera2) {
+            renderer.onSurfaceChanged(gl, width, height);
+        } else {
+            renderer.onSurfaceChanged(gl, width, height);
         }
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        renderer.onDrawFrame(gl);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        if (useCamera2) {
+            renderer.onDrawFrame(gl);
+        } else {
+            renderer.onDrawFrame(gl);
+        }
     }
 
     @Override
     public void onResume() {
-        if (kkCamera != null) {
-            kkCamera.startBackgroundThread();
+        if (mCamera2 != null) {
+            mCamera2.startBackgroundThread();
             if (renderer.isAvailable()) {
-                int width = mWidth == 0 ? getWidth() : mWidth;
-                int height = mHeight == 0 ? getHeight() : mHeight;
-                kkCamera.openCamera(width, height);
+                mCamera2.openCamera();
             }
         }
         super.onResume();
@@ -116,39 +119,22 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onPause() {
-        if (kkCamera != null) {
-            kkCamera.closeCamera();
-            kkCamera.stopBackgroundThread();
+        if (!useCamera2) {
+            mCamera1.close();
+        } else {
+            mCamera2.closeCamera();
+            mCamera2.stopBackgroundThread();
         }
         super.onPause();
     }
 
     public void onDestroy() {
-        if (mCamera != null) {
-            mCamera.close();
-        }
-        if (kkCamera != null) {
-            kkCamera.closeCamera();
+        if (mCamera2 != null) {
+            mCamera2.closeCamera();
         }
         renderer.releaseSurfaceTexture();
     }
 
-    private void open(int cameraId) {
-        mCamera.close();
-        mCamera.open(cameraId);
-        final Point previewSize = mCamera.getPreviewSize();
-        dataWidth = previewSize.x;
-        dataHeight = previewSize.y;
-        SurfaceTexture texture = renderer.getSurfaceTexture();
-        mCamera.setPreviewTexture(texture);
-        mCamera.preview();
-    }
-
-    private void stickerInit() {
-        if (!isSetParm && dataWidth > 0 && dataHeight > 0) {
-            isSetParm = true;
-        }
-    }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {

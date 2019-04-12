@@ -46,12 +46,15 @@ public class MagicCameraInputFilter extends GPUImageFilter{
         if(!isInitialized()) {
             return OpenGlUtils.NOT_INIT;
         }
+
         mGLCubeBuffer.position(0);
         GLES20.glVertexAttribPointer(mGLAttribPosition, 2, GLES20.GL_FLOAT, false, 0, mGLCubeBuffer);
         GLES20.glEnableVertexAttribArray(mGLAttribPosition);
+
         mGLTextureBuffer.position(0);
         GLES20.glVertexAttribPointer(mGLAttribTextureCoordinate, 2, GLES20.GL_FLOAT, false, 0, mGLTextureBuffer);
         GLES20.glEnableVertexAttribArray(mGLAttribTextureCoordinate);
+
         GLES20.glUniformMatrix4fv(mTextureTransformMatrixLocation, 1, false, mTextureTransformMatrix, 0);
 
         if(textureId != OpenGlUtils.NO_TEXTURE){
@@ -61,8 +64,10 @@ public class MagicCameraInputFilter extends GPUImageFilter{
         }
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
         GLES20.glDisableVertexAttribArray(mGLAttribPosition);
         GLES20.glDisableVertexAttribArray(mGLAttribTextureCoordinate);
+
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
         return OpenGlUtils.ON_DRAWN;
     }

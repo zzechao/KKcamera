@@ -1,6 +1,7 @@
 package viewset.com.kkcamera.view.widget;
 
 import android.content.Context;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.util.Log;
 
@@ -13,6 +14,7 @@ import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 public class BaseFilter {
 
     private FloatBuffer mVerBuffer, mTexBuffer;
+
     private String mVertexShader;
     private String mFragmentShader;
 
@@ -38,7 +40,6 @@ public class BaseFilter {
     protected int glCoordinate;
     protected int glMatrix;
     protected int glTexture;
-    protected int glIsHalf;
 
     protected Context mContext;
 
@@ -47,7 +48,7 @@ public class BaseFilter {
 
     public BaseFilter(Context context) {
         this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.glsl", context.getResources()));
+                OpenGlUtils.loadShareFromAssetsFile("filter/base_fragment.glsl", context.getResources()));
         mContext = context;
     }
 
@@ -76,7 +77,6 @@ public class BaseFilter {
         glCoordinate = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
-        glIsHalf = GLES20.glGetUniformLocation(mProgram, "vIsHalf");
     }
 
     public void onDrawFrame() {
@@ -88,11 +88,10 @@ public class BaseFilter {
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + mTextureType);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, getTextureId());
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, getTextureId());
         GLES20.glUniform1i(glTexture, getTextureType());
 
-        GLES20.glUniform1i(glIsHalf, 0);
 
         GLES20.glEnableVertexAttribArray(glPosition);
         GLES20.glVertexAttribPointer(glPosition, 2, GLES20.GL_FLOAT, false, 0, mVerBuffer);
@@ -101,6 +100,8 @@ public class BaseFilter {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
+
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
     }
 
     public final void setTextureType(int type) {

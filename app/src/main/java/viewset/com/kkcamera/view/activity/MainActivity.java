@@ -77,7 +77,14 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, Texture2dFilterActivity.class));
                 break;
             case R.id.button_glcamera:
-                startActivity(new Intent(this, GLCameraActivity.class));
+                if (PermissionChecker.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_DENIED || PermissionChecker.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        == PackageManager.PERMISSION_DENIED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            3);
+                } else {
+                    startActivity(new Intent(this, GLCameraActivity.class));
+                }
                 break;
         }
     }
@@ -92,6 +99,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case 2:
                     startActivity(new Intent(this, MagicActivity.class));
+                    break;
+                case 3:
+                    startActivity(new Intent(this, GLCameraActivity.class));
                     break;
             }
 

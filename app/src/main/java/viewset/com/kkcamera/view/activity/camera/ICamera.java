@@ -1,38 +1,45 @@
+/*
+ *
+ * ICamera.java
+ * 
+ * Created by Wuwang on 2016/11/10
+ * Copyright © 2016年 深圳哎吖科技. All rights reserved.
+ */
 package viewset.com.kkcamera.view.activity.camera;
 
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 
 /**
- * Created by cj on 2017/8/2.
- * desc 相机的接口控制类
+ * Description:
  */
-
 public interface ICamera {
-    /**open the camera*/
-    void open(int cameraId);
 
-    void setPreviewTexture(SurfaceTexture texture);
-    /**set the camera config*/
+    boolean open(int cameraId);
     void setConfig(Config config);
+    boolean preview();
+    boolean switchTo(int cameraId);
+    void takePhoto(TakePhotoCallback callback);
+    boolean close();
+    void setPreviewTexture(SurfaceTexture texture);
+
+    Point getPreviewSize();
+    Point getPictureSize();
 
     void setOnPreviewFrameCallback(PreviewFrameCallback callback);
 
-    void preview();
-
-    Point getPreviewSize();
-
-    Point getPictureSize();
-    /**close the camera*/
-    boolean close();
-
     class Config{
-        public float rate=1.778f; //宽高比
-        public int minPreviewWidth;
-        public int minPictureWidth;
+        float rate; //宽高比
+        int minPreviewWidth;
+        int minPictureWidth;
+    }
+
+    interface TakePhotoCallback{
+        void onTakePhoto(byte[] bytes, int width, int height);
     }
 
     interface PreviewFrameCallback{
         void onPreviewFrame(byte[] bytes, int width, int height);
     }
+
 }

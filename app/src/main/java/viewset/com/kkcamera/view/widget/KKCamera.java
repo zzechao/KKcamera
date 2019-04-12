@@ -53,7 +53,6 @@ public class KKCamera {
     private CameraCaptureSession mPreviewSession;
     private ImageReader mImageReader;
     private Size mPreviewSize;
-    private Size mPrewSize;
 
 
     private CameraCallback cameraCallback;
@@ -91,18 +90,15 @@ public class KKCamera {
     }
 
     public interface CameraCallback {
-        void configureTransform(int viewWidth, int viewHeight, int previewWidth, int previewHeight);
+        void configureTransform(int previewWidth, int previewHeight);
 
         void deviceOpened();
     }
 
     /**
      * 打开摄像头
-     *
-     * @param width
-     * @param height
      */
-    public void openCamera(int width, int height) {
+    public void openCamera() {
         //检查权限
         try {
             if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
@@ -111,11 +107,11 @@ public class KKCamera {
             }
             //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
             if (TextUtils.isEmpty(mCameraId)) {
-                setupCamera(width, height);
+                setupCamera();
             }
             setupImageReader(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             if (cameraCallback != null) {
-                cameraCallback.configureTransform(width, height, mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                cameraCallback.configureTransform(mPreviewSize.getHeight(), mPreviewSize.getWidth());
             }
             //mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
@@ -128,13 +124,9 @@ public class KKCamera {
 
     /**
      * 设置摄像头参数
-     *
-     * @param width
-     * @param height
      */
-    private void setupCamera(int width, int height) {
+    private void setupCamera() {
         //获取摄像头的管理者CameraManager
-        mPrewSize = new Size(width, height);
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         try {
             //遍历所有摄像头
@@ -154,11 +146,7 @@ public class KKCamera {
                 //根据TextureView的尺寸设置预览尺寸
                 Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
                 Log.e("ttt", Arrays.toString(sizes));
-
-                //mPreviewSize = getOptimalSize(sizes, width, height);
-                //mPreviewSize = new Size(960, 720);
                 mPreviewSize = getPropPreviewSize(Arrays.asList(sizes), 1.778f, 720);
-                Log.e("ttt", Arrays.toString(new Size[]{mPreviewSize}));
                 mCameraId = cameraId;
                 break;
             }
@@ -176,7 +164,7 @@ public class KKCamera {
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Rect viewRect = new Rect(0, 0, mPrewSize.getWidth(), mPrewSize.getHeight());
+                Rect viewRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 Rect bufferRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 cameraHandler.post(new CameraActivity.ImageSaver(reader.acquireNextImage(), viewRect, bufferRect));
             }
@@ -331,12 +319,11 @@ public class KKCamera {
         return cameraHandler;
     }
 
-    private Size getPropPreviewSize(List<Size> list, float th, int minWidth) {
+    private Size getPropPreviewSize(List<Size> list, float th, int minHeight) {
         Collections.sort(list, sizeComparator);
-
         int i = 0;
         for (Size s : list) {
-            if ((s.getWidth() >= minWidth) && equalRate(s, th)) {
+            if ((s.getHeight() >= minHeight) && equalRate(s, th)) {
                 break;
             }
             i++;

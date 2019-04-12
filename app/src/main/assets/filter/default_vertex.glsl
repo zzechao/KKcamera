@@ -5,6 +5,6 @@ uniform mat4 vMatrix;
 varying vec2 aCoordinate;
 
 void main(){
-    gl_Position=vMatrix*vPosition;
-    aCoordinate=vCoordinate;
+    gl_Position= vMatrix * vPosition;
+    aCoordinate = vCoordinate;
 }
