@@ -8,7 +8,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
-import viewset.com.kkcamera.view.widget.KKGLSurfaceView;
+import viewset.com.kkcamera.view.camera.KKGLSurfaceView;
 
 public class GLCameraActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package viewset.com.kkcamera.view.widget;
+package viewset.com.kkcamera.view.camera;
 
 import android.Manifest;
 import android.annotation.TargetApi;
@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;

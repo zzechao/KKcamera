@@ -1,4 +1,4 @@
-package viewset.com.kkcamera.view.widget;
+package viewset.com.kkcamera.view.camera.filter;
 
 import android.content.Context;
 import android.opengl.GLES11Ext;
@@ -11,7 +11,7 @@ import java.nio.FloatBuffer;
 
 import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
 
-public class BaseFilter {
+public abstract class BaseFilter {
 
     private FloatBuffer mVerBuffer, mTexBuffer;
 
@@ -47,8 +47,8 @@ public class BaseFilter {
     private int mTextureId = 0;
 
     public BaseFilter(Context context) {
-        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/base_fragment.glsl", context.getResources()));
+        this(OpenGlUtils.loadShareFromAssetsFile("camera/base_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("camera/base_fragment.glsl", context.getResources()));
         mContext = context;
     }
 
@@ -77,7 +77,11 @@ public class BaseFilter {
         glCoordinate = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
+
+        glOnSufaceCreated(mProgram);
     }
+
+    protected abstract void glOnSufaceCreated(int mProgram);
 
     public void onDrawFrame() {
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
@@ -87,6 +91,8 @@ public class BaseFilter {
 
         //指定vMatrix的值
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
+
+        onDrawArraysPre();
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, getTextureId());
@@ -101,8 +107,14 @@ public class BaseFilter {
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
 
+        onDrawArraysAfter();
+
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
     }
+
+    protected abstract void onDrawArraysAfter();
+
+    protected abstract void onDrawArraysPre();
 
     public final void setTextureType(int type) {
         mTextureType = type;

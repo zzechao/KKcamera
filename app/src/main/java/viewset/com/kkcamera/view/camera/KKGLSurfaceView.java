@@ -1,4 +1,4 @@
-package viewset.com.kkcamera.view.widget;
+package viewset.com.kkcamera.view.camera;
 
 import android.content.Context;
 import android.graphics.Point;
