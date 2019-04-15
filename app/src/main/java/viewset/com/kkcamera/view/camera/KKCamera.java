@@ -96,18 +96,19 @@ public class KKCamera {
 
     /**
      * 打开摄像头
+     *
+     * @param cameraId
      */
-    public void openCamera() {
+    public void openCamera(int cameraId) {
         //检查权限
         try {
             if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
                     != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
+            mFacing = cameraId == 0 ? CameraCharacteristics.LENS_FACING_BACK : CameraCharacteristics.LENS_FACING_FRONT;
             //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
-            if (TextUtils.isEmpty(mCameraId)) {
-                setupCamera();
-            }
+            setupCamera();
             setupImageReader(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             if (cameraCallback != null) {
                 cameraCallback.configureTransform(mPreviewSize.getHeight(), mPreviewSize.getWidth());

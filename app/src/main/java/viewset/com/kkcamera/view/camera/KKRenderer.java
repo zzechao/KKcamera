@@ -110,6 +110,7 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     }
 
     private void calculateMatrix() {
+        Log.e("ttt","calculateMatrix");
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         if (cameraId == 1) {
             Gl2Utils.flip(matrix, true, false);
@@ -118,5 +119,10 @@ public class KKRenderer implements GLSurfaceView.Renderer {
             Gl2Utils.rotate(matrix, 270);
         }
         baseFilter.setMatrix(matrix);
+    }
+
+    public void setCameraId(int cameraId) {
+        this.cameraId = cameraId;
+        calculateMatrix();
     }
 }

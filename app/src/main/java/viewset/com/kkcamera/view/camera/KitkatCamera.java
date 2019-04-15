@@ -5,7 +5,7 @@
  * Created by Wuwang on 2016/11/12
  * Copyright © 2016年 深圳哎吖科技. All rights reserved.
  */
-package viewset.com.kkcamera.view.activity.camera;
+package viewset.com.kkcamera.view.camera;
 
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
@@ -13,7 +13,6 @@ import android.hardware.Camera;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
