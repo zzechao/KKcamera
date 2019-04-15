@@ -20,6 +20,10 @@ import viewset.com.kkcamera.view.activity.opengl.EgTexture2dActivity;
 import viewset.com.kkcamera.view.activity.opengl.Texture2dFilterActivity;
 import viewset.com.kkcamera.view.activity.opengl.texture.ColorTexture2dFilterRender;
 
+/**
+ * https://blog.csdn.net/qqchenjian318/article/details/77396653
+ * https://blog.csdn.net/junzia/column/info/15997
+ */
 public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.button_camera)
