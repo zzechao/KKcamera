@@ -9,8 +9,9 @@ import android.util.Log;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
-import viewset.com.kkcamera.view.activity.opengl.util.Gl2Utils;
+import viewset.com.kkcamera.view.camera.filter.ShowFilter;
+import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
+import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
 
 public class KKRenderer implements GLSurfaceView.Renderer {
@@ -35,22 +36,7 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     public KKRenderer(Context context) {
         mContext = context;
 
-        baseFilter = new BaseFilter(mContext) {
-            @Override
-            protected void glOnSufaceCreated(int mProgram) {
-
-            }
-
-            @Override
-            protected void onDrawArraysAfter() {
-
-            }
-
-            @Override
-            protected void onDrawArraysPre() {
-
-            }
-        };
+        baseFilter = new ShowFilter(context);
     }
 
     @Override
@@ -110,7 +96,7 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     }
 
     private void calculateMatrix() {
-        Log.e("ttt","calculateMatrix");
+        Log.e("ttt", "calculateMatrix");
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         if (cameraId == 1) {
             Gl2Utils.flip(matrix, true, false);

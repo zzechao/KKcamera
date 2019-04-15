@@ -22,7 +22,13 @@
         android:id="@+id/button_magic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="magic" />
+        android:text="magic_img" />
+
+    <Button
+        android:id="@+id/button_magic_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="magic_camera" />
 
     <Button
         android:id="@+id/button_opengl"

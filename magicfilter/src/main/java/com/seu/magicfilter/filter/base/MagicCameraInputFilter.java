@@ -107,15 +107,21 @@ public class MagicCameraInputFilter extends GPUImageFilter{
         GLES20.glViewport(0, 0, mFrameWidth, mFrameHeight);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
         GLES20.glUseProgram(mGLProgId);
+
         if(!isInitialized()) {
             return OpenGlUtils.NOT_INIT;
         }
+
         mGLCubeBuffer.position(0);
-        GLES20.glVertexAttribPointer(mGLAttribPosition, 2, GLES20.GL_FLOAT, false, 0, mGLCubeBuffer);
         GLES20.glEnableVertexAttribArray(mGLAttribPosition);
+        GLES20.glVertexAttribPointer(mGLAttribPosition, 2, GLES20.GL_FLOAT, false, 0, mGLCubeBuffer);
+
+
         mGLTextureBuffer.position(0);
-        GLES20.glVertexAttribPointer(mGLAttribTextureCoordinate, 2, GLES20.GL_FLOAT, false, 0, mGLTextureBuffer);
         GLES20.glEnableVertexAttribArray(mGLAttribTextureCoordinate);
+        GLES20.glVertexAttribPointer(mGLAttribTextureCoordinate, 2, GLES20.GL_FLOAT, false, 0, mGLTextureBuffer);
+
+
         GLES20.glUniformMatrix4fv(mTextureTransformMatrixLocation, 1, false, mTextureTransformMatrix, 0);
 
         if(textureId != OpenGlUtils.NO_TEXTURE){

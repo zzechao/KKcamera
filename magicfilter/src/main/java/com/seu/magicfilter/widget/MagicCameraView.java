@@ -94,7 +94,6 @@ public class MagicCameraView extends MagicBaseView {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        Log.e("ttt2", "onDrawFrame");
         super.onDrawFrame(gl);
         if (surfaceTexture == null)
             return;
@@ -141,6 +140,7 @@ public class MagicCameraView extends MagicBaseView {
         if (filter == null) {
             cameraInputFilter.onDrawFrame(textureId, gLCubeBuffer, gLTextureBuffer);
         } else {
+            Log.e("ttt", "onDrawFrame with filter");
             id = cameraInputFilter.onDrawToTexture(textureId);
             filter.onDrawFrame(id, gLCubeBuffer, gLTextureBuffer);
         }
@@ -153,7 +153,6 @@ public class MagicCameraView extends MagicBaseView {
         @Override
         public void onFrameAvailable(SurfaceTexture surfaceTexture) {
             // 不断接收到camera的数据流然后调用requestRender刷新onDrawFrame进行画布更新
-            Log.e("ttt2", "onFrameAvailable--requestRender");
             requestRender();
         }
     };

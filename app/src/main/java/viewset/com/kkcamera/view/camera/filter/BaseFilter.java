@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-import viewset.com.kkcamera.view.activity.opengl.texture.OpenGlUtils;
+import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 
 public abstract class BaseFilter {
 
@@ -84,21 +84,47 @@ public abstract class BaseFilter {
     protected abstract void glOnSufaceCreated(int mProgram);
 
     public void onDrawFrame() {
+        onClear();
+        onUseProgram();
+        onSetExpandData();
+        onDrawArraysPre();
+        onBindTexture();
+        onDraw();
+        onDrawArraysAfter();
+    }
+
+    /**
+     * 清除屏幕
+     */
+    private void onClear() {
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+    }
 
+    protected void onUseProgram() {
         GLES20.glUseProgram(mProgram);
+    }
 
-        //指定vMatrix的值
+    /**
+     * 设置其他扩展数据
+     */
+    protected void onSetExpandData() {
         GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
+    }
 
-        onDrawArraysPre();
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, getTextureId());
+    /**
+     * 绑定默认纹理
+     */
+    protected void onBindTexture() {
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0+ getTextureType());
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, getTextureId());
         GLES20.glUniform1i(glTexture, getTextureType());
+    }
 
-
+    /**
+     * 启用顶点坐标和纹理坐标进行绘制
+     */
+    protected void onDraw() {
         GLES20.glEnableVertexAttribArray(glPosition);
         GLES20.glVertexAttribPointer(glPosition, 2, GLES20.GL_FLOAT, false, 0, mVerBuffer);
         GLES20.glEnableVertexAttribArray(glCoordinate);
@@ -106,10 +132,6 @@ public abstract class BaseFilter {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
-
-        onDrawArraysAfter();
-
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
     }
 
     protected abstract void onDrawArraysAfter();

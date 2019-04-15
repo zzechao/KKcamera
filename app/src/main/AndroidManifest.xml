@@ -43,19 +43,23 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".view.activity.MagicActivity"
+            android:name=".view.activity.MagicImgActivity"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".view.activity.opengl.OpenglActivity"
+            android:name=".view.activity.MagicCameraActivity"
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".view.activity.opengl.EgTexture2dActivity"
+            android:name=".view.image.opengl.OpenglActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".view.image.opengl.EgTexture2dActivity"
             android:screenOrientation="sensor" />
 
         <activity
-            android:name=".view.activity.opengl.Texture2dFilterActivity"
+            android:name=".view.image.opengl.Texture2dFilterActivity"
             android:screenOrientation="sensor" />
 
         <activity

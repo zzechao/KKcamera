@@ -97,18 +97,23 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     public void switchCamera() {
-        cameraId = cameraId == 0 ? 1 : 0;
-        if (useCamera2) {
-            mCamera2.closeCamera();
-            mCamera2.openCamera(cameraId);
-        } else {
-            mCamera1.switchTo(cameraId);
-            Point point = mCamera1.getPreviewSize();
-            renderer.setCameraId(cameraId);
-            renderer.setPreviewSize(point.x, point.y);
-            mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
-            mCamera1.preview();
-        }
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                cameraId = cameraId == 0 ? 1 : 0;
+                if (useCamera2) {
+                    mCamera2.closeCamera();
+                    mCamera2.openCamera(cameraId);
+                } else {
+                    mCamera1.switchTo(cameraId);
+                    Point point = mCamera1.getPreviewSize();
+                    renderer.setCameraId(cameraId);
+                    renderer.setPreviewSize(point.x, point.y);
+                    mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
+                    mCamera1.preview();
+                }
+            }
+        });
     }
 
     @Override
