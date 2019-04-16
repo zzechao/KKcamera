@@ -34,4 +34,9 @@ public class ShowFilter extends BaseFilter {
     protected void onDrawArraysPre() {
 
     }
+
+    @Override
+    protected void onSizeChanged(int width, int height) {
+
+    }
 }

@@ -1,25 +1,24 @@
 package viewset.com.kkcamera.view.camera.filter;
 
 import android.content.Context;
-import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
 import viewset.com.kkcamera.view.image.opengl.texture.FilterState;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
-import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public class ColorFilter extends BaseFilter {
     private int glIsHalf;
     private int glChangeType;
     private int glChangeColor;
 
-    public ColorFilter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("camera/half_color_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("camera/half_color_fragment.glsl", context.getResources()));
-        mContext = context;
+    private int[] fFrame = new int[1];
+    private int[] fRender = new int[1];
+    private int[] fTexture = new int[1];
 
-        float[] OM = Gl2Utils.getOriginalMatrix();
-        setMatrix(OM);
+    public ColorFilter(Context context) {
+        super(OpenGlUtils.loadShareFromAssetsFile("filter/half_color_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/half_color_fragment.glsl", context.getResources()));
+        mContext = context;
     }
 
     @Override
@@ -42,9 +41,8 @@ public class ColorFilter extends BaseFilter {
     }
 
     @Override
-    protected void onBindTexture() {
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + getTextureType());
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, getTextureId());
-        GLES20.glUniform1i(glTexture, getTextureType());
+    protected void onSizeChanged(int width, int height) {
+
     }
+
 }

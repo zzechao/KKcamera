@@ -81,8 +81,6 @@ public abstract class BaseFilter {
         glOnSufaceCreated(mProgram);
     }
 
-    protected abstract void glOnSufaceCreated(int mProgram);
-
     public void onDrawFrame() {
         onClear();
         onUseProgram();
@@ -134,9 +132,18 @@ public abstract class BaseFilter {
         GLES20.glDisableVertexAttribArray(glCoordinate);
     }
 
+    public final void setSize(int width, int height) {
+        onSizeChanged(width, height);
+    }
+
     protected abstract void onDrawArraysAfter();
 
     protected abstract void onDrawArraysPre();
+
+    protected abstract void onSizeChanged(int width, int height);
+
+    protected abstract void glOnSufaceCreated(int mProgram);
+
 
     public final void setTextureType(int type) {
         mTextureType = type;
@@ -171,5 +178,14 @@ public abstract class BaseFilter {
 
     public float[] getMatrix() {
         return mMVPMatrix.clone();
+    }
+
+    /**
+     * 获取program
+     *
+     * @return
+     */
+    public int getProgram() {
+        return mProgram;
     }
 }

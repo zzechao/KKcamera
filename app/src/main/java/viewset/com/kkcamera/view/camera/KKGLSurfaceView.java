@@ -22,7 +22,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera2
      */
-    private KKRenderer renderer;
+    private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
     private boolean useCamera2 = true;
@@ -59,11 +59,11 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
                     renderer.setCameraId(cameraId);
                 }
             });
-            renderer = new KKRenderer(getContext());
+            renderer = new KKFBORenderer(getContext());
         } else {
             /**初始化相机的管理类*/
             mCamera1 = new KitkatCamera();
-            renderer = new KKRenderer(getContext());
+            renderer = new KKFBORenderer(getContext());
         }
     }
 

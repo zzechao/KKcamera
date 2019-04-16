@@ -31,7 +31,6 @@ public class KKRenderer implements GLSurfaceView.Renderer {
 
     private int cameraId = 0;
 
-
     public KKRenderer(Context context) {
         mContext = context;
 
