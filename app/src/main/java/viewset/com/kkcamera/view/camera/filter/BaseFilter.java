@@ -116,7 +116,7 @@ public abstract class BaseFilter {
      * 绑定默认纹理
      */
     protected void onBindTexture() {
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0+ getTextureType());
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + getTextureType());
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, getTextureId());
         GLES20.glUniform1i(glTexture, getTextureType());
     }
@@ -166,5 +166,10 @@ public abstract class BaseFilter {
      */
     public void setMatrix(float[] matrix) {
         mMVPMatrix = matrix;
+    }
+
+
+    public float[] getMatrix() {
+        return mMVPMatrix.clone();
     }
 }

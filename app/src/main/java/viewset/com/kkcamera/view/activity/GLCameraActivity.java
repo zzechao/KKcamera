@@ -27,11 +27,14 @@ public class GLCameraActivity extends AppCompatActivity {
         unbinder = ButterKnife.bind(this);
     }
 
-    @OnClick(R.id.bt_switch)
+    @OnClick({R.id.bt_switch,R.id.filter})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.bt_switch:
                 kkcamera.switchCamera();
+                break;
+            case R.id.filter:
+                
                 break;
         }
     }

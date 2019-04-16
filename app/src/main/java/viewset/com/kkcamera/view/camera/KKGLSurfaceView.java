@@ -16,7 +16,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera1
      */
-    private int cameraId = 0;
+    private int cameraId = 1;
     private KitkatCamera mCamera1;
 
     /**

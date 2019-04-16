@@ -10,11 +10,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
-import viewset.com.kkcamera.view.camera.filter.ShowFilter;
+import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
-public class KKRenderer implements GLSurfaceView.Renderer {
+public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     private BaseFilter showFilter;
 
@@ -32,10 +32,10 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     private int cameraId = 0;
 
 
-    public KKRenderer(Context context) {
+    public KKFBORenderer(Context context) {
         mContext = context;
 
-        showFilter = new ShowFilter(context);
+        showFilter = new ColorFilter(context);
     }
 
     @Override
