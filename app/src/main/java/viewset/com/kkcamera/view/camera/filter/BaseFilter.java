@@ -8,8 +8,10 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
+import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public abstract class BaseFilter {
 
@@ -32,9 +34,14 @@ public abstract class BaseFilter {
             1.0f, 1.0f,
     };
 
-    private float[] mMVPMatrix = new float[16];
+    public static final float[] OM = Gl2Utils.getOriginalMatrix();
 
-    private int mProgram;
+    /**
+     * 对于帧FBO来说，不能用new float[]的形式，因为如果这样会导致其他滤镜不存在matrix的对象，导致无效。
+     */
+    private float[] matrix = Arrays.copyOf(OM, 16);
+
+    protected int mProgram;
 
     protected int glPosition;
     protected int glCoordinate;
@@ -47,8 +54,8 @@ public abstract class BaseFilter {
     private int mTextureId = 0;
 
     public BaseFilter(Context context) {
-        this(OpenGlUtils.loadShareFromAssetsFile("camera/base_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("camera/base_fragment.glsl", context.getResources()));
+        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.glsl", context.getResources()));
         mContext = context;
     }
 
@@ -56,6 +63,13 @@ public abstract class BaseFilter {
         mVertexShader = vertexShader;
         mFragmentShader = fragmentShader;
 
+        initBuffer();
+    }
+
+    /**
+     * Buffer初始化
+     */
+    protected void initBuffer() {
         ByteBuffer bb = ByteBuffer.allocateDirect(sPos.length * 4);
         bb.order(ByteOrder.nativeOrder());
         mVerBuffer = bb.asFloatBuffer();
@@ -70,32 +84,28 @@ public abstract class BaseFilter {
     }
 
     public void onSurfaceCreated() {
-        Log.e("ttt", "onSurfaceCreated");
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 
         glPosition = GLES20.glGetAttribLocation(mProgram, "vPosition");
         glCoordinate = GLES20.glGetAttribLocation(mProgram, "vCoordinate");
         glMatrix = GLES20.glGetUniformLocation(mProgram, "vMatrix");
         glTexture = GLES20.glGetUniformLocation(mProgram, "inputImageTexture");
-
-        glOnSufaceCreated(mProgram);
     }
 
     public void onDrawFrame() {
         onClear();
         onUseProgram();
         onSetExpandData();
-        onDrawArraysPre();
         onBindTexture();
         onDraw();
-        onDrawArraysAfter();
     }
 
     /**
      * 清除屏幕
      */
-    private void onClear() {
-        GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    protected void onClear() {
+        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
 
@@ -107,7 +117,7 @@ public abstract class BaseFilter {
      * 设置其他扩展数据
      */
     protected void onSetExpandData() {
-        GLES20.glUniformMatrix4fv(glMatrix, 1, false, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(glMatrix, 1, false, matrix, 0);
     }
 
     /**
@@ -125,8 +135,10 @@ public abstract class BaseFilter {
     protected void onDraw() {
         GLES20.glEnableVertexAttribArray(glPosition);
         GLES20.glVertexAttribPointer(glPosition, 2, GLES20.GL_FLOAT, false, 0, mVerBuffer);
+
         GLES20.glEnableVertexAttribArray(glCoordinate);
         GLES20.glVertexAttribPointer(glCoordinate, 2, GLES20.GL_FLOAT, false, 0, mTexBuffer);
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         GLES20.glDisableVertexAttribArray(glPosition);
         GLES20.glDisableVertexAttribArray(glCoordinate);
@@ -136,14 +148,7 @@ public abstract class BaseFilter {
         onSizeChanged(width, height);
     }
 
-    protected abstract void onDrawArraysAfter();
-
-    protected abstract void onDrawArraysPre();
-
     protected abstract void onSizeChanged(int width, int height);
-
-    protected abstract void glOnSufaceCreated(int mProgram);
-
 
     public final void setTextureType(int type) {
         mTextureType = type;
@@ -172,20 +177,10 @@ public abstract class BaseFilter {
      * @param matrix
      */
     public void setMatrix(float[] matrix) {
-        mMVPMatrix = matrix;
+        this.matrix = matrix;
     }
 
-
-    public float[] getMatrix() {
-        return mMVPMatrix.clone();
-    }
-
-    /**
-     * 获取program
-     *
-     * @return
-     */
-    public int getProgram() {
-        return mProgram;
+    public int getOutputTexture() {
+        return -1;
     }
 }

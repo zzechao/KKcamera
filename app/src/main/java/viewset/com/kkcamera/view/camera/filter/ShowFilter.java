@@ -8,8 +8,8 @@ import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 
 public class ShowFilter extends BaseFilter {
     public ShowFilter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("camera/base_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("camera/base_fragment.glsl", context.getResources()));
+        super(OpenGlUtils.loadShareFromAssetsFile("camera/show_vertex.glsl", context.getResources()),
+                OpenGlUtils.loadShareFromAssetsFile("camera/show_fragment.glsl", context.getResources()));
         mContext = context;
     }
 
@@ -20,20 +20,6 @@ public class ShowFilter extends BaseFilter {
         GLES20.glUniform1i(glTexture, getTextureType());
     }
 
-    @Override
-    protected void glOnSufaceCreated(int mProgram) {
-
-    }
-
-    @Override
-    protected void onDrawArraysAfter() {
-
-    }
-
-    @Override
-    protected void onDrawArraysPre() {
-
-    }
 
     @Override
     protected void onSizeChanged(int width, int height) {
