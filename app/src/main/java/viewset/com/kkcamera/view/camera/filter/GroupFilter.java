@@ -119,10 +119,6 @@ public class GroupFilter extends BaseFilter{
                 GLES20.GL_TEXTURE_2D, fTexture[0], 0);
         GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
                 GLES20.GL_RENDERBUFFER, fRender[0]);
-//        int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
-//        if(status==GLES20.GL_FRAMEBUFFER_COMPLETE){
-//            return true;
-//        }
         unBindFrame();
         return false;
     }

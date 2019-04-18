@@ -10,7 +10,10 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
+import viewset.com.kkcamera.view.camera.filter.ColorFilter;
+import viewset.com.kkcamera.view.camera.filter.GroupFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
+import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.EasyGlUtils;
@@ -18,6 +21,7 @@ import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public class KKFBORenderer implements GLSurfaceView.Renderer {
 
+    //private BaseFilter colorFilter;
     /**
      * 显示
      */
@@ -27,6 +31,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      * 图像的
      */
     private BaseFilter drawFilter;
+
+    private GroupFilter groupFilter;
+
+    private BaseFilter processFilter;
 
 
     protected Context mContext;
@@ -58,8 +66,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
 
-        //ColorFilter colorFilter = new ColorFilter(context);
-        //groupFilter.addFilter(colorFilter);
+        groupFilter = new GroupFilter(context);
+
+        processFilter = new ProcessFilter(context);
+
+        ColorFilter colorFilter = new ColorFilter(context);
+        groupFilter.addFilter(colorFilter);
     }
 
     @Override
@@ -71,6 +83,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         drawFilter.setTextureId(mTextureId);
 
         showFilter.onSurfaceCreated();
+
+        processFilter.onSurfaceCreated();
+
+        groupFilter.onSurfaceCreated();
     }
 
     @Override
@@ -100,6 +116,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         setViewSize(width, height);
         drawFilter.setSize(width, height);
+        groupFilter.setSize(width, height);
+        processFilter.setSize(width, height);
     }
 
     @Override
@@ -108,13 +126,18 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             //更新数据，其实也是消耗数据，将上一帧的数据处理或者抛弃掉，要不然SurfaceTexture是接收不到最新数据
             mSurfaceTexture.updateTexImage();
 
-            EasyGlUtils.bindFrameTexture(fFrame[0], fTexture[0]);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
+            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
+                    GLES20.GL_TEXTURE_2D, fTexture[0], 0);
             GLES20.glViewport(0, 0, mPreviewWidth, mPreviewHeight);
             drawFilter.onDrawFrame();
-            EasyGlUtils.unBindFrameBuffer();
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+
+            processFilter.setTextureId(fTexture[0]);
+            processFilter.onDrawFrame();
 
             GLES20.glViewport(0, 0, mWidth, mHeight);
-            showFilter.setTextureId(fTexture[0]);
+            showFilter.setTextureId(processFilter.getOutputTexture());
             showFilter.onDrawFrame();
         }
     }
@@ -154,9 +177,9 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         Log.e("ttt", "calculateMatrix");
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         if (cameraId == 1) {
+            Gl2Utils.flip(matrix, true, false);
             Gl2Utils.rotate(matrix, 90);
         } else {
-            Gl2Utils.flip(matrix, true, false);
             Gl2Utils.rotate(matrix, 270);
         }
         showFilter.setMatrix(matrix);
