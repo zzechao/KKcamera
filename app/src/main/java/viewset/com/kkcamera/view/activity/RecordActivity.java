@@ -274,7 +274,9 @@ public class RecordActivity extends AppCompatActivity {
     }
 
     private void stopBackgroundThread() {
-        handlerThread.quitSafely();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            handlerThread.quitSafely();
+        }
         try {
             handlerThread.join();
             handlerThread = null;

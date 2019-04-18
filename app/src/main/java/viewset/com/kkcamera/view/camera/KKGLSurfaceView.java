@@ -22,10 +22,12 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera2
      */
-    private KKFBORenderer  renderer;
+    private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = true;
+    private boolean useCamera2 = false;
+
+    private boolean isPauce = false;
 
     public KKGLSurfaceView(Context context) {
         this(context, null);
@@ -48,22 +50,20 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
             mCamera2.setCameraCallback(new KKCamera.CameraCallback() {
                 @Override
                 public void configureTransform(int previewWidth, int previewHeight) {
-                    Log.e("ttt", "configureTransform");
                     renderer.setPreviewSize(previewWidth, previewHeight);
                 }
 
                 @Override
                 public void deviceOpened() {
-                    Log.e("ttt", "deviceOpened");
                     mCamera2.startPreview(renderer.getSurfaceTexture());
                     renderer.setCameraId(cameraId);
                 }
             });
-            renderer = new KKFBORenderer (getContext());
+            renderer = new KKFBORenderer(getContext());
         } else {
             /**初始化相机的管理类*/
             mCamera1 = new KitkatCamera();
-            renderer = new KKFBORenderer (getContext());
+            renderer = new KKFBORenderer(getContext());
         }
     }
 
@@ -88,6 +88,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        Log.e("ttt","onSurfaceChanged---GLSurface");
         GLES20.glViewport(0, 0, width, height);
         if (useCamera2) {
             renderer.onSurfaceChanged(gl, width, height);
@@ -128,27 +129,55 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onResume() {
+        Log.e("ttt", "onResume");
         if (useCamera2) {
             mCamera2.startBackgroundThread();
-            //mCamera2.openCamera(cameraId);
-        } else {
-
         }
+        openCamera();
         super.onResume();
+    }
+
+    /**
+     * 开启摄像头
+     */
+    private void openCamera() {
+        if (isPauce) {
+            isPauce = false;
+            if (useCamera2) {
+                mCamera2.openCamera(cameraId);
+            } else {
+//                mCamera1.open(cameraId);
+//                Point point = mCamera1.getPreviewSize();
+//                renderer.setPreviewSize(point.x, point.y);
+//                mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
+//                mCamera1.preview();
+            }
+        }
     }
 
     @Override
     public void onPause() {
+        Log.e("ttt", "onPause");
         if (useCamera2) {
-            mCamera2.closeCamera();
             mCamera2.stopBackgroundThread();
-        } else {
-            mCamera1.close();
         }
+        //closeCamera();
         super.onPause();
     }
 
+    private void closeCamera() {
+        if (!isPauce) {
+            isPauce = true;
+            if (useCamera2) {
+                mCamera2.closeCamera();
+            } else {
+                mCamera1.close();
+            }
+        }
+    }
+
     public void onDestroy() {
+        Log.e("ttt", "onDestroy");
         if (mCamera2 != null) {
             mCamera2.closeCamera();
         }

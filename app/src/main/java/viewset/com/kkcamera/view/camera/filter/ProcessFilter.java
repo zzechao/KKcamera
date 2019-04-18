@@ -2,8 +2,8 @@ package viewset.com.kkcamera.view.camera.filter;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
-import viewset.com.kkcamera.view.image.opengl.util.EasyGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public class ProcessFilter extends BaseFilter {
@@ -22,9 +22,14 @@ public class ProcessFilter extends BaseFilter {
         super(context);
 
         mFilter = new ColorFilter(context);
-        /*float[] OM = Gl2Utils.getOriginalMatrix();
+        float[] OM = Gl2Utils.getOriginalMatrix();
         Gl2Utils.flip(OM, false, true);//矩阵上下翻转
-        mFilter.setMatrix(OM);*/
+        mFilter.setMatrix(OM);
+    }
+
+    @Override
+    protected void initBuffer() {
+
     }
 
     @Override
@@ -59,6 +64,7 @@ public class ProcessFilter extends BaseFilter {
 
     @Override
     protected void onSizeChanged(int width, int height) {
+        Log.e("ttt", "onSizeChanged---" + width + "---" + height);
         if (this.width != width && this.height != height) {
             this.width = width;
             this.height = height;
