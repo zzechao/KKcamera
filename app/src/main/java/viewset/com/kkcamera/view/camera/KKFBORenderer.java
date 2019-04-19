@@ -17,6 +17,7 @@ import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
+import viewset.com.kkcamera.view.camera.filter.WaterMarkPosition;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -55,10 +56,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int[] fFrame = new int[1];
     private int[] fTexture = new int[1];
 
-    private int waterMarkPosition = 0;
-    private final int TOP_LEFT = 0;
-
-
     public KKFBORenderer(Context context) {
         mContext = context;
 
@@ -91,17 +88,22 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     }
 
     private void setWaterMarkPosition() {
-        if (waterMarkPosition == TOP_LEFT) {
-            float[] OM = Gl2Utils.getOriginalMatrix();
-            Gl2Utils.rotate(OM, 90);
-            drawFilter.setMatrix(OM);
+//        if (waterMarkPosition == WaterMarkPosition.TOP_LEFT) {
+//            float[] OM = Gl2Utils.getOriginalMatrix();
+//            Gl2Utils.rotate(OM, 90);
+//            drawFilter.setMatrix(OM);
+//        } else if (waterMarkPosition == WaterMarkPosition.TOP_RIGHT) {
+//            //float[] OM = Gl2Utils.getOriginalMatrix();
+//            //Gl2Utils.rotate(OM, 90);
+//            //Gl2Utils.flip(OM, false, true);
+//            //drawFilter.setMatrix(OM);
+//        }
 
-            groupFilter = new GroupFilter(mContext);
-            waterMarkFilter = new WaterMarkFilter(mContext);
-            waterMarkFilter.setWaterMark(BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark));
-            waterMarkFilter.setPosition(30, 50, 0, 0);
-            groupFilter.addFilter(waterMarkFilter);
-        }
+        groupFilter = new GroupFilter(mContext);
+        waterMarkFilter = new WaterMarkFilter(mContext);
+        waterMarkFilter.setWaterMark(BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark));
+        waterMarkFilter.setPosition(30, 50, 0, 0);
+        groupFilter.addFilter(waterMarkFilter);
     }
 
     @Override
@@ -158,12 +160,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 //
 //
 //
-//            processFilter.setTextureId(groupFilter.getOutputTexture());
-//            processFilter.onDrawFrame();
+            processFilter.setTextureId(groupFilter.getOutputTexture());
+            processFilter.onDrawFrame();
 
 
             GLES20.glViewport(0, 0, mWidth, mHeight);
-            showFilter.setTextureId(groupFilter.getOutputTexture());
+            showFilter.setTextureId(processFilter.getOutputTexture());
             showFilter.onDrawFrame();
         }
     }
@@ -200,12 +202,17 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     private void calculateMatrix() {
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
-        showFilter.setMatrix(matrix);
+        if (cameraId == 1) {
+            Gl2Utils.flip(matrix, true, false);
+            Gl2Utils.rotate(matrix, 90);
+        } else {
+            Gl2Utils.rotate(matrix, 270);
+        }
+        drawFilter.setMatrix(matrix);
     }
 
     public void setCameraId(int cameraId) {
         this.cameraId = cameraId;
-        waterMarkFilter.setCameraId(cameraId);
         calculateMatrix();
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.util.Log;
 
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -43,7 +44,7 @@ public class WaterMarkFilter extends NoFilter {
     @Override
     public void onDrawFrame() {
         super.onDrawFrame();
-        GLES20.glViewport(0, 50, mBitmap.getWidth(), mBitmap.getHeight());
+        GLES20.glViewport(0, 0, mBitmap.getWidth(), mBitmap.getHeight());
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_DST_ALPHA);
@@ -99,15 +100,4 @@ public class WaterMarkFilter extends NoFilter {
         this.h = height;
     }
 
-    public void setCameraId(int cameraId) {
-        if (cameraId == 1) {
-            float[] OM = Gl2Utils.getOriginalMatrix();
-            Gl2Utils.flip(OM, false, true);
-            setMatrix(OM);
-        } else {
-            float[] OM = Gl2Utils.getOriginalMatrix();
-            Gl2Utils.flip(OM, true, false);
-            setMatrix(OM);
-        }
-    }
 }
