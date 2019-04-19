@@ -65,32 +65,28 @@ public class ProcessFilter extends BaseFilter {
     @Override
     protected void onSizeChanged(int width, int height) {
         Log.e("ttt", "onSizeChanged---" + width + "---" + height);
-        if (this.width != width && this.height != height) {
-            this.width = width;
-            this.height = height;
-            mFilter.setSize(width, height);
-            deleteFrameBuffer();
+        this.width = width;
+        this.height = height;
+        mFilter.setSize(width, height);
+        deleteFrameBuffer();
 
+        GLES20.glGenFramebuffers(1, fFrame, 0);
+        GLES20.glGenRenderbuffers(1, fRender, 0);
 
-            GLES20.glGenFramebuffers(1, fFrame, 0);
-            GLES20.glGenRenderbuffers(1, fRender, 0);
+        genTextures();
 
-            genTextures();
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
+        GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, fRender[0]);
 
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
-            GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, fRender[0]);
+        GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16,
+                width, height);
+        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
+                GLES20.GL_TEXTURE_2D, fTexture[0], 0);
+        GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
+                GLES20.GL_RENDERBUFFER, fRender[0]);
 
-            GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16,
-                    width, height);
-            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-                    GLES20.GL_TEXTURE_2D, fTexture[0], 0);
-            GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
-                    GLES20.GL_RENDERBUFFER, fRender[0]);
-
-
-            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-            GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
-        }
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+        GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
     }
 
     //生成Textures
@@ -100,10 +96,10 @@ public class ProcessFilter extends BaseFilter {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fTexture[i]);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height,
                     0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
         }
     }
 

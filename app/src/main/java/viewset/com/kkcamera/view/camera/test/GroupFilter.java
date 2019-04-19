@@ -1,6 +1,6 @@
-package viewset.com.kkcamera.view.camera.filter;
+package viewset.com.kkcamera.view.camera.test;
 
-import android.content.Context;
+import android.content.res.Resources;
 import android.opengl.GLES20;
 
 import java.util.ArrayList;
@@ -8,29 +8,32 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class GroupFilter extends BaseFilter{
+/**
+ * Description:
+ */
+public class GroupFilter extends AFilter{
 
-    private Queue<BaseFilter> mFilterQueue;
-    private List<BaseFilter> mFilters;
+    private Queue<AFilter> mFilterQueue;
+    private List<AFilter> mFilters;
     private int width=0, height=0;
     private int size=0;
 
-    public GroupFilter(Context context) {
-        super(context);
+    public GroupFilter(Resources res) {
+        super(res);
         mFilters=new ArrayList<>();
         mFilterQueue=new ConcurrentLinkedQueue<>();
     }
 
     @Override
-    protected void onClear() {
+    protected void initBuffer() {
 
     }
 
-    public void addFilter(final BaseFilter filter){
+    public void addFilter(final AFilter filter){
         mFilterQueue.add(filter);
     }
 
-    public boolean removeFilter(BaseFilter filter){
+    public boolean removeFilter(AFilter filter){
         boolean b=mFilters.remove(filter);
         if(b){
             size--;
@@ -38,8 +41,8 @@ public class GroupFilter extends BaseFilter{
         return b;
     }
 
-    public BaseFilter removeFilter(int index){
-        BaseFilter f=mFilters.remove(index);
+    public AFilter removeFilter(int index){
+        AFilter f=mFilters.remove(index);
         if(f!=null){
             size--;
         }
@@ -55,33 +58,32 @@ public class GroupFilter extends BaseFilter{
     /**
      * 双Texture,一个输入一个输出,循环往复
      */
-    @Override
-    public void onDrawFrame() {
+    public void draw(){
         updateFilter();
         textureIndex=0;
         GLES20.glViewport(0,0,width,height);
 
-        for (BaseFilter filter:mFilters){
+        for (AFilter filter:mFilters){
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-                    GLES20.GL_TEXTURE_2D, fTexture[textureIndex%2], 0);
+                GLES20.GL_TEXTURE_2D, fTexture[textureIndex%2], 0);
             GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
-                    GLES20.GL_RENDERBUFFER, fRender[0]);
+                GLES20.GL_RENDERBUFFER, fRender[0]);
             if(textureIndex==0){
                 filter.setTextureId(getTextureId());
             }else{
                 filter.setTextureId(fTexture[(textureIndex-1)%2]);
             }
-            filter.onDrawFrame();
+            filter.draw();
             unBindFrame();
             textureIndex++;
         }
     }
 
     private void updateFilter(){
-        BaseFilter f;
+        AFilter f;
         while ((f=mFilterQueue.poll())!=null){
-            f.onSurfaceCreated();
+            f.create();
             f.setSize(width,height);
             mFilters.add(f);
             size++;
@@ -93,6 +95,10 @@ public class GroupFilter extends BaseFilter{
         return size==0?getTextureId():fTexture[(textureIndex-1)%2];
     }
 
+    @Override
+    protected void onCreate() {
+
+    }
 
     @Override
     protected void onSizeChanged(int width, int height) {
@@ -101,7 +107,6 @@ public class GroupFilter extends BaseFilter{
         updateFilter();
         createFrameBuffer();
     }
-
 
     //创建离屏buffer
     private int fTextureSize = 2;
@@ -119,11 +124,15 @@ public class GroupFilter extends BaseFilter{
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
         GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, fRender[0]);
         GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16, width,
-                height);
+            height);
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-                GLES20.GL_TEXTURE_2D, fTexture[0], 0);
+            GLES20.GL_TEXTURE_2D, fTexture[0], 0);
         GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
-                GLES20.GL_RENDERBUFFER, fRender[0]);
+            GLES20.GL_RENDERBUFFER, fRender[0]);
+//        int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
+//        if(status==GLES20.GL_FRAMEBUFFER_COMPLETE){
+//            return true;
+//        }
         unBindFrame();
         return false;
     }
@@ -134,7 +143,7 @@ public class GroupFilter extends BaseFilter{
         for (int i = 0; i < fTextureSize; i++) {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fTexture[i]);
             GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height,
-                    0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+                0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);

@@ -105,7 +105,6 @@ public abstract class BaseFilter {
      */
     protected void onClear() {
         GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
 
@@ -182,5 +181,9 @@ public abstract class BaseFilter {
 
     public int getOutputTexture() {
         return -1;
+    }
+
+    protected float[] getMatrix() {
+        return matrix;
     }
 }
