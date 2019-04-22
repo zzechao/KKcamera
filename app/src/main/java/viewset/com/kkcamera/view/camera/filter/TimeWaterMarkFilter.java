@@ -5,10 +5,15 @@ import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
-public class WaterMarkFilter extends NoFilter {
+public class TimeWaterMarkFilter extends NoFilter {
+
+    private SimpleDateFormat mDateFormat;
+    private String mPreTimeStr;
     /**
      * 水印的放置位置和宽高
      */
@@ -17,14 +22,12 @@ public class WaterMarkFilter extends NoFilter {
      * 控件的大小
      */
     private int width, height;
-    /**
-     * 水印图片的bitmap
-     */
-    private Bitmap mBitmap;
+
     /***/
     private NoFilter mFilter;
+    private Bitmap mBitmap;
 
-    public WaterMarkFilter(Context context) {
+    public TimeWaterMarkFilter(Context context) {
         super(context);
         mFilter = new NoFilter(context) {
             @Override
@@ -35,22 +38,29 @@ public class WaterMarkFilter extends NoFilter {
         float[] OM = Gl2Utils.getOriginalMatrix();
         Gl2Utils.flip(OM, false, true);
         setMatrix(OM);
+        mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
 
-    public void setWaterMark(Bitmap bitmap) {
-        if (this.mBitmap != null) {
-            this.mBitmap.recycle();
-        }
-        this.mBitmap = bitmap;
-    }
 
     @Override
     public void onDrawFrame() {
         super.onDrawFrame();
+        long time = System.currentTimeMillis();
+        Date date = new Date(time);
+        String timeStr = mDateFormat.format(date);
+        if (!timeStr.equals(mPreTimeStr)) {
+            mPreTimeStr = timeStr;
+            if (mBitmap != null) {
+                mBitmap.recycle();
+            }
+            mBitmap = Gl2Utils.text2Bitmap(mPreTimeStr);
+        }
+
         GLES20.glViewport(x, y, w == 0 ? mBitmap.getWidth() : w, h == 0 ? mBitmap.getHeight() : h);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_DST_ALPHA);
+        createTexture();
         mFilter.onDrawFrame();
         GLES20.glDisable(GLES20.GL_BLEND);
         GLES20.glViewport(0, 0, width, height);
@@ -60,7 +70,8 @@ public class WaterMarkFilter extends NoFilter {
     public void onSurfaceCreated() {
         super.onSurfaceCreated();
         mFilter.onSurfaceCreated();
-        createTexture();
+        Gl2Utils.flip(mFilter.getMatrix(), false, true);
+        //createTexture();
     }
 
     private int[] textures = new int[1];
@@ -83,11 +94,11 @@ public class WaterMarkFilter extends NoFilter {
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
 
             //对画面进行矩阵旋转
-            Gl2Utils.flip(mFilter.getMatrix(), false, true);
+            //Gl2Utils.flip(mFilter.getMatrix(), false, true);
 
             mFilter.setTextureId(textures[0]);
 
-            mBitmap.recycle();
+
         }
     }
 

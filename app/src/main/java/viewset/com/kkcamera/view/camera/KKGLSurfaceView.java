@@ -16,7 +16,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera1
      */
-    private int cameraId = 1;
+    private int cameraId = 0;
     private KitkatCamera mCamera1;
 
     /**
@@ -27,7 +27,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     private boolean useCamera2 = false;
 
-    private boolean isPauce = false;
+    private boolean isSetParm = false;
 
     public KKGLSurfaceView(Context context) {
         this(context, null);
@@ -43,6 +43,8 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         setEGLContextClientVersion(2);
         setRenderer(this);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
+        setPreserveEGLContextOnPause(true);//保存Context当pause时
+        setCameraDistance(100);//相机距离
 
         // 大于21使用camera2
         if (useCamera2) {
@@ -69,26 +71,30 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Log.e("ttt", "onSurfaceCreated---GLSurface");
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
         renderer.setCameraId(cameraId);
-        if (useCamera2) {
-            renderer.onSurfaceCreated(gl, config);
-            mCamera2.openCamera(cameraId);
-        } else {
-            renderer.onSurfaceCreated(gl, config);
-            mCamera1.open(cameraId);
-            Point point = mCamera1.getPreviewSize();
-            renderer.setPreviewSize(point.x, point.y);
-            mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
-            mCamera1.preview();
+        if (!isSetParm) {
+            if (useCamera2) {
+                renderer.onSurfaceCreated(gl, config);
+                mCamera2.openCamera(cameraId);
+            } else {
+                renderer.onSurfaceCreated(gl, config);
+                mCamera1.open(cameraId);
+                Point point = mCamera1.getPreviewSize();
+                renderer.setPreviewSize(point.x, point.y);
+                mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
+                mCamera1.preview();
+            }
+            renderer.getSurfaceTexture().setOnFrameAvailableListener(this);
+            isSetParm = true;
         }
-        renderer.getSurfaceTexture().setOnFrameAvailableListener(this);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        Log.e("ttt","onSurfaceChanged---GLSurface");
+        Log.e("ttt", "onSurfaceChanged---GLSurface");
         GLES20.glViewport(0, 0, width, height);
         if (useCamera2) {
             renderer.onSurfaceChanged(gl, width, height);
@@ -120,11 +126,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        if (useCamera2) {
-            renderer.onDrawFrame(gl);
-        } else {
-            renderer.onDrawFrame(gl);
-        }
+        renderer.onDrawFrame(gl);
     }
 
     @Override
@@ -137,21 +139,33 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         super.onResume();
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        Log.e("ttt", "onDetachedFromWindow");
+        super.onDetachedFromWindow();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        Log.e("ttt", "onAttachedToWindow");
+        super.onAttachedToWindow();
+    }
+
     /**
      * 开启摄像头
      */
     private void openCamera() {
-        if (isPauce) {
-            isPauce = false;
+        if (isSetParm) {
             if (useCamera2) {
                 mCamera2.openCamera(cameraId);
             } else {
-//                mCamera1.open(cameraId);
-//                Point point = mCamera1.getPreviewSize();
-//                renderer.setPreviewSize(point.x, point.y);
-//                mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
-//                mCamera1.preview();
+                mCamera1.open(cameraId);
+                Point point = mCamera1.getPreviewSize();
+                renderer.setPreviewSize(point.x, point.y);
+                mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
+                mCamera1.preview();
             }
+            renderer.getSurfaceTexture().setOnFrameAvailableListener(this);
         }
     }
 
@@ -161,18 +175,17 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         if (useCamera2) {
             mCamera2.stopBackgroundThread();
         }
-        //closeCamera();
+        //renderer.onPause();
+        //renderer.getSurfaceTexture().setOnFrameAvailableListener(null);
+        closeCamera();
         super.onPause();
     }
 
     private void closeCamera() {
-        if (!isPauce) {
-            isPauce = true;
-            if (useCamera2) {
-                mCamera2.closeCamera();
-            } else {
-                mCamera1.close();
-            }
+        if (useCamera2) {
+            mCamera2.closeCamera();
+        } else {
+            mCamera1.close();
         }
     }
 
@@ -181,7 +194,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         if (mCamera2 != null) {
             mCamera2.closeCamera();
         }
-        renderer.releaseSurfaceTexture();
+        //renderer.releaseSurfaceTexture();
     }
 
 
