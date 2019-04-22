@@ -4,11 +4,14 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.util.Log;
 
+import com.seu.magicfilter.filter.advanced.MagicBeautyFilter;
+import com.seu.magicfilter.utils.MagicParams;
+
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
-public class ProcessFilter extends BaseFilter {
+public class ProcessBeautyFilter extends BaseFilter {
 
-    private BaseFilter mFilter;
+    private MagicBeautyFilter mFilter;
 
     //创建离屏buffer
     private int[] fFrame = new int[1];
@@ -18,13 +21,13 @@ public class ProcessFilter extends BaseFilter {
     private int width;
     private int height;
 
-    public ProcessFilter(Context context) {
+    public ProcessBeautyFilter(Context context) {
         super(context);
-
-        mFilter = new ColorFilter(context);
+        MagicParams.context = context;
+        mFilter = new MagicBeautyFilter();
         float[] OM = Gl2Utils.getOriginalMatrix();
         Gl2Utils.flip(OM, false, true);//矩阵上下翻转
-        mFilter.setMatrix(OM);
+        mFilter.setBeautyLevel(3);
     }
 
     @Override
@@ -46,8 +49,7 @@ public class ProcessFilter extends BaseFilter {
         GLES20.glFramebufferRenderbuffer(GLES20.GL_FRAMEBUFFER, GLES20.GL_DEPTH_ATTACHMENT,
                 GLES20.GL_RENDERBUFFER, fRender[0]);
 
-        mFilter.setTextureId(getTextureId());
-        mFilter.onDrawFrame();
+        mFilter.onDrawFrame(getTextureId());
 
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
         GLES20.glBindRenderbuffer(GLES20.GL_RENDERBUFFER, 0);
@@ -58,7 +60,7 @@ public class ProcessFilter extends BaseFilter {
 
     @Override
     public void onSurfaceCreated() {
-        mFilter.onSurfaceCreated();
+        mFilter.init();
     }
 
     @Override
@@ -66,7 +68,8 @@ public class ProcessFilter extends BaseFilter {
         Log.e("ttt", "onSizeChanged---" + width + "---" + height);
         this.width = width;
         this.height = height;
-        mFilter.setSize(width, height);
+        mFilter.onDisplaySizeChanged(width,height);
+        mFilter.onInputSizeChanged(width, height);
         deleteFrameBuffer();
 
         GLES20.glGenFramebuffers(1, fFrame, 0);

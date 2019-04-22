@@ -15,6 +15,7 @@ import viewset.com.kkcamera.R;
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
 import viewset.com.kkcamera.view.camera.filter.GroupFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
+import viewset.com.kkcamera.view.camera.filter.ProcessBeautyFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
@@ -33,12 +34,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      * 图像的
      */
     private BaseFilter drawFilter;
-
     private GroupFilter groupFilter;
-
     private BaseFilter processFilter;
-
     private WaterMarkFilter waterMarkFilter;
+    private ProcessBeautyFilter beautyFilter;
 
     protected Context mContext;
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
@@ -69,7 +68,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
         processFilter = new ProcessFilter(context);
-
+        beautyFilter = new ProcessBeautyFilter(context);
         setWaterMarkPosition();
     }
 
@@ -87,6 +86,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         processFilter.onSurfaceCreated();
 
         groupFilter.onSurfaceCreated();
+
+        beautyFilter.onSurfaceCreated();
     }
 
     @Override
@@ -118,9 +119,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
-            processFilter.setSize(width, height);
-            drawFilter.setSize(width, height);
-            groupFilter.setSize(width, height);
+            processFilter.setSize(mPreviewWidth, mPreviewHeight);
+            drawFilter.setSize(mPreviewWidth, mPreviewHeight);
+            groupFilter.setSize(mPreviewWidth, mPreviewHeight);
+            beautyFilter.setSize(mPreviewWidth, mPreviewHeight);
             setViewSize(width, height);
         }
         Log.e("ttt", "onSurfaceChanged---fTexture =" + fTexture[0] + "---mTextureId==" + mTextureId);
@@ -140,17 +142,17 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             drawFilter.onDrawFrame();
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
-
             groupFilter.setTextureId(fTexture[0]);
             groupFilter.onDrawFrame();
-
 
             processFilter.setTextureId(groupFilter.getOutputTexture());
             processFilter.onDrawFrame();
 
+            beautyFilter.setTextureId(groupFilter.getOutputTexture());
+            beautyFilter.onDrawFrame();
 
             GLES20.glViewport(0, 0, mWidth, mHeight);
-            showFilter.setTextureId(processFilter.getOutputTexture());
+            showFilter.setTextureId(beautyFilter.getOutputTexture());
             showFilter.onDrawFrame();
         }
     }
@@ -176,12 +178,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setPreviewSize(int width, int height) {
         mPreviewWidth = width;
         mPreviewHeight = height;
+        waterMarkFilter.setPosition(mPreviewWidth - mImgWidth, 0, mImgWidth, mImgHeight);
     }
 
     public void setViewSize(int width, int height) {
         mWidth = width;
         mHeight = height;
-        waterMarkFilter.setPosition(width - mImgWidth, 50, mImgWidth,  mImgHeight);
         calculateMatrix();
     }
 
@@ -217,11 +219,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter.setPosition(10, 50, 0, 0);
+        timeWaterMarkFilter.setPosition(10, 0, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
-    }
-
-    public void onPause() {
-        Log.e("ttt", "onSurfaceChanged---fTexture =" + fTexture[0] + "---mTextureId==" + mTextureId);
     }
 }
