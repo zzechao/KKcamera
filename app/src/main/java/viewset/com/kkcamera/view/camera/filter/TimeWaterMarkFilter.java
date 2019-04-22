@@ -55,7 +55,6 @@ public class TimeWaterMarkFilter extends NoFilter {
             }
             mBitmap = Gl2Utils.text2Bitmap(mPreTimeStr);
         }
-
         GLES20.glViewport(x, y, w == 0 ? mBitmap.getWidth() : w, h == 0 ? mBitmap.getHeight() : h);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);

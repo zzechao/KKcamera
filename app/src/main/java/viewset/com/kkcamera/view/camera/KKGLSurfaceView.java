@@ -16,7 +16,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera1
      */
-    private int cameraId = 0;
+    private int cameraId = 1;
     private KitkatCamera mCamera1;
 
     /**
@@ -25,7 +25,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = false;
+    private boolean useCamera2 = true;
 
     private boolean isSetParm = false;
 
@@ -194,7 +194,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         if (mCamera2 != null) {
             mCamera2.closeCamera();
         }
-        //renderer.releaseSurfaceTexture();
+        renderer.releaseSurfaceTexture();
     }
 
 

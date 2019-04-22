@@ -213,7 +213,7 @@ public class Gl2Utils {
     public static Bitmap text2Bitmap(String txt) {
         Paint p = new Paint();
         p.setColor(Color.WHITE);
-        p.setTextSize(39);
+        p.setTextSize(52);
         p.setFlags(Paint.FAKE_BOLD_TEXT_FLAG);
         //获取高度
         Paint.FontMetricsInt metrics = p.getFontMetricsInt();

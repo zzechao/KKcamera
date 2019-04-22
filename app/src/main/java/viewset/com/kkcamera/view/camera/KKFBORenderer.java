@@ -100,9 +100,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             GLES20.glGenFramebuffers(1, fFrame, 0);
             /**根据纹理数量 返回的纹理索引*/
             GLES20.glGenTextures(1, fTexture, 0);
-       /* GLES20.glRenderbufferStorage(GLES20.GL_RENDERBUFFER, GLES20.GL_DEPTH_COMPONENT16, width,
-                height);*/
-
 
             /**将生产的纹理名称和对应纹理进行绑定*/
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fTexture[0]);
@@ -121,7 +118,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
-            //processFilter.setSize(width, height);
+            processFilter.setSize(width, height);
             drawFilter.setSize(width, height);
             groupFilter.setSize(width, height);
             setViewSize(width, height);
@@ -153,7 +150,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
 
             GLES20.glViewport(0, 0, mWidth, mHeight);
-            showFilter.setTextureId(groupFilter.getOutputTexture());
+            showFilter.setTextureId(processFilter.getOutputTexture());
             showFilter.onDrawFrame();
         }
     }
@@ -179,13 +176,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setPreviewSize(int width, int height) {
         mPreviewWidth = width;
         mPreviewHeight = height;
-        //calculateMatrix();
     }
 
     public void setViewSize(int width, int height) {
         mWidth = width;
         mHeight = height;
-        waterMarkFilter.setPosition(width - mImgWidth, 50, 0, 0);
+        waterMarkFilter.setPosition(width - mImgWidth, 50, mImgWidth,  mImgHeight);
         calculateMatrix();
     }
 
@@ -218,7 +214,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         mImgHeight = bitmap.getHeight();
         waterMarkFilter.setWaterMark(bitmap);
         waterMarkFilter.setPosition(30, 50, 0, 0);
-         groupFilter.addFilter(waterMarkFilter);
+        groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
         timeWaterMarkFilter.setPosition(10, 50, 0, 0);
