@@ -20,6 +20,9 @@ import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
+import viewset.com.kkcamera.view.camera.filter.ZipPkmAnimationFilter;
+import viewset.com.kkcamera.view.camera.test.GroupTestFilter;
+import viewset.com.kkcamera.view.camera.test.ZipTestPkmAnimationFilter;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -38,6 +41,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private BaseFilter processFilter;
     private WaterMarkFilter waterMarkFilter;
     private ProcessBeautyFilter beautyFilter;
+
+    private ZipPkmAnimationFilter pkmAnimationFilter;
 
     protected Context mContext;
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
@@ -60,6 +65,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int height;
 
 
+
+
     public KKFBORenderer(Context context) {
         mContext = context;
 
@@ -69,6 +76,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         drawFilter = new ShowFilter(context);
         processFilter = new ProcessFilter(context);
         beautyFilter = new ProcessBeautyFilter(context);
+
         setWaterMarkPosition();
     }
 
@@ -124,6 +132,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             groupFilter.setSize(mPreviewWidth, mPreviewHeight);
             beautyFilter.setSize(mPreviewWidth, mPreviewHeight);
             setViewSize(width, height);
+
+
         }
         Log.e("ttt", "onSurfaceChanged---fTexture =" + fTexture[0] + "---mTextureId==" + mTextureId);
     }
@@ -148,7 +158,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             processFilter.setTextureId(groupFilter.getOutputTexture());
             processFilter.onDrawFrame();
 
-            beautyFilter.setTextureId(groupFilter.getOutputTexture());
+            beautyFilter.setTextureId(processFilter.getOutputTexture());
             beautyFilter.onDrawFrame();
 
             GLES20.glViewport(0, 0, mWidth, mHeight);
@@ -178,7 +188,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setPreviewSize(int width, int height) {
         mPreviewWidth = width;
         mPreviewHeight = height;
-        waterMarkFilter.setPosition(mPreviewWidth - mImgWidth, 0, mImgWidth, mImgHeight);
+        waterMarkFilter.setPosition(mPreviewWidth - mImgWidth / 2, 50, mImgWidth / 2, mImgHeight / 2);
+        pkmAnimationFilter.setPosition(mPreviewWidth / 2, mPreviewHeight / 2);
     }
 
     public void setViewSize(int width, int height) {
@@ -219,7 +230,16 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter.setPosition(10, 0, 0, 0);
+        timeWaterMarkFilter.setPosition(10, 50, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
+
+        pkmAnimationFilter = new ZipPkmAnimationFilter(mContext);
+        pkmAnimationFilter.setAnimation("assets/etczip/cc.zip");
+
+        groupFilter.addFilter(pkmAnimationFilter);
+
+        //pkmAnimationFilter = new ZipTestPkmAnimationFilter(mContext);
+        //pkmAnimationFilter.setAnimation("assets/etczip/cc.zip");
+        //groupFilter.addFilter(pkmAnimationFilter);
     }
 }

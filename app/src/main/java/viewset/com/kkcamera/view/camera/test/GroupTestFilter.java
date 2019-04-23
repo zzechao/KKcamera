@@ -11,14 +11,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Description:
  */
-public class GroupFilter extends AFilter{
+public class GroupTestFilter extends AFilter{
 
     private Queue<AFilter> mFilterQueue;
     private List<AFilter> mFilters;
     private int width=0, height=0;
     private int size=0;
 
-    public GroupFilter(Resources res) {
+    public GroupTestFilter(Resources res) {
         super(res);
         mFilters=new ArrayList<>();
         mFilterQueue=new ConcurrentLinkedQueue<>();

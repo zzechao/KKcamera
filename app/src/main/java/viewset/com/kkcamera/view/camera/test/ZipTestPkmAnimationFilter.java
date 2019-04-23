@@ -13,7 +13,7 @@ import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 /**
  * Description:
  */
-public class ZipPkmAnimationFilter extends AFilter {
+public class ZipTestPkmAnimationFilter extends AFilter {
 
     private boolean isPlay=false;
     private ByteBuffer emptyBuffer;
@@ -28,7 +28,7 @@ public class ZipPkmAnimationFilter extends AFilter {
     private ZipPkmReader mPkmReader;
     private int mGlHAlpha;
 
-    public ZipPkmAnimationFilter(Resources mRes) {
+    public ZipTestPkmAnimationFilter(Resources mRes) {
         super(mRes);
         mBaseFilter=new NoFilter(mRes);
         mPkmReader=new ZipPkmReader(mRes.getAssets());
@@ -128,7 +128,6 @@ public class ZipPkmAnimationFilter extends AFilter {
         mPkmReader.setZipPath(path);
         mPkmReader.open();
     }
-
 
     @Override
     protected void finalize() throws Throwable {

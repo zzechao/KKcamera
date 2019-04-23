@@ -7,8 +7,6 @@ import android.util.Log;
 import com.seu.magicfilter.filter.advanced.MagicBeautyFilter;
 import com.seu.magicfilter.utils.MagicParams;
 
-import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
-
 public class ProcessBeautyFilter extends BaseFilter {
 
     private MagicBeautyFilter mFilter;
@@ -25,9 +23,7 @@ public class ProcessBeautyFilter extends BaseFilter {
         super(context);
         MagicParams.context = context;
         mFilter = new MagicBeautyFilter();
-        float[] OM = Gl2Utils.getOriginalMatrix();
-        Gl2Utils.flip(OM, false, true);//矩阵上下翻转
-        mFilter.setBeautyLevel(3);
+        mFilter.setBeautyLevel(1);
     }
 
     @Override
