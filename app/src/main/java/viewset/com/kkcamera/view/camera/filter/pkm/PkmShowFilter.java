@@ -6,7 +6,7 @@ import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 /**
- * 针对https://blog.csdn.net/junzia/article/details/53872303写的Pkm
+ * 针对https://blog.csdn.net/junzia/article/details/53872303写的Pkm加载的底层Filter
  */
 public class PkmShowFilter extends NoFilter {
 

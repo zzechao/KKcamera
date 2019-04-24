@@ -16,6 +16,7 @@ import viewset.com.kkcamera.view.camera.filter.BaseFilter;
 import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.camera.filter.GroupFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
+import viewset.com.kkcamera.view.camera.filter.PkmFilter;
 import viewset.com.kkcamera.view.camera.filter.pkm.PkmShowFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessBeautyFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
@@ -43,7 +44,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private WaterMarkFilter waterMarkFilter;
     private ProcessBeautyFilter beautyFilter;
 
-    private PkmShowFilter pkmAnimationFilter;
+    private PkmFilter pkmFilter;
 
     protected Context mContext;
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
@@ -196,6 +197,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         mPreviewWidth = width;
         mPreviewHeight = height;
         waterMarkFilter.setPosition(mPreviewWidth - mImgWidth / 2, 50, mImgWidth / 2, mImgHeight / 2);
+        pkmFilter.setPosition(mPreviewWidth / 2, mPreviewHeight / 2);
     }
 
     public void setViewSize(int width, int height) {
@@ -241,14 +243,15 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         TimeWaterMarkFilter timeWaterMarkFilter2 = new TimeWaterMarkFilter(mContext);
         timeWaterMarkFilter2.setPosition(10, 100, 0, 0);
-        //groupFilter.addFilter(timeWaterMarkFilter2);
+        groupFilter.addFilter(timeWaterMarkFilter2);
 
         TimeWaterMarkFilter timeWaterMarkFilter3 = new TimeWaterMarkFilter(mContext);
         timeWaterMarkFilter3.setPosition(10, 150, 0, 0);
-        //groupFilter.addFilter(timeWaterMarkFilter3);
+        groupFilter.addFilter(timeWaterMarkFilter3);
 
-        pkmAnimationFilter = new PkmShowFilter(mContext);
-        groupFilter.addFilter(pkmAnimationFilter);
+        pkmFilter = new PkmFilter(mContext);
+        pkmFilter.setAnimation("assets/etczip/cc.zip");
+        groupFilter.addFilter(pkmFilter);
 
         //pkmAnimationFilter = new ZipTestPkmAnimationFilter(mContext);
         //pkmAnimationFilter.setAnimation("assets/etczip/cc.zip");
