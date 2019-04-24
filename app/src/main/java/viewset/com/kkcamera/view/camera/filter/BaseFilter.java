@@ -17,8 +17,8 @@ public abstract class BaseFilter {
 
     private FloatBuffer mVerBuffer, mTexBuffer;
 
-    private String mVertexShader;
-    private String mFragmentShader;
+    protected String mVertexShader;
+    protected String mFragmentShader;
 
     private final float[] sPos = {
             -1.0f, 1.0f,    //左上角
@@ -54,16 +54,17 @@ public abstract class BaseFilter {
     private int mTextureId = 0;
 
     public BaseFilter(Context context) {
-        this(OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.glsl", context.getResources()));
         mContext = context;
+        onCreateShare();
+        initBuffer();
     }
 
-    public BaseFilter(String vertexShader, String fragmentShader) {
-        mVertexShader = vertexShader;
-        mFragmentShader = fragmentShader;
-
-        initBuffer();
+    /**
+     * 创建所有着色器，包括顶点着色器和片元着色器
+     */
+    public void onCreateShare() {
+        mVertexShader = OpenGlUtils.loadShareFromAssetsFile("filter/default_vertex.glsl", mContext.getResources());
+        mFragmentShader = OpenGlUtils.loadShareFromAssetsFile("filter/default_fragment.glsl", mContext.getResources());
     }
 
     /**
@@ -83,6 +84,9 @@ public abstract class BaseFilter {
         mTexBuffer.position(0);
     }
 
+    /**
+     * 获取所有句柄
+     */
     public void onSurfaceCreated() {
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 

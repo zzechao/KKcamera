@@ -5,7 +5,7 @@
  * Created by Wuwang on 2016/12/8
  * Copyright © 2016年 深圳哎吖科技. All rights reserved.
  */
-package viewset.com.kkcamera.view.camera.filter;
+package viewset.com.kkcamera.view.camera.filter.pkm;
 
 import android.content.Context;
 import android.content.res.AssetManager;

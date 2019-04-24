@@ -5,9 +5,11 @@ import android.graphics.Bitmap;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
+/**
+ * 针对水印首先初始化一个滤镜Nofilter来存放真正的水印绘制的filter
+ */
 public class WaterMarkFilter extends NoFilter {
     /**
      * 水印的放置位置和宽高
@@ -21,7 +23,10 @@ public class WaterMarkFilter extends NoFilter {
      * 水印图片的bitmap
      */
     private Bitmap mBitmap;
-    /***/
+
+    /**
+     * 真正的水印绘制
+     */
     private NoFilter mFilter;
 
     public WaterMarkFilter(Context context) {

@@ -8,9 +8,13 @@ import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 
 public class ShowFilter extends BaseFilter {
     public ShowFilter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("camera/show_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("camera/show_fragment.glsl", context.getResources()));
-        mContext = context;
+        super(context);
+    }
+
+    @Override
+    public void onCreateShare() {
+        mVertexShader = OpenGlUtils.loadShareFromAssetsFile("camera/show_vertex.glsl", mContext.getResources());
+        mFragmentShader = OpenGlUtils.loadShareFromAssetsFile("camera/show_fragment.glsl", mContext.getResources());
     }
 
     @Override

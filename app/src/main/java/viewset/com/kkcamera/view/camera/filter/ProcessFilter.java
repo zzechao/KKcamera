@@ -18,10 +18,10 @@ public class ProcessFilter extends BaseFilter {
     private int width;
     private int height;
 
-    public ProcessFilter(Context context) {
+    public ProcessFilter(Context context, BaseFilter filter) {
         super(context);
 
-        mFilter = new ColorFilter(context);
+        mFilter = filter;
         float[] OM = Gl2Utils.getOriginalMatrix();
         Gl2Utils.flip(OM, false, true);//矩阵上下翻转
         mFilter.setMatrix(OM);

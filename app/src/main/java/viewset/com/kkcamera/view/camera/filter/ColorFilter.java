@@ -12,9 +12,13 @@ public class ColorFilter extends BaseFilter {
     private int glChangeColor;
 
     public ColorFilter(Context context) {
-        super(OpenGlUtils.loadShareFromAssetsFile("camera/half_color_vertex.glsl", context.getResources()),
-                OpenGlUtils.loadShareFromAssetsFile("camera/half_color_fragment.glsl", context.getResources()));
-        mContext = context;
+        super(context);
+    }
+
+    @Override
+    public void onCreateShare() {
+       mVertexShader = OpenGlUtils.loadShareFromAssetsFile("camera/half_color_vertex.glsl", mContext.getResources());
+       mFragmentShader = OpenGlUtils.loadShareFromAssetsFile("camera/half_color_fragment.glsl", mContext.getResources());
     }
 
     @Override
