@@ -219,11 +219,14 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
                     ImgShowFilter mFilter = new ImgShowFilter(getContext());
                     mFilter.setBitmap(bmp);
+                    mFilter.onSurfaceCreated();
                     mFilter.setSize(w, h);
                     mFilter.onDrawFrame();
 
                     Bitmap result = backEnv.getBitmap();
                     Log.e("ttt",(result == null) + "");
+                    backEnv.destroy();
+
                     callback.back(result);
                     mCamera1.preview();
 //                    mCamera1.stopPreview();
