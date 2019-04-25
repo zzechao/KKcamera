@@ -295,8 +295,7 @@ public class MagicCameraView extends MagicBaseView {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
-        int[] mFrameBuffers = new int[1];
-        int[] mFrameBufferTextures = new int[1];
+
         if (beautyFilter == null)
             beautyFilter = new MagicBeautyFilter(getContext());
         beautyFilter.init();
@@ -307,6 +306,9 @@ public class MagicCameraView extends MagicBaseView {
             filter.onInputSizeChanged(width, height);
             filter.onDisplaySizeChanged(width, height);
         }
+
+        int[] mFrameBuffers = new int[1];
+        int[] mFrameBufferTextures = new int[1];
         GLES20.glGenFramebuffers(1, mFrameBuffers, 0);
         GLES20.glGenTextures(1, mFrameBufferTextures, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0]);

@@ -57,7 +57,6 @@ public class KitkatCamera implements ICamera {
             Camera.Size pic = param.getPictureSize();
             mPicSize = new Point(pic.height, pic.width);
             mPreSize = new Point(pre.height, pre.width);
-            Log.e("wuwang", "camera previewSize:" + mPreSize.x + "/" + mPreSize.y);
             return true;
         }
         return false;
@@ -86,6 +85,12 @@ public class KitkatCamera implements ICamera {
         return false;
     }
 
+    public boolean stopPreview(){
+        if (mCamera != null) {
+            mCamera.stopPreview();
+        }
+        return false;
+    }
 
     @Override
     public boolean switchTo(int cameraId) {
@@ -95,8 +100,15 @@ public class KitkatCamera implements ICamera {
     }
 
     @Override
-    public void takePhoto(TakePhotoCallback callback) {
-
+    public void takePhoto(final TakePhotoCallback callback) {
+        if (mCamera != null) {
+            mCamera.takePicture(null, null, new Camera.PictureCallback() {
+                @Override
+                public void onPictureTaken(byte[] data, Camera camera) {
+                    callback.onTakePhoto(data, mPicSize.x, mPicSize.y);
+                }
+            });
+        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -12,6 +13,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
@@ -24,6 +26,7 @@ import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
+import android.util.SparseIntArray;
 import android.view.Surface;
 
 import java.util.ArrayList;
@@ -35,7 +38,7 @@ import java.util.List;
 import viewset.com.kkcamera.view.activity.CameraActivity;
 
 @TargetApi(21)
-public class KKCamera {
+public class KKCamera implements ICamera {
 
     private Context mContext;
     private String mCameraId;
@@ -53,6 +56,14 @@ public class KKCamera {
     private ImageReader mImageReader;
     private Size mPreviewSize;
 
+    private static final SparseIntArray ORIENTATION = new SparseIntArray();
+
+    static {
+        ORIENTATION.append(Surface.ROTATION_0, 90);
+        ORIENTATION.append(Surface.ROTATION_90, 0);
+        ORIENTATION.append(Surface.ROTATION_180, 270);
+        ORIENTATION.append(Surface.ROTATION_270, 180);
+    }
 
     private CameraCallback cameraCallback;
 
@@ -88,6 +99,96 @@ public class KKCamera {
         this.cameraCallback = cameraCallback;
     }
 
+    @Override
+    public void setConfig(Config config) {
+
+    }
+
+    @Override
+    public boolean preview() {
+        return false;
+    }
+
+    @Override
+    public boolean switchTo(int cameraId) {
+        return false;
+    }
+
+    @Override
+    public void takePhoto(TakePhotoCallback callback) {
+        try {
+            final CaptureRequest.Builder captureBuilder =
+                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            captureBuilder.addTarget(mImageReader.getSurface());
+
+            // Use the same AE and AF modes as the preview.
+            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            captureBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+
+            // Orientation
+            //int rotation = getWindowManager().getDefaultDisplay().getRotation();
+            //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATION.get(rotation));
+
+            CameraCaptureSession.CaptureCallback CaptureCallback
+                    = new CameraCaptureSession.CaptureCallback() {
+
+                @Override
+                public void onCaptureCompleted(@NonNull CameraCaptureSession session,
+                                               @NonNull CaptureRequest request,
+                                               @NonNull TotalCaptureResult result) {
+                    Log.e("ttt", "onCaptureCompleted");
+                    //unlockFocus();
+                }
+
+                @Override
+                public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
+                    Log.e("ttt", "onCaptureFailed");
+                    //unlockFocus();
+                }
+            };
+
+            mPreviewSession.stopRepeating();
+            mPreviewSession.abortCaptures();
+            mPreviewSession.capture(captureBuilder.build(), CaptureCallback, null);
+        } catch (Exception e) {
+
+        }
+    }
+
+    @Override
+    public boolean close() {
+        if (null != mPreviewSession) {
+            mPreviewSession.close();
+            mPreviewSession = null;
+        }
+        if (null != mCameraDevice) {
+            mCameraDevice.close();
+            mCameraDevice = null;
+        }
+        if (null != mImageReader) {
+            mImageReader.close();
+            mImageReader = null;
+        }
+        return true;
+    }
+
+    @Override
+    public Point getPreviewSize() {
+        return new Point(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+    }
+
+    @Override
+    public Point getPictureSize() {
+        return null;
+    }
+
+    @Override
+    public void setOnPreviewFrameCallback(PreviewFrameCallback callback) {
+
+    }
+
     public interface CameraCallback {
         void configureTransform(int previewWidth, int previewHeight);
 
@@ -99,12 +200,13 @@ public class KKCamera {
      *
      * @param cameraId
      */
-    public void openCamera(int cameraId) {
+    @Override
+    public boolean open(int cameraId) {
         //检查权限
         try {
             if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
                     != PackageManager.PERMISSION_GRANTED) {
-                return;
+                return false;
             }
             mFacing = cameraId == 0 ? CameraCharacteristics.LENS_FACING_BACK : CameraCharacteristics.LENS_FACING_FRONT;
             //打开相机，第一个参数指示打开哪个摄像头，第二个参数stateCallback为相机的状态回调接口，第三个参数用来确定Callback在哪个线程执行，为null的话就在当前线程执行
@@ -116,9 +218,11 @@ public class KKCamera {
             //mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
             manager.openCamera(mCameraId, stateCallback, cameraHandler);
+            return true;
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
 
@@ -145,7 +249,6 @@ public class KKCamera {
                 }
                 //根据TextureView的尺寸设置预览尺寸
                 Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
-                Log.e("ttt", Arrays.toString(sizes));
                 mPreviewSize = getPropPreviewSize(Arrays.asList(sizes), 1.778f, 720);
                 mCameraId = cameraId;
                 break;
@@ -171,34 +274,6 @@ public class KKCamera {
         }, cameraHandler);
     }
 
-    /**
-     * @param sizes
-     * @param width
-     * @param height
-     * @return
-     */
-    private Size getOptimalSize(Size[] sizes, int width, int height) {
-        List<Size> bigEnough = new ArrayList<>();
-        List<Size> notBigEnough = new ArrayList<>();
-        float t = width > height ? width * 1f / height : height * 1f / width;
-        for (Size option : sizes) {
-            float k = option.getWidth() > option.getHeight() ? option.getWidth() * 1f / option.getHeight() : option.getHeight() * 1f / option.getWidth();
-            if (k > t && option.getHeight() >= width) {
-                bigEnough.add(option);
-            } else {
-                notBigEnough.add(option);
-            }
-        }
-
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
-        } else if (notBigEnough.size() > 0) {
-            return Collections.max(notBigEnough, new CompareSizesByArea());
-        } else {
-            return new Size(width, height);
-        }
-    }
-
     static class CompareSizesByArea implements Comparator<Size> {
         @Override
         public int compare(Size lhs, Size rhs) {
@@ -212,7 +287,8 @@ public class KKCamera {
      *
      * @param mSurfaceTexture
      */
-    public void startPreview(SurfaceTexture mSurfaceTexture) {
+    @Override
+    public void setPreviewTexture(SurfaceTexture mSurfaceTexture) {
         //设置TextureView的缓冲区大小
         mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
         //获取Surface显示预览数据
@@ -294,24 +370,6 @@ public class KKCamera {
             cameraHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * 扣除
-     */
-    public void closeCamera() {
-        if (null != mPreviewSession) {
-            mPreviewSession.close();
-            mPreviewSession = null;
-        }
-        if (null != mCameraDevice) {
-            mCameraDevice.close();
-            mCameraDevice = null;
-        }
-        if (null != mImageReader) {
-            mImageReader.close();
-            mImageReader = null;
         }
     }
 

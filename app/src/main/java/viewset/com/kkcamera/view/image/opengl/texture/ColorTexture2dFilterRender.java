@@ -66,7 +66,7 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         if (colorFilter == null) {
             return;
         }
-        colorFilter.onSurfaceCreated(gl, config);
+        colorFilter.onSurfaceCreated();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
         if (colorFilter == null) {
             return;
         }
-        colorFilter.onSurfaceChanged(gl, width, height);
+        colorFilter.onSurfaceChanged(width, height);
     }
 
     @Override
@@ -86,12 +86,12 @@ public class ColorTexture2dFilterRender implements GLSurfaceView.Renderer {
             return;
         }
         if (isFilterChange && mWidth != 0 && mHeight != 0) {
-            colorFilter.onSurfaceCreated(gl, mConfig);
-            colorFilter.onSurfaceChanged(gl, mWidth, mHeight);
+            colorFilter.onSurfaceCreated();
+            colorFilter.onSurfaceChanged(mWidth, mHeight);
             isFilterChange = false;
         }
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        colorFilter.onDrawFrame(gl);
+        colorFilter.onDrawFrame();
     }
 
     public void setFilter(FilterState.Filter filter) {

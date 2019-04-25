@@ -17,7 +17,7 @@ import javax.microedition.khronos.opengles.GL10;
 import viewset.com.kkcamera.view.image.opengl.texture.ColorTexture2dFilterRender;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 
-public abstract class ColorFilter implements GLSurfaceView.Renderer {
+public abstract class ColorFilter{
 
     private FloatBuffer bPos, bCoord;
     private String mVertexShader;
@@ -91,8 +91,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
 
     protected abstract void onDrawArraysAfter();
 
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated() {
         Log.e("ttt", "onSurfaceCreated");
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 
@@ -105,8 +104,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         glOnSufaceCreated(mProgram);
     }
 
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceChanged(int width, int height) {
         mInputWidth = width;
         mInputHeight = height;
         Bitmap bitmap = mRender.getBitmap();
@@ -136,9 +134,7 @@ public abstract class ColorFilter implements GLSurfaceView.Renderer {
         }
     }
 
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        Log.e("ttt", "onDrawFrame--" + mRender.getBitmap().isRecycled());
+    public void onDrawFrame() {
         GLES20.glUseProgram(mProgram);
 
         mTextureId = OpenGlUtils.loadTexture(mRender.getBitmap(), OpenGlUtils.NO_TEXTURE);

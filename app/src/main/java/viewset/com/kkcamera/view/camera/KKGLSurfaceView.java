@@ -1,6 +1,8 @@
 package viewset.com.kkcamera.view.camera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
@@ -10,6 +12,10 @@ import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import viewset.com.kkcamera.view.camera.egl.FrameBuffer;
+import viewset.com.kkcamera.view.camera.egl.GLESBackEnv;
+import viewset.com.kkcamera.view.camera.filter.ImgShowFilter;
 
 public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
@@ -25,7 +31,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = true;
+    private boolean useCamera2 = false;
 
     private boolean isSetParm = false;
 
@@ -57,7 +63,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
                 @Override
                 public void deviceOpened() {
-                    mCamera2.startPreview(renderer.getSurfaceTexture());
+                    mCamera2.setPreviewTexture(renderer.getSurfaceTexture());
                     renderer.setCameraId(cameraId);
                 }
             });
@@ -71,14 +77,13 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        Log.e("ttt", "onSurfaceCreated---GLSurface");
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
         renderer.setCameraId(cameraId);
         if (!isSetParm) {
             if (useCamera2) {
                 renderer.onSurfaceCreated(gl, config);
-                mCamera2.openCamera(cameraId);
+                mCamera2.open(cameraId);
             } else {
                 renderer.onSurfaceCreated(gl, config);
                 mCamera1.open(cameraId);
@@ -94,7 +99,6 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        Log.e("ttt", "onSurfaceChanged---GLSurface");
         GLES20.glViewport(0, 0, width, height);
         if (useCamera2) {
             renderer.onSurfaceChanged(gl, width, height);
@@ -109,8 +113,8 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
             public void run() {
                 cameraId = cameraId == 0 ? 1 : 0;
                 if (useCamera2) {
-                    mCamera2.closeCamera();
-                    mCamera2.openCamera(cameraId);
+                    mCamera2.close();
+                    mCamera2.open(cameraId);
                 } else {
                     mCamera1.switchTo(cameraId);
                     Point point = mCamera1.getPreviewSize();
@@ -157,7 +161,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private void openCamera() {
         if (isSetParm) {
             if (useCamera2) {
-                mCamera2.openCamera(cameraId);
+                mCamera2.open(cameraId);
             } else {
                 mCamera1.open(cameraId);
                 Point point = mCamera1.getPreviewSize();
@@ -183,7 +187,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     private void closeCamera() {
         if (useCamera2) {
-            mCamera2.closeCamera();
+            mCamera2.close();
         } else {
             mCamera1.close();
         }
@@ -192,14 +196,76 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     public void onDestroy() {
         Log.e("ttt", "onDestroy");
         if (mCamera2 != null) {
-            mCamera2.closeCamera();
+            mCamera2.close();
         }
         renderer.releaseSurfaceTexture();
     }
 
+    /**
+     * 拍照
+     */
+    public void takePhoto(final Callback<Bitmap> callback) {
+        if (useCamera2) {
+
+        } else {
+            mCamera1.takePhoto(new ICamera.TakePhotoCallback() {
+                @Override
+                public void onTakePhoto(byte[] data, int width, int height) {
+                    Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    int w = bmp.getWidth();
+                    int h = bmp.getHeight();
+                    GLESBackEnv backEnv = new GLESBackEnv(w, h);
+                    backEnv.setThreadOwner(Thread.currentThread().getName());
+
+                    ImgShowFilter mFilter = new ImgShowFilter(getContext());
+                    mFilter.setBitmap(bmp);
+                    mFilter.setSize(w, h);
+                    mFilter.onDrawFrame();
+
+                    Bitmap result = backEnv.getBitmap();
+                    Log.e("ttt",(result == null) + "");
+                    callback.back(result);
+                    mCamera1.preview();
+//                    mCamera1.stopPreview();
+//                    final Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+//                    queueEvent(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            int w = bmp.getWidth();
+//                            int h = bmp.getHeight();
+//                            GLESBackEnv backEnv = new GLESBackEnv(w, h);
+//                            backEnv.setThreadOwner(Thread.currentThread().getName());
+//
+//                            ImgShowFilter mFilter = new ImgShowFilter(getContext());
+//                            mFilter.setBitmap(bmp);
+//                            mFilter.setSize(w, h);
+//
+//                            FrameBuffer buffer = new FrameBuffer();
+//                            buffer.create(w, h);
+//                            buffer.beginDrawToFrameBuffer();
+//                            mFilter.onDrawFrame();
+//                            buffer.endDrawToFrameBuffer();
+//
+//                            Bitmap result = backEnv.getBitmap();
+//                            if (callback != null) {
+//                                callback.back(result);
+//                            }
+//                            backEnv.destroy();
+//
+//                            mCamera1.preview();
+//                        }
+//                    });
+                }
+            });
+        }
+    }
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         requestRender();
+    }
+
+    public interface Callback<T> {
+        void back(T t);
     }
 }

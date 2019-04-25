@@ -1,10 +1,3 @@
-/*
- *
- * ICamera.java
- * 
- * Created by Wuwang on 2016/11/10
- * Copyright © 2016年 深圳哎吖科技. All rights reserved.
- */
 package viewset.com.kkcamera.view.camera;
 
 import android.graphics.Point;

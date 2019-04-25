@@ -8,23 +8,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <ImageView
+        android:id="@+id/iv_pic"
+        android:layout_width="160dp"
+        android:layout_height="240dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY"
+        android:background="#000"
+        android:visibility="visible" />
+
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
         android:layout_centerVertical="true"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/bt_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="switch" />
+            android:text="转换" />
 
         <Button
-            android:id="@+id/filter"
+            android:id="@+id/takephoto"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="filter" />
+            android:text="拍照" />
+
     </LinearLayout>
 </RelativeLayout>

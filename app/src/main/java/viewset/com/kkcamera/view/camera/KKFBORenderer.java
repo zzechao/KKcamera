@@ -17,7 +17,6 @@ import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.camera.filter.GroupFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.filter.PkmFilter;
-import viewset.com.kkcamera.view.camera.filter.pkm.PkmShowFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessBeautyFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
@@ -197,7 +196,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         mPreviewWidth = width;
         mPreviewHeight = height;
         waterMarkFilter.setPosition(mPreviewWidth - mImgWidth / 2, 50, mImgWidth / 2, mImgHeight / 2);
-        pkmFilter.setPosition(mPreviewWidth / 2, mPreviewHeight / 2);
+        pkmFilter.setPosition(200, 200);
     }
 
     public void setViewSize(int width, int height) {
@@ -241,20 +240,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         timeWaterMarkFilter.setPosition(10, 50, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
 
-        TimeWaterMarkFilter timeWaterMarkFilter2 = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter2.setPosition(10, 100, 0, 0);
-        groupFilter.addFilter(timeWaterMarkFilter2);
-
-        TimeWaterMarkFilter timeWaterMarkFilter3 = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter3.setPosition(10, 150, 0, 0);
-        groupFilter.addFilter(timeWaterMarkFilter3);
-
         pkmFilter = new PkmFilter(mContext);
         pkmFilter.setAnimation("assets/etczip/cc.zip");
         groupFilter.addFilter(pkmFilter);
-
-        //pkmAnimationFilter = new ZipTestPkmAnimationFilter(mContext);
-        //pkmAnimationFilter.setAnimation("assets/etczip/cc.zip");
-        //groupFilter.addFilter(pkmAnimationFilter);
     }
 }
