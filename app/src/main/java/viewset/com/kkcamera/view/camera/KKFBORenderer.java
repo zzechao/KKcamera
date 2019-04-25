@@ -244,4 +244,17 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         pkmFilter.setAnimation("assets/etczip/cc.zip");
         groupFilter.addFilter(pkmFilter);
     }
+
+    /**
+     * @param id
+     * @param w
+     * @param h
+     */
+    public void drawBitmap(int id, int w, int h) {
+        BaseFilter processColorFilter = new ProcessFilter(mContext, new ColorFilter(mContext));
+        processColorFilter.onSurfaceCreated();
+        processColorFilter.setSize(w, h);
+        processColorFilter.setTextureId(id);
+        processColorFilter.onDrawFrame();
+    }
 }

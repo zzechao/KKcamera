@@ -225,8 +225,7 @@ public class MagicCameraView extends MagicBaseView {
     private Bitmap drawPhoto(Bitmap bitmap, boolean isRotated) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
-        int[] mFrameBuffers = new int[1];
-        int[] mFrameBufferTextures = new int[1];
+
         if (beautyFilter == null)
             beautyFilter = new MagicBeautyFilter();
         beautyFilter.init();
@@ -237,8 +236,12 @@ public class MagicCameraView extends MagicBaseView {
             filter.onInputSizeChanged(width, height);
             filter.onDisplaySizeChanged(width, height);
         }
+        int[] mFrameBuffers = new int[1];
+        int[] mFrameBufferTextures = new int[1];
+
         GLES20.glGenFramebuffers(1, mFrameBuffers, 0);
         GLES20.glGenTextures(1, mFrameBufferTextures, 0);
+
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0]);
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
@@ -250,6 +253,7 @@ public class MagicCameraView extends MagicBaseView {
                 GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
                 GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
         GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                 GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0], 0);
