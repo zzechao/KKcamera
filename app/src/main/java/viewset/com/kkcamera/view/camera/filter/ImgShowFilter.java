@@ -6,6 +6,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
+import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public class ImgShowFilter extends NoFilter {
 
@@ -50,7 +51,7 @@ public class ImgShowFilter extends NoFilter {
             //计算变换矩阵
             Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
         }
-
+        Gl2Utils.rotate(mMVPMatrix, 90);
         setMatrix(mMVPMatrix);
 
         GLES20.glViewport(0, 0, width, height);
