@@ -50,7 +50,7 @@ public class GLCameraActivity extends AppCompatActivity {
                             }
                         });
                     }
-                });
+                },iv_pic.getMeasuredWidth(),iv_pic.getMeasuredHeight());
                 break;
         }
     }

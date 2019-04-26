@@ -18,6 +18,7 @@ import viewset.com.kkcamera.view.camera.egl.GLESBackEnv;
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
 import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.camera.filter.ImgShowFilter;
+import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 
 public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
@@ -37,6 +38,8 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private boolean useCamera2 = false;
 
     private boolean isSetParm = false;
+
+    private int mWidth, mHeight;
 
     public KKGLSurfaceView(Context context) {
         this(context, null);
@@ -102,6 +105,8 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        this.mWidth = width;
+        this.mHeight = height;
         GLES20.glViewport(0, 0, width, height);
         if (useCamera2) {
             renderer.onSurfaceChanged(gl, width, height);
@@ -207,7 +212,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * 拍照
      */
-    public void takePhoto(final Callback<Bitmap> callback) {
+    public void takePhoto(final Callback<Bitmap> callback, final int viewWidth, final int viewHeight) {
         if (useCamera2) {
 
         } else {
@@ -217,7 +222,8 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
                     Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
                     int w = bmp.getWidth();
                     int h = bmp.getHeight();
-                    GLESBackEnv backEnv = new GLESBackEnv(w, h);
+
+                    GLESBackEnv backEnv = new GLESBackEnv(width, height);
                     backEnv.setThreadOwner(Thread.currentThread().getName());
 
                     ImgShowFilter mFilter = new ImgShowFilter(getContext());
@@ -225,43 +231,33 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
                     mFilter.onSurfaceCreated();
                     mFilter.setSize(w, h);
 
-                    int[] mFrameBuffers = new int[1];
-                    int[] mFrameBufferTextures = new int[1];
-
-                    GLES20.glGenFramebuffers(1, mFrameBuffers, 0);
-                    GLES20.glGenTextures(1, mFrameBufferTextures, 0);
-
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0]);
-                    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0,
-                            GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
-                    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                            GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-                    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                            GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-                    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                            GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-                    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
-                            GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-
-                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0]);
-                    GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
-                            GLES20.GL_TEXTURE_2D, mFrameBufferTextures[0], 0);
+                    FrameBuffer buffer = new FrameBuffer();
+                    buffer.create(w, h);
+                    buffer.beginDrawToFrameBuffer();
                     mFilter.onDrawFrame();
+                    buffer.endDrawToFrameBuffer();
 
+//                    GLES20.glViewport(0, 0, viewWidth, viewHeight);
+//                    BaseFilter processColorFilter = new ProcessFilter(getContext(), new ColorFilter(getContext()));
+//                    processColorFilter.onSurfaceCreated();
+//                    processColorFilter.setSize(viewWidth, viewHeight);
+//                    processColorFilter.setTextureId(fTexture[0]);
+//                    processColorFilter.onDrawFrame();
+//
 
-                    BaseFilter processColorFilter = new ProcessFilter(getContext(), new ColorFilter(getContext()));
-                    processColorFilter.onSurfaceCreated();
-                    processColorFilter.setSize(w, h);
-                    processColorFilter.setTextureId(mFrameBufferTextures[0]);
-                    processColorFilter.onDrawFrame();
-
+                    GLES20.glViewport(0, 0, w, h * 2);
+                    NoFilter showFilter = new NoFilter(getContext());
+                    showFilter.onSurfaceCreated();
+                    showFilter.setSize(w, h);
+                    showFilter.setTextureId(buffer.getTextureId());
+                    showFilter.onDrawFrame();
 
                     Bitmap result = backEnv.getBitmap();
 
-                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-                    GLES20.glDeleteTextures(1, new int[]{mFilter.getTextureId()}, 0);
-                    GLES20.glDeleteFramebuffers(mFrameBuffers.length, mFrameBuffers, 0);
-                    GLES20.glDeleteTextures(mFrameBufferTextures.length, mFrameBufferTextures, 0);
+//                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+//                    GLES20.glDeleteTextures(1, new int[]{mFilter.getTextureId()}, 0);
+//                    GLES20.glDeleteFramebuffers(mFrameBuffers.length, mFrameBuffers, 0);
+//                    GLES20.glDeleteTextures(mFrameBufferTextures.length, mFrameBufferTextures, 0);
 
                     backEnv.destroy();
 

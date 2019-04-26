@@ -107,6 +107,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             this.height = height;
             GLES20.glDeleteFramebuffers(1, fFrame, 0);
             GLES20.glDeleteTextures(1, fTexture, 0);
+
             /**创建一个帧染缓冲区对象*/
             GLES20.glGenFramebuffers(1, fFrame, 0);
             /**根据纹理数量 返回的纹理索引*/
@@ -243,18 +244,5 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         pkmFilter = new PkmFilter(mContext);
         pkmFilter.setAnimation("assets/etczip/cc.zip");
         groupFilter.addFilter(pkmFilter);
-    }
-
-    /**
-     * @param id
-     * @param w
-     * @param h
-     */
-    public void drawBitmap(int id, int w, int h) {
-        BaseFilter processColorFilter = new ProcessFilter(mContext, new ColorFilter(mContext));
-        processColorFilter.onSurfaceCreated();
-        processColorFilter.setSize(w, h);
-        processColorFilter.setTextureId(id);
-        processColorFilter.onDrawFrame();
     }
 }
