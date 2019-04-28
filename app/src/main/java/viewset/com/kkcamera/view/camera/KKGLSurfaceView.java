@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -20,6 +21,7 @@ import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.camera.filter.ImgShowFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
+import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
 public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
@@ -120,13 +122,13 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
             @Override
             public void run() {
                 cameraId = cameraId == 0 ? 1 : 0;
+                renderer.setCameraId(cameraId);
                 if (useCamera2) {
                     mCamera2.close();
                     mCamera2.open(cameraId);
                 } else {
                     mCamera1.switchTo(cameraId);
                     Point point = mCamera1.getPreviewSize();
-                    renderer.setCameraId(cameraId);
                     renderer.setPreviewSize(point.x, point.y);
                     mCamera1.setPreviewTexture(renderer.getSurfaceTexture());
                     mCamera1.preview();
@@ -212,86 +214,30 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * 拍照
      */
-    public void takePhoto(final Callback<Bitmap> callback, final int viewWidth, final int viewHeight) {
+    public void takePhoto(final Callback<Bitmap> callback) {
         if (useCamera2) {
 
         } else {
             mCamera1.takePhoto(new ICamera.TakePhotoCallback() {
                 @Override
                 public void onTakePhoto(byte[] data, int width, int height) {
-                    Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    Log.e("ttt", Thread.currentThread().getName());
+                    final Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
                     int w = bmp.getWidth();
                     int h = bmp.getHeight();
 
-                    GLESBackEnv backEnv = new GLESBackEnv(width, height);
+                    GLESBackEnv backEnv = new GLESBackEnv(w, h);
                     backEnv.setThreadOwner(Thread.currentThread().getName());
 
-                    ImgShowFilter mFilter = new ImgShowFilter(getContext());
-                    mFilter.setBitmap(bmp);
-                    mFilter.onSurfaceCreated();
-                    mFilter.setSize(w, h);
-
-                    FrameBuffer buffer = new FrameBuffer();
-                    buffer.create(w, h);
-                    buffer.beginDrawToFrameBuffer();
-                    mFilter.onDrawFrame();
-                    buffer.endDrawToFrameBuffer();
-
-//                    GLES20.glViewport(0, 0, viewWidth, viewHeight);
-//                    BaseFilter processColorFilter = new ProcessFilter(getContext(), new ColorFilter(getContext()));
-//                    processColorFilter.onSurfaceCreated();
-//                    processColorFilter.setSize(viewWidth, viewHeight);
-//                    processColorFilter.setTextureId(fTexture[0]);
-//                    processColorFilter.onDrawFrame();
-//
-
-                    GLES20.glViewport(0, 0, w, h * 2);
-                    NoFilter showFilter = new NoFilter(getContext());
-                    showFilter.onSurfaceCreated();
-                    showFilter.setSize(w, h);
-                    showFilter.setTextureId(buffer.getTextureId());
-                    showFilter.onDrawFrame();
+                    renderer.drawBitmap(bmp,w,h);
 
                     Bitmap result = backEnv.getBitmap();
-
-//                    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-//                    GLES20.glDeleteTextures(1, new int[]{mFilter.getTextureId()}, 0);
-//                    GLES20.glDeleteFramebuffers(mFrameBuffers.length, mFrameBuffers, 0);
-//                    GLES20.glDeleteTextures(mFrameBufferTextures.length, mFrameBufferTextures, 0);
 
                     backEnv.destroy();
 
                     callback.back(result);
+
                     mCamera1.preview();
-//                    mCamera1.stopPreview();
-//                    final Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-//                    queueEvent(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            int w = bmp.getWidth();
-//                            int h = bmp.getHeight();
-//                            GLESBackEnv backEnv = new GLESBackEnv(w, h);
-//                            backEnv.setThreadOwner(Thread.currentThread().getName());
-//
-//                            ImgShowFilter mFilter = new ImgShowFilter(getContext());
-//                            mFilter.setBitmap(bmp);
-//                            mFilter.setSize(w, h);
-//
-//                            FrameBuffer buffer = new FrameBuffer();
-//                            buffer.create(w, h);
-//                            buffer.beginDrawToFrameBuffer();
-//                            mFilter.onDrawFrame();
-//                            buffer.endDrawToFrameBuffer();
-//
-//                            Bitmap result = backEnv.getBitmap();
-//                            if (callback != null) {
-//                                callback.back(result);
-//                            }
-//                            backEnv.destroy();
-//
-//                            mCamera1.preview();
-//                        }
-//                    });
                 }
             });
         }

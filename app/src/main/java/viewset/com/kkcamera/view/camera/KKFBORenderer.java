@@ -12,9 +12,11 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import viewset.com.kkcamera.R;
+import viewset.com.kkcamera.view.camera.egl.FrameBuffer;
 import viewset.com.kkcamera.view.camera.filter.BaseFilter;
 import viewset.com.kkcamera.view.camera.filter.ColorFilter;
 import viewset.com.kkcamera.view.camera.filter.GroupFilter;
+import viewset.com.kkcamera.view.camera.filter.ImgShowFilter;
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.filter.PkmFilter;
 import viewset.com.kkcamera.view.camera.filter.ProcessBeautyFilter;
@@ -64,12 +66,13 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     private int width;
     private int height;
+    private int mCameraId;
 
 
     public KKFBORenderer(Context context) {
         mContext = context;
 
-        matrix = Gl2Utils.getOriginalMatrix();
+        matrix = new float[16];
 
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
@@ -87,7 +90,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         drawFilter.onSurfaceCreated();
         drawFilter.setTextureId(mTextureId);
-
 
         showFilter.onSurfaceCreated();
 
@@ -137,8 +139,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             groupFilter.setSize(mPreviewWidth, mPreviewHeight);
             beautyFilter.setSize(mPreviewWidth, mPreviewHeight);
             setViewSize(width, height);
-
-
         }
         Log.e("ttt", "onSurfaceChanged---fTexture =" + fTexture[0] + "---mTextureId==" + mTextureId);
     }
@@ -196,8 +196,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setPreviewSize(int width, int height) {
         mPreviewWidth = width;
         mPreviewHeight = height;
-        waterMarkFilter.setPosition(mPreviewWidth - mImgWidth / 2, 50, mImgWidth / 2, mImgHeight / 2);
-        pkmFilter.setPosition(200, 200);
+        waterMarkFilter.setPosition(mPreviewWidth - mImgWidth, 0, mImgWidth, mImgHeight);
+        pkmFilter.setPosition(200, 100);
     }
 
     public void setViewSize(int width, int height) {
@@ -208,22 +208,19 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     private void calculateMatrix() {
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
-        showFilter.setMatrix(matrix);
+        drawFilter.setMatrix(matrix);
+        if (mCameraId == 1) { // 前置摄像头矩阵
+            Gl2Utils.rotate(drawFilter.getMatrix(), 90);
+            Gl2Utils.flip(drawFilter.getMatrix(), true, true);
+            drawFilter.setMatrix(drawFilter.getMatrix());
+        } else { // 后置摄像头
+            drawFilter.setMatrix(drawFilter.getMatrix());
+        }
     }
 
     public void setCameraId(int cameraId) {
+        mCameraId = cameraId;
         calculateMatrix();
-        if (cameraId == 1) { // 前置摄像头矩阵
-            float[] OM = Gl2Utils.getOriginalMatrix();
-            Gl2Utils.rotate(OM, 90);
-            Gl2Utils.flip(OM, true, true);
-            drawFilter.setMatrix(OM);
-        } else { // 后置摄像头
-            float[] OM = Gl2Utils.getOriginalMatrix();
-            Gl2Utils.rotate(OM, 90);
-            Gl2Utils.flip(OM, false, true);
-            drawFilter.setMatrix(OM);
-        }
     }
 
     private void setWaterMarkPosition() {
@@ -234,15 +231,90 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         mImgWidth = bitmap.getWidth();
         mImgHeight = bitmap.getHeight();
         waterMarkFilter.setWaterMark(bitmap);
-        waterMarkFilter.setPosition(30, 50, 0, 0);
+        waterMarkFilter.setPosition(30, 0, 0, 0);
         groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter.setPosition(10, 50, 0, 0);
+        timeWaterMarkFilter.setPosition(0, 0, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
 
         pkmFilter = new PkmFilter(mContext);
         pkmFilter.setAnimation("assets/etczip/cc.zip");
         groupFilter.addFilter(pkmFilter);
+    }
+
+    /**
+     * 绘制拍照的图片滤镜
+     *
+     * @param bmp
+     * @param width
+     * @param height
+     */
+    public void drawBitmap(Bitmap bmp, int width, int height) {
+        ImgShowFilter mFilter = new ImgShowFilter(mContext);
+        mFilter.setBitmap(bmp);
+        mFilter.onSurfaceCreated();
+        mFilter.setSize(width, height);
+
+        GLES20.glViewport(0, 0, width, height);
+        FrameBuffer buffer = new FrameBuffer();
+        buffer.create(width, height);
+        buffer.beginDrawToFrameBuffer();
+        if (mCameraId == 1) { // 前置摄像头矩阵
+            Gl2Utils.rotate(mFilter.getMatrix(), 90);
+            Gl2Utils.flip(mFilter.getMatrix(), true, true);
+            mFilter.setMatrix(mFilter.getMatrix());
+        } else { // 后置摄像头
+            mFilter.setMatrix(mFilter.getMatrix());
+        }
+        mFilter.onDrawFrame();
+        buffer.endDrawToFrameBuffer();
+
+        /**
+         * 水印
+         */
+        GLES20.glViewport(0, 0, width, height);
+        GroupFilter groupFilter = new GroupFilter(mContext);
+
+        WaterMarkFilter waterMarkFilter = new WaterMarkFilter(mContext);
+        Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark);
+        int imgWidth = bitmap.getWidth();
+        int imgHeight = bitmap.getHeight();
+        waterMarkFilter.setWaterMark(bitmap);
+        waterMarkFilter.setPosition(width - imgWidth, 0, imgWidth, imgHeight);
+        groupFilter.addFilter(waterMarkFilter);
+
+        TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
+        timeWaterMarkFilter.setPosition(10, 0, 0, 0);
+        groupFilter.addFilter(timeWaterMarkFilter);
+
+        groupFilter.onSurfaceCreated();
+        groupFilter.setSize(width, height);
+        groupFilter.setTextureId(buffer.getTextureId());
+        groupFilter.onDrawFrame();
+
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+
+        GLES20.glViewport(0, 0, width, height);
+        BaseFilter processColorFilter = new ProcessFilter(mContext, new ColorFilter(mContext));
+        processColorFilter.onSurfaceCreated();
+        processColorFilter.setSize(width, height);
+        processColorFilter.setTextureId(groupFilter.getOutputTexture());
+        processColorFilter.onDrawFrame();
+
+        GLES20.glViewport(0, 0, width, height);
+        ProcessBeautyFilter beautyFilter = new ProcessBeautyFilter(mContext);
+        beautyFilter.onSurfaceCreated();
+        beautyFilter.setSize(width, height);
+        beautyFilter.setTextureId(processColorFilter.getOutputTexture());
+        beautyFilter.onDrawFrame();
+
+
+        NoFilter showFilter = new NoFilter(mContext);
+        showFilter.onSurfaceCreated();
+        showFilter.setSize(width, height);
+        showFilter.setMatrix(Gl2Utils.getOriginalMatrix());
+        showFilter.setTextureId(beautyFilter.getOutputTexture());
+        showFilter.onDrawFrame();
     }
 }

@@ -187,7 +187,7 @@ public abstract class BaseFilter {
         return -1;
     }
 
-    protected float[] getMatrix() {
+    public float[] getMatrix() {
         return matrix;
     }
 }

@@ -48,13 +48,7 @@ public class TimeWaterMarkFilter extends NoFilter {
         long time = System.currentTimeMillis();
         Date date = new Date(time);
         String timeStr = mDateFormat.format(date);
-        if (!timeStr.equals(mPreTimeStr)) {
-            mPreTimeStr = timeStr;
-            if (mBitmap != null) {
-                mBitmap.recycle();
-            }
-            mBitmap = Gl2Utils.text2Bitmap(mPreTimeStr);
-        }
+        mBitmap = Gl2Utils.text2Bitmap(timeStr);
         GLES20.glViewport(x, y, w == 0 ? mBitmap.getWidth() : w, h == 0 ? mBitmap.getHeight() : h);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -96,8 +90,6 @@ public class TimeWaterMarkFilter extends NoFilter {
             //Gl2Utils.flip(mFilter.getMatrix(), false, true);
 
             mFilter.setTextureId(textures[0]);
-
-
         }
     }
 

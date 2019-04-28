@@ -24,34 +24,14 @@ public class ImgShowFilter extends NoFilter {
 
     @Override
     protected void onSizeChanged(int width, int height) {
-        float[] mViewMatrix = new float[16];
-        float[] mProjectMatrix = new float[16];
         float[] mMVPMatrix = new float[16];
 
         if (!mBitmap.isRecycled()) {
             int w = mBitmap.getWidth();
             int h = mBitmap.getHeight();
-            float sWH = w / (float) h;
-            float sWidthHeight = width / (float) height;
-            if (width > height) {
-                if (sWH > sWidthHeight) {
-                    Matrix.orthoM(mProjectMatrix, 0, -sWidthHeight * sWH, sWidthHeight * sWH, -1, 1, 3, 7);
-                } else {
-                    Matrix.orthoM(mProjectMatrix, 0, -sWidthHeight / sWH, sWidthHeight / sWH, -1, 1, 3, 7);
-                }
-            } else {
-                if (sWH > sWidthHeight) {
-                    Matrix.orthoM(mProjectMatrix, 0, -1, 1, -1 / sWidthHeight * sWH, 1 / sWidthHeight * sWH, 3, 7);
-                } else {
-                    Matrix.orthoM(mProjectMatrix, 0, -1, 1, -sWH / sWidthHeight, sWH / sWidthHeight, 3, 7);
-                }
-            }
-            //设置相机位置
-            Matrix.setLookAtM(mViewMatrix, 0, 0, 0, -7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
-            //计算变换矩阵
-            Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
+
+            Gl2Utils.getShowMatrix(mMVPMatrix, w, h, width, height);
         }
-        Gl2Utils.rotate(mMVPMatrix, 90);
         setMatrix(mMVPMatrix);
 
         GLES20.glViewport(0, 0, width, height);

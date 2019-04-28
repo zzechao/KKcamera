@@ -1,10 +1,3 @@
-/*
- *
- * FastDrawerHelper.java
- *
- * Created by Wuwang on 2016/11/17
- * Copyright © 2016年 深圳哎吖科技. All rights reserved.
- */
 package viewset.com.kkcamera.view.image.opengl.util;
 
 import android.content.res.Resources;
@@ -64,8 +57,8 @@ public class Gl2Utils {
                 Matrix.setLookAtM(camera, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);
                 Matrix.multiplyMM(matrix, 0, projection, 0, camera, 0);
             }
-            float sWhView = (float) viewWidth / viewHeight;
             float sWhImg = (float) imgWidth / imgHeight;
+            float sWhView = (float) viewWidth / viewHeight;
             if (sWhImg > sWhView) {
                 switch (type) {
                     case TYPE_CENTERCROP:

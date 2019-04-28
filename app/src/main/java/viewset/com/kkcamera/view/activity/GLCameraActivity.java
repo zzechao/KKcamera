@@ -50,7 +50,7 @@ public class GLCameraActivity extends AppCompatActivity {
                             }
                         });
                     }
-                },iv_pic.getMeasuredWidth(),iv_pic.getMeasuredHeight());
+                });
                 break;
         }
     }
@@ -58,13 +58,13 @@ public class GLCameraActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        kkcamera.onResume();
+        //kkcamera.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        kkcamera.onPause();
+        //kkcamera.onPause();
     }
 
     @Override
