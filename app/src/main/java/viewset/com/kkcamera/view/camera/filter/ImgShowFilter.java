@@ -30,6 +30,7 @@ public class ImgShowFilter extends NoFilter {
             int w = mBitmap.getWidth();
             int h = mBitmap.getHeight();
 
+            // 拍照的矩阵要跟预览的一致
             Gl2Utils.getShowMatrix(mMVPMatrix, w, h, width, height);
         }
         setMatrix(mMVPMatrix);

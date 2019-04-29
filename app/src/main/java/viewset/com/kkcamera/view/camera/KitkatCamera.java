@@ -105,7 +105,7 @@ public class KitkatCamera implements ICamera {
             mCamera.takePicture(null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
-                    callback.onTakePhoto(data, mPicSize.x, mPicSize.y);
+                    callback.onTakePhoto(data);
                 }
             });
         }

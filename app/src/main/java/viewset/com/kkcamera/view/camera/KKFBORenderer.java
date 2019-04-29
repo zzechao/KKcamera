@@ -76,8 +76,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
-        processColorFilter = new ProcessFilter(context, new ColorFilter(context));
-        processPkmFilter = new ProcessFilter(context, new ZipPkmAnimationFilter(context));
+        processColorFilter = new ProcessFilter(context);
+        //((ProcessFilter) processColorFilter).setFilter(new ColorFilter(context));
+        //processPkmFilter = new ProcessFilter(context);
+        ((ProcessFilter) processPkmFilter).setFilter(new ZipPkmAnimationFilter(context));
         beautyFilter = new ProcessBeautyFilter(context);
 
         setWaterMarkPosition();
@@ -95,7 +97,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         processColorFilter.onSurfaceCreated();
 
-        processPkmFilter.onSurfaceCreated();
+        //processPkmFilter.onSurfaceCreated();
 
         groupFilter.onSurfaceCreated();
 
@@ -150,6 +152,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             //更新数据，其实也是消耗数据，将上一帧的数据处理或者抛弃掉，要不然SurfaceTexture是接收不到最新数据
             mSurfaceTexture.updateTexImage();
 
+            // 绘制
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fFrame[0]);
             GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0,
                     GLES20.GL_TEXTURE_2D, fTexture[0], 0);
@@ -157,18 +160,22 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             drawFilter.onDrawFrame();
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
+            // 滤镜组
             groupFilter.setTextureId(fTexture[0]);
             groupFilter.onDrawFrame();
 
             //processPkmFilter.setTextureId(groupFilter.getOutputTexture());
             //processPkmFilter.onDrawFrame();
 
+            // 滤镜
             processColorFilter.setTextureId(groupFilter.getOutputTexture());
             processColorFilter.onDrawFrame();
 
+            // 美颜
             beautyFilter.setTextureId(processColorFilter.getOutputTexture());
             beautyFilter.onDrawFrame();
 
+            // 显示
             GLES20.glViewport(0, 0, mWidth, mHeight);
             showFilter.setTextureId(beautyFilter.getOutputTexture());
             showFilter.onDrawFrame();
@@ -206,10 +213,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         calculateMatrix();
     }
 
+    //和拍照一样都是先绘制到drawFilter中，要跟随ImageShowFilter一样的逻辑
     private void calculateMatrix() {
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         drawFilter.setMatrix(matrix);
-        Log.e("ttt", mCameraId + "");
         if (mCameraId == 1) { // 前置摄像头矩阵
             Gl2Utils.rotate(drawFilter.getMatrix(), 90);
             Gl2Utils.flip(drawFilter.getMatrix(), true, true);
@@ -253,35 +260,46 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      * @param bmp
      * @param width
      * @param height
+     * @param useCamera2
      */
-    public void drawBitmap(Bitmap bmp, int width, int height) {
+    public void drawBitmap(Bitmap bmp, int width, int height, boolean useCamera2) {
         ImgShowFilter mFilter = new ImgShowFilter(mContext);
         mFilter.setBitmap(bmp);
         mFilter.onSurfaceCreated();
         mFilter.setSize(width, height);
 
+        // 绘制
         GLES20.glViewport(0, 0, width, height);
         FrameBuffer buffer = new FrameBuffer();
         buffer.create(width, height);
         buffer.beginDrawToFrameBuffer();
         if (mCameraId == 1) { // 前置摄像头矩阵
-            Gl2Utils.rotate(mFilter.getMatrix(), 90);
-            Gl2Utils.flip(mFilter.getMatrix(), true, true);
+            if (useCamera2) {
+
+            } else {
+                Gl2Utils.rotate(mFilter.getMatrix(), 90);
+                Gl2Utils.flip(mFilter.getMatrix(), true, true);
+            }
             mFilter.setMatrix(mFilter.getMatrix());
         } else { // 后置摄像头
-            Gl2Utils.rotate(mFilter.getMatrix(), 90);
-            Gl2Utils.flip(mFilter.getMatrix(), false, true);
+            if (useCamera2) {
+                Gl2Utils.flip(mFilter.getMatrix(), false, true);
+            } else {
+                Gl2Utils.rotate(mFilter.getMatrix(), 90);
+                Gl2Utils.flip(mFilter.getMatrix(), false, true);
+            }
             mFilter.setMatrix(mFilter.getMatrix());
         }
         mFilter.onDrawFrame();
         buffer.endDrawToFrameBuffer();
 
         /**
-         * 水印
+         * 滤镜组
          */
         GLES20.glViewport(0, 0, width, height);
         GroupFilter groupFilter = new GroupFilter(mContext);
 
+        // 图片水印
         WaterMarkFilter waterMarkFilter = new WaterMarkFilter(mContext);
         waterMarkFilter.isBitmap(true);
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark);
@@ -291,6 +309,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         waterMarkFilter.setPosition(width - imgWidth, 0, imgWidth, imgHeight);
         groupFilter.addFilter(waterMarkFilter);
 
+        // 时间水印
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
         timeWaterMarkFilter.isBitmap(true);
         timeWaterMarkFilter.setPosition(10, 0, 0, 0);
@@ -301,15 +320,16 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.setTextureId(buffer.getTextureId());
         groupFilter.onDrawFrame();
 
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-
+        // 滤镜
         GLES20.glViewport(0, 0, width, height);
-        BaseFilter processColorFilter = new ProcessFilter(mContext, new ColorFilter(mContext));
+        BaseFilter processColorFilter = new ProcessFilter(mContext);
+        ((ProcessFilter) processColorFilter).setFilter(new ColorFilter(mContext));
         processColorFilter.onSurfaceCreated();
         processColorFilter.setSize(width, height);
         processColorFilter.setTextureId(groupFilter.getOutputTexture());
         processColorFilter.onDrawFrame();
 
+        // 美颜
         GLES20.glViewport(0, 0, width, height);
         ProcessBeautyFilter beautyFilter = new ProcessBeautyFilter(mContext);
         beautyFilter.onSurfaceCreated();
@@ -317,7 +337,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         beautyFilter.setTextureId(processColorFilter.getOutputTexture());
         beautyFilter.onDrawFrame();
 
-
+        // 显示
         NoFilter showFilter = new NoFilter(mContext);
         showFilter.onSurfaceCreated();
         showFilter.setSize(width, height);

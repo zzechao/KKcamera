@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -13,22 +15,34 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
 import android.media.ImageReader;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ContextThemeWrapper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,6 +71,8 @@ public class KKCamera implements ICamera {
     private Size mPreviewSize;
 
     private static final SparseIntArray ORIENTATION = new SparseIntArray();
+
+    private TakePhotoCallback mCallback;
 
     static {
         ORIENTATION.append(Surface.ROTATION_0, 90);
@@ -117,19 +133,19 @@ public class KKCamera implements ICamera {
     @Override
     public void takePhoto(TakePhotoCallback callback) {
         try {
+            mCallback = callback;
             final CaptureRequest.Builder captureBuilder =
                     mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(mImageReader.getSurface());
 
-            // Use the same AE and AF modes as the preview.
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             captureBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                     CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
 
-            // Orientation
-            //int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATION.get(rotation));
+            AppCompatActivity activity = getAppCompActivity(mContext);
+            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATION.get(rotation));
 
             CameraCaptureSession.CaptureCallback CaptureCallback
                     = new CameraCaptureSession.CaptureCallback() {
@@ -138,22 +154,35 @@ public class KKCamera implements ICamera {
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session,
                                                @NonNull CaptureRequest request,
                                                @NonNull TotalCaptureResult result) {
-                    Log.e("ttt", "onCaptureCompleted");
-                    //unlockFocus();
+                    unlockFocus();
                 }
 
                 @Override
                 public void onCaptureFailed(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull CaptureFailure failure) {
-                    Log.e("ttt", "onCaptureFailed");
-                    //unlockFocus();
+                    unlockFocus();
                 }
             };
 
             mPreviewSession.stopRepeating();
             mPreviewSession.abortCaptures();
             mPreviewSession.capture(captureBuilder.build(), CaptureCallback, null);
-        } catch (Exception e) {
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void unlockFocus() {
+        try {
+            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                    CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
+            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+            mPreviewSession.capture(mCaptureRequestBuilder.build(), mCaptureCallback,
+                    cameraHandler);
+            mPreviewSession.setRepeatingRequest(mCaptureRequest, mCaptureCallback,
+                    cameraHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
         }
     }
 
@@ -195,6 +224,16 @@ public class KKCamera implements ICamera {
         void deviceOpened();
     }
 
+    public static AppCompatActivity getAppCompActivity(Context context) {
+        if (context == null) return null;
+        if (context instanceof AppCompatActivity) {
+            return (AppCompatActivity) context;
+        } else if (context instanceof ContextThemeWrapper) {
+            return getAppCompActivity(((ContextThemeWrapper) context).getBaseContext());
+        }
+        return null;
+    }
+
     /**
      * 打开摄像头
      *
@@ -204,6 +243,7 @@ public class KKCamera implements ICamera {
     public boolean open(int cameraId) {
         //检查权限
         try {
+            startBackgroundThread();
             if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA)
                     != PackageManager.PERMISSION_GRANTED) {
                 return false;
@@ -262,14 +302,12 @@ public class KKCamera implements ICamera {
         if (mImageReader != null) return;
         //前三个参数分别是需要的尺寸和格式，最后一个参数代表每次最多获取几帧数据，本例的2代表ImageReader中最多可以获取两帧图像流
         mImageReader = ImageReader.newInstance(width, height,
-                ImageFormat.JPEG, /*maxImages*/2);
+                ImageFormat.JPEG, /*maxImages*/1);
         //监听ImageReader的事件，当有图像流数据可用时会回调onImageAvailable方法，它的参数就是预览帧数据，可以对这帧数据进行处理
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Rect viewRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                Rect bufferRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                cameraHandler.post(new CameraActivity.ImageSaver(reader.acquireNextImage(), viewRect, bufferRect));
+                cameraHandler.post(new ImageSaver(reader.acquireNextImage(), mCallback));
             }
         }, cameraHandler);
     }
@@ -354,9 +392,11 @@ public class KKCamera implements ICamera {
      * 开启线程
      */
     public void startBackgroundThread() {
-        cameraThread = new HandlerThread("CameraThread");
-        cameraThread.start();
-        cameraHandler = new Handler(cameraThread.getLooper());
+        if (cameraHandler == null) {
+            cameraThread = new HandlerThread("CameraThread");
+            cameraThread.start();
+            cameraHandler = new Handler(cameraThread.getLooper());
+        }
     }
 
     /**
@@ -412,4 +452,25 @@ public class KKCamera implements ICamera {
             }
         }
     };
+
+    public static class ImageSaver implements Runnable {
+        private Image mImage;
+        private TakePhotoCallback mCallback;
+
+        public ImageSaver(Image image, TakePhotoCallback callback) {
+            mImage = image;
+            mCallback = callback;
+        }
+
+        @Override
+        public void run() {
+            ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
+            byte[] data = new byte[buffer.remaining()];
+            buffer.get(data);
+            mImage.close();
+            if (mCallback != null) {
+                mCallback.onTakePhoto(data);
+            }
+        }
+    }
 }

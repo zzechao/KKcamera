@@ -28,7 +28,7 @@ public interface ICamera {
     }
 
     interface TakePhotoCallback{
-        void onTakePhoto(byte[] bytes, int width, int height);
+        void onTakePhoto(byte[] bytes);
     }
 
     interface PreviewFrameCallback{

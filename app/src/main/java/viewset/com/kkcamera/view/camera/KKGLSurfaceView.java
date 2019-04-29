@@ -37,7 +37,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = false;
+    private boolean useCamera2 = true;
 
     private boolean isSetParm = false;
 
@@ -215,31 +215,31 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
      * 拍照
      */
     public void takePhoto(final Callback<Bitmap> callback) {
-        if (useCamera2) {
+        ICamera.TakePhotoCallback photoCallback = new ICamera.TakePhotoCallback() {
+            @Override
+            public void onTakePhoto(byte[] data) {
+                final Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+                int w = bmp.getWidth();
+                int h = bmp.getHeight();
 
-        } else {
-            mCamera1.takePhoto(new ICamera.TakePhotoCallback() {
-                @Override
-                public void onTakePhoto(byte[] data, int width, int height) {
-                    Log.e("ttt", Thread.currentThread().getName());
-                    final Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-                    int w = bmp.getWidth();
-                    int h = bmp.getHeight();
+                GLESBackEnv backEnv = new GLESBackEnv(w, h);
+                backEnv.setThreadOwner(Thread.currentThread().getName());
 
-                    GLESBackEnv backEnv = new GLESBackEnv(w, h);
-                    backEnv.setThreadOwner(Thread.currentThread().getName());
+                renderer.drawBitmap(bmp, w, h, useCamera2);
 
-                    renderer.drawBitmap(bmp,w,h);
+                Bitmap result = backEnv.getBitmap();
 
-                    Bitmap result = backEnv.getBitmap();
+                backEnv.destroy();
 
-                    backEnv.destroy();
+                callback.back(result);
 
-                    callback.back(result);
-
-                    mCamera1.preview();
-                }
-            });
+                mCamera1.preview();
+            }
+        };
+        if (useCamera2) { // 摄像机1、2拍照
+            mCamera2.takePhoto(photoCallback);
+        } else { //
+            mCamera1.takePhoto(photoCallback);
         }
     }
 
