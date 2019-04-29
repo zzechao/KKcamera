@@ -233,7 +233,9 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
                 callback.back(result);
 
-                mCamera1.preview();
+                if (!useCamera2) {
+                    mCamera1.preview();
+                }
             }
         };
         if (useCamera2) { // 摄像机1、2拍照
