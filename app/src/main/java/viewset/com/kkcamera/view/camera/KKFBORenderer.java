@@ -77,9 +77,9 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
         processColorFilter = new ProcessFilter(context);
-        //((ProcessFilter) processColorFilter).setFilter(new ColorFilter(context));
+        ((ProcessFilter) processColorFilter).setFilter(new ColorFilter(context));
         //processPkmFilter = new ProcessFilter(context);
-        ((ProcessFilter) processPkmFilter).setFilter(new ZipPkmAnimationFilter(context));
+        //((ProcessFilter) processPkmFilter).setFilter(new ZipPkmAnimationFilter(context));
         beautyFilter = new ProcessBeautyFilter(context);
 
         setWaterMarkPosition();
