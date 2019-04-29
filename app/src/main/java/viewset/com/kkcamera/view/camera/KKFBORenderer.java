@@ -209,11 +209,14 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private void calculateMatrix() {
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         drawFilter.setMatrix(matrix);
+        Log.e("ttt", mCameraId + "");
         if (mCameraId == 1) { // 前置摄像头矩阵
             Gl2Utils.rotate(drawFilter.getMatrix(), 90);
             Gl2Utils.flip(drawFilter.getMatrix(), true, true);
             drawFilter.setMatrix(drawFilter.getMatrix());
         } else { // 后置摄像头
+            Gl2Utils.rotate(drawFilter.getMatrix(), 90);
+            Gl2Utils.flip(drawFilter.getMatrix(), false, true);
             drawFilter.setMatrix(drawFilter.getMatrix());
         }
     }
@@ -235,6 +238,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
+        timeWaterMarkFilter.isBitmap(false);
         timeWaterMarkFilter.setPosition(0, 0, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
 
@@ -265,6 +269,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             Gl2Utils.flip(mFilter.getMatrix(), true, true);
             mFilter.setMatrix(mFilter.getMatrix());
         } else { // 后置摄像头
+            Gl2Utils.rotate(mFilter.getMatrix(), 90);
+            Gl2Utils.flip(mFilter.getMatrix(), false, true);
             mFilter.setMatrix(mFilter.getMatrix());
         }
         mFilter.onDrawFrame();
@@ -277,6 +283,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         GroupFilter groupFilter = new GroupFilter(mContext);
 
         WaterMarkFilter waterMarkFilter = new WaterMarkFilter(mContext);
+        waterMarkFilter.isBitmap(true);
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark);
         int imgWidth = bitmap.getWidth();
         int imgHeight = bitmap.getHeight();
@@ -285,6 +292,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.addFilter(waterMarkFilter);
 
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
+        timeWaterMarkFilter.isBitmap(true);
         timeWaterMarkFilter.setPosition(10, 0, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
 

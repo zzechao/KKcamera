@@ -26,6 +26,7 @@ public class TimeWaterMarkFilter extends NoFilter {
     /***/
     private NoFilter mFilter;
     private Bitmap mBitmap;
+    private boolean mStats = false;
 
     public TimeWaterMarkFilter(Context context) {
         super(context);
@@ -59,12 +60,18 @@ public class TimeWaterMarkFilter extends NoFilter {
         GLES20.glViewport(0, 0, width, height);
     }
 
+    public void isBitmap(boolean stats) {
+        mStats = stats;
+    }
+
     @Override
     public void onSurfaceCreated() {
         super.onSurfaceCreated();
         mFilter.onSurfaceCreated();
-        Gl2Utils.flip(mFilter.getMatrix(), false, true);
-        //createTexture();
+
+        if (!mStats) {
+            Gl2Utils.flip(mFilter.getMatrix(), false, true);
+        }
     }
 
     private int[] textures = new int[1];
@@ -85,9 +92,6 @@ public class TimeWaterMarkFilter extends NoFilter {
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
 
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
-
-            //对画面进行矩阵旋转
-            //Gl2Utils.flip(mFilter.getMatrix(), false, true);
 
             mFilter.setTextureId(textures[0]);
         }
