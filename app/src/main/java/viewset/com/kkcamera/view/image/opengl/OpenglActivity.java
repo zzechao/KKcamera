@@ -42,7 +42,6 @@ public class OpenglActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        Log.e("ttt", "onResume");
         super.onResume();
         mGLView.onResume();
     }

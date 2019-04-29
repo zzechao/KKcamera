@@ -92,7 +92,6 @@ public abstract class ColorFilter{
     protected abstract void onDrawArraysAfter();
 
     public void onSurfaceCreated() {
-        Log.e("ttt", "onSurfaceCreated");
         mProgram = OpenGlUtils.loadProgram(mVertexShader, mFragmentShader);
 
         glPosition = GLES20.glGetAttribLocation(mProgram, "vPosition");
@@ -108,7 +107,6 @@ public abstract class ColorFilter{
         mInputWidth = width;
         mInputHeight = height;
         Bitmap bitmap = mRender.getBitmap();
-        Log.e("ttt", "onSurfaceChanged--" + bitmap.isRecycled());
         if (!bitmap.isRecycled()) {
             int w = bitmap.getWidth();
             int h = bitmap.getHeight();

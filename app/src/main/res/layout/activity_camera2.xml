@@ -16,7 +16,7 @@
         android:layout_centerVertical="true"
         android:scaleType="fitXY"
         android:background="#000"
-        android:visibility="visible" />
+        android:visibility="gone" />
 
 
     <LinearLayout

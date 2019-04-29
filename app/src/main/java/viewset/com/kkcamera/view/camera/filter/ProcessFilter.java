@@ -65,7 +65,6 @@ public class ProcessFilter extends BaseFilter {
 
     @Override
     protected void onSizeChanged(int width, int height) {
-        Log.e("ttt", "onSizeChanged---" + width + "---" + height);
         this.width = width;
         this.height = height;
         mFilter.setSize(width, height);

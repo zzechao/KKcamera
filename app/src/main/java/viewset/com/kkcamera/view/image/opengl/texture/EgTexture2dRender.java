@@ -96,7 +96,6 @@ public class EgTexture2dRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        Log.e("ttt", "onSurfaceChanged--" + (mBitmap != null));
         GLES20.glViewport(0, 0, width, height);
 
         if (mBitmap != null && !mBitmap.isRecycled()) {
@@ -126,7 +125,6 @@ public class EgTexture2dRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        Log.e("ttt", "onDrawFrame--");
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glUseProgram(mProgram);
 

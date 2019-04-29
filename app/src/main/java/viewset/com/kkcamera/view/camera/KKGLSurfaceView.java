@@ -37,7 +37,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = true;
+    private boolean useCamera2 = false;
 
     private boolean isSetParm = false;
 
@@ -145,24 +145,11 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onResume() {
-        Log.e("ttt", "onResume");
         if (useCamera2) {
             mCamera2.startBackgroundThread();
         }
         openCamera();
         super.onResume();
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        Log.e("ttt", "onDetachedFromWindow");
-        super.onDetachedFromWindow();
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        Log.e("ttt", "onAttachedToWindow");
-        super.onAttachedToWindow();
     }
 
     /**
@@ -185,7 +172,6 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     @Override
     public void onPause() {
-        Log.e("ttt", "onPause");
         if (useCamera2) {
             mCamera2.stopBackgroundThread();
         }
@@ -204,7 +190,6 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     public void onDestroy() {
-        Log.e("ttt", "onDestroy");
         if (mCamera2 != null) {
             mCamera2.close();
         }

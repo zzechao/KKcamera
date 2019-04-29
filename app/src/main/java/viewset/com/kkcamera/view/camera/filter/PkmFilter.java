@@ -55,8 +55,9 @@ public class PkmFilter extends NoFilter {
                 if (t != null && tAlpha != null) {
                     pkmWidth = t.getWidth();
                     pkmHeight = t.getHeight();
-                    Gl2Utils.getMatrix(super.getMatrix(), Gl2Utils.TYPE_FITEND, t.getWidth(), t.getHeight(), width, height);
-                    Gl2Utils.flip(super.getMatrix(), false, true);
+                    float[] OM = Gl2Utils.getOriginalMatrix();
+                    Gl2Utils.getMatrix(OM, Gl2Utils.TYPE_FITEND, t.getWidth(), t.getHeight(), width, height);
+                    Gl2Utils.flip(OM, false, true);
                     setMatrix(OM);
 
                     GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + getTextureType());
@@ -109,10 +110,12 @@ public class PkmFilter extends NoFilter {
 
     @Override
     protected void onSizeChanged(int width, int height) {
-        this.width = width;
-        this.height = height;
-        mFilter.setSize(width, height);
-        emptyBuffer = ByteBuffer.allocateDirect(ETC1.getEncodedDataSize(width, height));
+        if (this.width != width || this.height != height) {
+            this.width = width;
+            this.height = height;
+            mFilter.setSize(width, height);
+            emptyBuffer = ByteBuffer.allocateDirect(ETC1.getEncodedDataSize(width, height));
+        }
     }
 
     @Override
@@ -123,6 +126,7 @@ public class PkmFilter extends NoFilter {
         GLES20.glViewport(x - pkmWidth / 2, y - pkmHeight / 2, pkmWidth, pkmHeight * 2);
         mFilter.onDrawFrame();
         GLES20.glDisable(GLES20.GL_BLEND);
+        GLES20.glViewport(0, 0, width, height);
     }
 
     /**
@@ -132,7 +136,6 @@ public class PkmFilter extends NoFilter {
         GLES20.glGenTextures(fTextureSize, textures, 0);
         for (int i = 0; i < fTextureSize; i++) {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[i]);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
@@ -143,6 +146,7 @@ public class PkmFilter extends NoFilter {
 
     /**
      * 加载pkm动画
+     *
      * @param path
      */
     public void setAnimation(String path) {

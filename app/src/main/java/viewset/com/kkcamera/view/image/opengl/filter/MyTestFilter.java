@@ -31,7 +31,6 @@ public class MyTestFilter extends ColorFilter {
     @Override
     public void glOnSufaceCreated(int program) {
         for (int i = 0; i < inputTextureUniformLocations.length; i++) {
-            Log.e("ttt", "--glOnSufaceCreated--");
             inputTextureUniformLocations[i] = GLES20.glGetUniformLocation(program, "inputImageTexture" + (2 + i));
         }
         glColorChange = GLES20.glGetUniformLocation(program, "vChangeColor");
