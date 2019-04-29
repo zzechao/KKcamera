@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -62,6 +61,13 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int height;
     private int mCameraId;
 
+    private boolean recordingEnabled;
+    private int recordingStatus;
+    private static final int RECORDING_OFF = 0;
+    private static final int RECORDING_ON = 1;
+    private static final int RECORDING_RESUME = 2;
+    private static final int RECORDING_PAUSE = 3;
+
 
     public KKFBORenderer(Context context) {
         mContext = context;
@@ -94,6 +100,9 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         groupFilter.onSurfaceCreated();
 
         beautyFilter.onSurfaceCreated();
+
+        // 一开始处于关闭状态
+        recordingStatus = RECORDING_OFF;
     }
 
     @Override
@@ -181,6 +190,9 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         return mSurfaceTexture != null;
     }
 
+    /**
+     * 释放surfaceTexture
+     */
     public void releaseSurfaceTexture() {
         if (mSurfaceTexture != null) {
             boolean shouldRelease = true;
@@ -219,11 +231,19 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         }
     }
 
+    /**
+     * 设置摄像头
+     *
+     * @param cameraId
+     */
     public void setCameraId(int cameraId) {
         mCameraId = cameraId;
         calculateMatrix();
     }
 
+    /**
+     * 设置水印
+     */
     private void setWaterMarkPosition() {
         groupFilter = new GroupFilter(mContext);
 
