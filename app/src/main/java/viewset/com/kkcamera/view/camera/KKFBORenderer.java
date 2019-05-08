@@ -313,7 +313,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         // 图片水印
         WaterMarkFilter waterMarkFilter = new WaterMarkFilter(mContext);
-        waterMarkFilter.isBitmap(true);
         Bitmap bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.watermark);
         int imgWidth = bitmap.getWidth();
         int imgHeight = bitmap.getHeight();
@@ -323,7 +322,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
         // 时间水印
         TimeWaterMarkFilter timeWaterMarkFilter = new TimeWaterMarkFilter(mContext);
-        timeWaterMarkFilter.isBitmap(true);
         timeWaterMarkFilter.setPosition(10, 0, 0, 0);
         groupFilter.addFilter(timeWaterMarkFilter);
 
