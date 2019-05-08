@@ -23,6 +23,7 @@ import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
+import viewset.com.kkcamera.view.camera.record.MediaMuxer;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -60,6 +61,8 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int width;
     private int height;
     private int mCameraId;
+
+    private MediaMuxer mediaMuxer;
 
     private boolean recordingEnabled;
     private int recordingStatus;
@@ -174,6 +177,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             // 美颜
             beautyFilter.setTextureId(processColorFilter.getOutputTexture());
             beautyFilter.onDrawFrame();
+
+
+            if (mediaMuxer != null && recordingEnabled && recordingStatus == RECORDING_ON){
+                mediaMuxer.setTextureId(beautyFilter.getOutputTexture());
+                mediaMuxer.frameAvailable(mSurfaceTexture);
+            }
 
             // 显示
             GLES20.glViewport(0, 0, mWidth, mHeight);
