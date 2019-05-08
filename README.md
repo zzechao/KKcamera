@@ -6,3 +6,5 @@ android的camera1和camera2的opengles录像和拍照，以及视频编辑（正
  https://blog.csdn.net/junzia/column/info/15997 三个博主的滤镜以及动画添加camera1和camera2中
 
 完成拍照+时间水印的功能
+效果图<br/>
+![image](https://github.com/zzechao/KKcamera/blob/master/camera.gif)
