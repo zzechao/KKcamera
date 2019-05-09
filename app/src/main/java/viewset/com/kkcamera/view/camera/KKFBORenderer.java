@@ -4,8 +4,12 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Environment;
+
+import java.io.File;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -23,7 +27,8 @@ import viewset.com.kkcamera.view.camera.filter.ProcessFilter;
 import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
-import viewset.com.kkcamera.view.camera.record.MediaMuxer;
+import viewset.com.kkcamera.view.camera.multimedia.MediaEncoder;
+import viewset.com.kkcamera.view.camera.record.HardcodeEncoder;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -62,18 +67,42 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int height;
     private int mCameraId;
 
-    private MediaMuxer mediaMuxer;
-
     private boolean recordingEnabled;
     private int recordingStatus;
     private static final int RECORDING_OFF = 0;
     private static final int RECORDING_ON = 1;
-    private static final int RECORDING_RESUME = 2;
     private static final int RECORDING_PAUSE = 3;
+    private static final int RECORDING_RESUME = 4;
 
+    private HardcodeEncoder hardcodeEncoder;
+    private String mOutputPath;
+
+    /**
+     * 获取视频缓存绝对路径
+     *
+     * @param context
+     * @return
+     */
+    public static String getVideoCachePath(Context context) {
+        String directoryPath;
+        // 判断外部存储是否可用，如果不可用则使用内部存储路径
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            directoryPath = context.getExternalCacheDir().getAbsolutePath();
+        } else { // 使用内部存储缓存目录
+            directoryPath = context.getCacheDir().getAbsolutePath();
+        }
+        String path = directoryPath + File.separator + "CainCamera_" + System.currentTimeMillis() + ".mp4";
+        File file = new File(path);
+        if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        return path;
+    }
 
     public KKFBORenderer(Context context) {
         mContext = context;
+
+        mOutputPath = getVideoCachePath(context);
 
         showFilter = new NoFilter(context);
         drawFilter = new ShowFilter(context);
@@ -178,10 +207,35 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             beautyFilter.setTextureId(processColorFilter.getOutputTexture());
             beautyFilter.onDrawFrame();
 
-
-            if (mediaMuxer != null && recordingEnabled && recordingStatus == RECORDING_ON){
-                mediaMuxer.setTextureId(beautyFilter.getOutputTexture());
-                mediaMuxer.frameAvailable(mSurfaceTexture);
+            if (recordingEnabled) {
+                /**说明是录制状态*/
+                switch (recordingStatus) {
+                    case RECORDING_OFF:
+                        HardcodeEncoder.getInstance().startRecording(mContext,EGL14.eglGetCurrentContext());
+                        recordingStatus = RECORDING_ON;
+                        break;
+                    case RECORDING_ON:
+                        break;
+                    case RECORDING_PAUSE:
+                        HardcodeEncoder.getInstance().pauseRecord();
+                        recordingStatus = RECORDING_ON;
+                        break;
+                    case RECORDING_RESUME:
+                        HardcodeEncoder.getInstance().continueRecord();
+                        recordingStatus = RECORDING_ON;
+                        break;
+                }
+            } else {
+                switch (recordingStatus) {
+                    case RECORDING_ON:
+                    case RECORDING_PAUSE:
+                    case RECORDING_RESUME:
+                        HardcodeEncoder.getInstance().stopRecording();
+                        recordingStatus = RECORDING_OFF;
+                        break;
+                    case RECORDING_OFF:
+                        break;
+                }
             }
 
             // 显示
@@ -363,5 +417,38 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter.setMatrix(Gl2Utils.getOriginalMatrix());
         showFilter.setTextureId(beautyFilter.getOutputTexture());
         showFilter.onDrawFrame();
+    }
+
+    public void startRecord() {
+        HardcodeEncoder.getInstance()
+                .preparedRecorder()
+                .setOutputPath(mOutputPath)
+                .enableAudioRecord(true)
+                .initRecorder(width, height, new MediaEncoder.MediaEncoderListener() {
+                    @Override
+                    public void onPrepared(MediaEncoder encoder) {
+
+                    }
+
+                    @Override
+                    public void onStarted(MediaEncoder encoder) {
+
+                    }
+
+                    @Override
+                    public void onStopped(MediaEncoder encoder) {
+
+                    }
+
+                    @Override
+                    public void onReleased(MediaEncoder encoder) {
+
+                    }
+                });
+        recordingEnabled = true;
+    }
+
+    public void stopRecord() {
+        recordingEnabled = false;
     }
 }

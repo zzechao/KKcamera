@@ -172,7 +172,7 @@ public abstract class BaseFilter {
     /**
      * 销毁
      */
-    public void realse() {
+    public void release() {
         GLES20.glDeleteProgram(mProgram);
     }
 
