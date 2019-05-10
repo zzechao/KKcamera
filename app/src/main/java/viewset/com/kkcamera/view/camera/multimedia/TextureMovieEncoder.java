@@ -106,21 +106,14 @@ public class TextureMovieEncoder implements Runnable {
             mBitRate = bitRate;
             mEglContext = sharedEglContext;
         }
-
-        @Override
-        public String toString() {
-            return "EncoderConfig: " + mWidth + "x" + mHeight + " @" + mBitRate +
-                    " to '" + mOutputFile.toString() + "' ctxt=" + mEglContext;
-        }
     }
 
     /**
-     * Tells the video recorder to start recording.  (Call from non-encoder thread.)
-     * <p>
-     * Creates a new thread, which will create an encoder using the provided configuration.
-     * <p>
-     * Returns after the recorder thread has started and is ready to accept Messages.  The
-     * encoder may not yet be fully configured.
+     * startRecording 先通过mReadyFence.wait()先将线程锁死，
+     * 并开启TextureMovieEncoder线程，执行runnable，
+     * 创建线程对应的Looper，再解锁mReadyFence.notify(),
+     * 执行 mHandler.sendMessage(mHandler.obtainMessage(MSG_START_RECORDING, config));
+     * @param config
      */
     public void startRecording(EncoderConfig config) {
         Log.d(TAG, "Encoder: startRecording()");
@@ -134,8 +127,7 @@ public class TextureMovieEncoder implements Runnable {
             while (!mReady) {
                 try {
                     mReadyFence.wait();
-                } catch (InterruptedException ie) {
-                    // ignore
+                } catch (InterruptedException ignore) {
                 }
             }
         }
@@ -143,32 +135,17 @@ public class TextureMovieEncoder implements Runnable {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_START_RECORDING, config));
     }
 
-    /**
-     * Tells the video recorder to stop recording.  (Call from non-encoder thread.)
-     * <p>
-     * Returns immediately; the encoder/muxer may not yet be finished creating the movie.
-     * <p>
-     * TODO: have the encoder thread invoke a callback on the UI thread just before it shuts down
-     * so we can provide reasonable status UI (and let the caller know that movie encoding
-     * has completed).
-     */
     public void stopRecording() {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
         mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
     }
 
-    /**
-     * Returns true if recording has been started.
-     */
     public boolean isRecording() {
         synchronized (mReadyFence) {
             return mRunning;
         }
     }
 
-    /**
-     * Tells the video recorder to refresh its EGL surface.  (Call from non-encoder thread.)
-     */
     public void updateSharedContext(EGLContext sharedContext) {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_SHARED_CONTEXT, sharedContext));
     }
@@ -191,12 +168,6 @@ public class TextureMovieEncoder implements Runnable {
                 (int) (timestamp >> 32), (int) timestamp, transform));
     }
 
-    /**
-     * Tells the video recorder what texture name to use.  This is the external texture that
-     * we're receiving camera previews in.  (Call from non-encoder thread.)
-     * <p>
-     * TODO: do something less clumsy
-     */
     public void setTextureId(int id) {
         synchronized (mReadyFence) {
             if (!mReady) {
@@ -206,10 +177,6 @@ public class TextureMovieEncoder implements Runnable {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_SET_TEXTURE_ID, id, 0, null));
     }
 
-    /**
-     * Encoder thread entry point.  Establishes Looper/Handler and waits for messages.
-     * <p>
-     */
     @Override
     public void run() {
         // Establish a Looper for this thread, and define a Handler for it.
@@ -221,7 +188,6 @@ public class TextureMovieEncoder implements Runnable {
         }
         Looper.loop();
 
-        Log.d(TAG, "Encoder thread exiting");
         synchronized (mReadyFence) {
             mReady = mRunning = false;
             mHandler = null;
@@ -229,9 +195,6 @@ public class TextureMovieEncoder implements Runnable {
     }
 
 
-    /**
-     * Handles encoder state change requests.  The handler is created on the encoder thread.
-     */
     private static class EncoderHandler extends Handler {
         private WeakReference<TextureMovieEncoder> mWeakEncoder;
 
@@ -239,14 +202,13 @@ public class TextureMovieEncoder implements Runnable {
             mWeakEncoder = new WeakReference<TextureMovieEncoder>(encoder);
         }
 
-        @Override  // runs on encoder thread
+        @Override
         public void handleMessage(Message inputMessage) {
             int what = inputMessage.what;
             Object obj = inputMessage.obj;
 
             TextureMovieEncoder encoder = mWeakEncoder.get();
             if (encoder == null) {
-                Log.w(TAG, "EncoderHandler.handleMessage: encoder is null");
                 return;
             }
 
@@ -277,27 +239,12 @@ public class TextureMovieEncoder implements Runnable {
         }
     }
 
-    /**
-     * Starts recording.
-     */
     private void handleStartRecording(EncoderConfig config) {
-        Log.d(TAG, "handleStartRecording " + config);
         prepareEncoder(config.mEglContext, config.mWidth, config.mHeight, config.mBitRate,
                 config.mOutputFile);
     }
 
-    /**
-     * Handles notification of an available frame.
-     * <p>
-     * The texture is rendered onto the encoder's input surface, along with a moving
-     * box (just because we can).
-     * <p>
-     *
-     * @param transform      The texture transform, from SurfaceTexture.
-     * @param timestampNanos The frame's timestamp, from SurfaceTexture.
-     */
     private void handleFrameAvailable(float[] transform, long timestampNanos) {
-        if (VERBOSE) Log.d(TAG, "handleFrameAvailable tr=" + transform);
         mVideoEncoder.drainEncoder(false);
 
         showFilter.setTextureId(mTextureId);
@@ -307,39 +254,20 @@ public class TextureMovieEncoder implements Runnable {
         mInputWindowSurface.swapBuffers();
     }
 
-    /**
-     * Handles a request to stop encoding.
-     */
     private void handleStopRecording() {
-        Log.d(TAG, "handleStopRecording");
         mVideoEncoder.drainEncoder(true);
         releaseEncoder();
     }
 
-    /**
-     * Sets the texture name that SurfaceTexture will use when frames are received.
-     */
     private void handleSetTexture(int id) {
-        //Log.d(TAG, "handleSetTexture " + id);
         mTextureId = id;
     }
 
-    /**
-     * Tears down the EGL surface and context we've been using to feed the MediaCodec input
-     * surface, and replaces it with a new one that shares with the new context.
-     * <p>
-     * This is useful if the old context we were sharing with went away (maybe a GLSurfaceView
-     * that got torn down) and we need to hook up with the new one.
-     */
     private void handleUpdateSharedContext(EGLContext newSharedContext) {
-        Log.d(TAG, "handleUpdatedSharedContext " + newSharedContext);
-
-        // Release the EGLSurface and EGLContext.
         mInputWindowSurface.releaseEglSurface();
         showFilter.release();
         mEglCore.release();
 
-        // Create a new EGLContext and recreate the window surface.
         mEglCore = new EglCore(newSharedContext, EglCore.FLAG_RECORDABLE);
         mInputWindowSurface.recreate(mEglCore);
         mInputWindowSurface.makeCurrent();
