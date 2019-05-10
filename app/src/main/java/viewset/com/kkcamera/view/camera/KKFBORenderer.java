@@ -1,5 +1,6 @@
 package viewset.com.kkcamera.view.camera;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -7,7 +8,9 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 
@@ -28,6 +31,7 @@ import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
 import viewset.com.kkcamera.view.camera.multimedia.MediaEncoder;
+import viewset.com.kkcamera.view.camera.multimedia.TextureMovieEncoder;
 import viewset.com.kkcamera.view.camera.record.HardcodeEncoder;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
@@ -71,11 +75,14 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int recordingStatus;
     private static final int RECORDING_OFF = 0;
     private static final int RECORDING_ON = 1;
+    private static final int RECORDING_RESUMED = 2;
     private static final int RECORDING_PAUSE = 3;
     private static final int RECORDING_RESUME = 4;
 
     private HardcodeEncoder hardcodeEncoder;
     private String mOutputPath;
+
+    private TextureMovieEncoder videoEncoder;
 
     /**
      * 获取视频缓存绝对路径
@@ -87,11 +94,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         String directoryPath;
         // 判断外部存储是否可用，如果不可用则使用内部存储路径
         if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            directoryPath = context.getExternalCacheDir().getAbsolutePath();
+            directoryPath = Environment.getExternalStorageDirectory().getAbsolutePath();
         } else { // 使用内部存储缓存目录
             directoryPath = context.getCacheDir().getAbsolutePath();
         }
-        String path = directoryPath + File.separator + "CainCamera_" + System.currentTimeMillis() + ".mp4";
+        String path = directoryPath + File.separator + "KkCamera_" + System.currentTimeMillis() + ".mp4";
         File file = new File(path);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
@@ -134,7 +141,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         beautyFilter.onSurfaceCreated();
 
         // 一开始处于关闭状态
-        recordingStatus = RECORDING_OFF;
+        if (recordingEnabled) {
+            recordingStatus = RECORDING_RESUMED;
+        } else {
+            recordingStatus = RECORDING_OFF;
+        }
     }
 
     @Override
@@ -178,6 +189,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     }
 
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Override
     public void onDrawFrame(GL10 gl) {
         if (mSurfaceTexture != null) {
@@ -211,26 +223,33 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
                 /**说明是录制状态*/
                 switch (recordingStatus) {
                     case RECORDING_OFF:
-                        HardcodeEncoder.getInstance().startRecording(mContext,EGL14.eglGetCurrentContext());
+                        videoEncoder = new TextureMovieEncoder(mContext);
+                        Log.e("ttt", mOutputPath+"---startRecording");
+                        videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
+                                new File(mOutputPath), mPreviewWidth, mPreviewHeight, 2000000, EGL14.eglGetCurrentContext()));
+                        recordingStatus = RECORDING_ON;
+                        break;
+                    case RECORDING_RESUMED:
+                        videoEncoder.updateSharedContext(EGL14.eglGetCurrentContext());
                         recordingStatus = RECORDING_ON;
                         break;
                     case RECORDING_ON:
                         break;
                     case RECORDING_PAUSE:
-                        HardcodeEncoder.getInstance().pauseRecord();
                         recordingStatus = RECORDING_ON;
                         break;
                     case RECORDING_RESUME:
-                        HardcodeEncoder.getInstance().continueRecord();
                         recordingStatus = RECORDING_ON;
                         break;
                 }
             } else {
                 switch (recordingStatus) {
                     case RECORDING_ON:
+                    case RECORDING_RESUMED:
                     case RECORDING_PAUSE:
                     case RECORDING_RESUME:
-                        HardcodeEncoder.getInstance().stopRecording();
+                        Log.e("ttt", mOutputPath+"---stopRecording");
+                        videoEncoder.stopRecording();
                         recordingStatus = RECORDING_OFF;
                         break;
                     case RECORDING_OFF:
@@ -242,6 +261,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             GLES20.glViewport(0, 0, mWidth, mHeight);
             showFilter.setTextureId(beautyFilter.getOutputTexture());
             showFilter.onDrawFrame();
+
+            if (videoEncoder != null && recordingEnabled && recordingStatus == RECORDING_ON) {
+                videoEncoder.setTextureId(beautyFilter.getOutputTexture());
+                videoEncoder.frameAvailable(mSurfaceTexture);
+            }
         }
     }
 
@@ -420,31 +444,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     }
 
     public void startRecord() {
-        HardcodeEncoder.getInstance()
-                .preparedRecorder()
-                .setOutputPath(mOutputPath)
-                .enableAudioRecord(true)
-                .initRecorder(width, height, new MediaEncoder.MediaEncoderListener() {
-                    @Override
-                    public void onPrepared(MediaEncoder encoder) {
-
-                    }
-
-                    @Override
-                    public void onStarted(MediaEncoder encoder) {
-
-                    }
-
-                    @Override
-                    public void onStopped(MediaEncoder encoder) {
-
-                    }
-
-                    @Override
-                    public void onReleased(MediaEncoder encoder) {
-
-                    }
-                });
         recordingEnabled = true;
     }
 

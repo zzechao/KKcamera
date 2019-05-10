@@ -25,6 +25,8 @@ public class GLCameraActivity extends AppCompatActivity {
 
     private Unbinder unbinder;
 
+    private boolean isRecording = false;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +34,7 @@ public class GLCameraActivity extends AppCompatActivity {
         unbinder = ButterKnife.bind(this);
     }
 
-    @OnClick({R.id.bt_switch, R.id.takephoto})
+    @OnClick({R.id.bt_switch, R.id.takephoto,R.id.record})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.bt_switch:
@@ -51,6 +53,14 @@ public class GLCameraActivity extends AppCompatActivity {
                         });
                     }
                 });
+                break;
+            case R.id.record:
+                if(isRecording){
+                    kkcamera.stopRecord();
+                }else {
+                    kkcamera.startRecord();
+                }
+                isRecording = !isRecording;
                 break;
         }
     }

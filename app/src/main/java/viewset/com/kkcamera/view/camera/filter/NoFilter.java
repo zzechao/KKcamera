@@ -11,7 +11,7 @@ public class NoFilter extends BaseFilter {
     }
 
     @Override
-    public void onCreateShare() {
+    protected void onCreateShare() {
         mVertexShader = OpenGlUtils.loadShareFromAssetsFile("camera/show_vertex.glsl", mContext.getResources());
         mFragmentShader = OpenGlUtils.loadShareFromAssetsFile("camera/base_fragment.glsl", mContext.getResources());
     }
