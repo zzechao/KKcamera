@@ -226,7 +226,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
                         videoEncoder = new TextureMovieEncoder(mContext);
                         Log.e("ttt", mOutputPath+"---startRecording");
                         videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
-                                new File(mOutputPath), mPreviewWidth, mPreviewHeight, 2000000, EGL14.eglGetCurrentContext()));
+                                new File(mOutputPath), mPreviewWidth, mPreviewHeight, 2500000, EGL14.eglGetCurrentContext()));
                         recordingStatus = RECORDING_ON;
                         break;
                     case RECORDING_RESUMED:

@@ -27,7 +27,6 @@ import android.os.Message;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 import viewset.com.kkcamera.view.camera.filter.NoFilter;
@@ -62,7 +61,6 @@ import viewset.com.kkcamera.view.camera.gles.WindowSurface;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class TextureMovieEncoder implements Runnable {
     private static final String TAG = "";
-    private static final boolean VERBOSE = false;
 
     private static final int MSG_START_RECORDING = 0;
     private static final int MSG_STOP_RECORDING = 1;

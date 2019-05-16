@@ -44,7 +44,6 @@ public class VideoEncoderCore {
     private static final String TAG = VideoEncoderCore.class.getSimpleName();
     private static final boolean VERBOSE = false;
 
-    // TODO: these ought to be configurable as well
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int FRAME_RATE = 30;               // 30fps
     private static final int IFRAME_INTERVAL = 5;           // 5 seconds between I-frames
@@ -105,8 +104,6 @@ public class VideoEncoderCore {
             mEncoder = null;
         }
         if (mMuxer != null) {
-            // TODO: stop() throws an exception if you haven't fed it any data.  Keep track
-            //       of frames submitted, and don't call stop() if we haven't written anything.
             mMuxer.stop();
             mMuxer.release();
             mMuxer = null;
