@@ -90,7 +90,7 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
         }
     }
 
-    public void pauce() {
+    public void pause() {
         mPauseAngle.add(mStartAngle + mProcess * 360 / (float) mTotal);
     }
 

@@ -68,8 +68,8 @@ public class GLCameraActivity extends AppCompatActivity {
             case R.id.record:
                 if(isRecording){
                     mHandler.removeMessages(0);
-                    record.pauce();
-                    kkcamera.stopRecord();
+                    record.pause();
+                    kkcamera.pause();
                 }else {
                     mHandler.sendMessageDelayed(mHandler.obtainMessage(0), 50);
                     kkcamera.startRecord();

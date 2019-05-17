@@ -243,6 +243,10 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         renderer.stopRecord();
     }
 
+    public void pause() {
+        
+    }
+
     public interface Callback<T> {
         void back(T t);
     }
