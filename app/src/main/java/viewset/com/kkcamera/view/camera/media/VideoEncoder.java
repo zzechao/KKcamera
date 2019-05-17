@@ -7,17 +7,20 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class VideoEncoder {
 
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private static final int FRAME_RATE = 24;
+    private static final int FRAME_RATE = 25;
     private static final float BPP = 0.25f;
-    private static final int I_FRAME_INTERVAL = 1; // I帧间隔
+    private static final int I_FRAME_INTERVAL = 5; // I帧间隔
     private int mBitRate;
     private int mWidth;
     private int mHeight;
@@ -28,23 +31,26 @@ public class VideoEncoder {
     private boolean isEnableHD = false;
 
     protected MediaCodec mMediaCodec;
+    private MediaCodec.BufferInfo mBufferInfo;
     private Surface mSurface;
 
-    public VideoEncoder() {
+    private WeakReference<MuxerEncoder> weakReferenceMuxer;
+    private int mTrackIndex;
 
+    public VideoEncoder(MuxerEncoder muxerEncoder) {
+        weakReferenceMuxer = new WeakReference<>(muxerEncoder);
     }
 
-    public VideoEncoder(MediaMuxer mMediaMuxer) {
-
-    }
-
-    public void prepare(int width, int height) throws IOException {
+    public void start(int width, int height) throws IOException {
         final MediaCodecInfo videoCodecInfo = selectVideoCodec(MIME_TYPE);
         if (videoCodecInfo == null) {
             return;
         }
         mWidth = width;
         mHeight = height;
+        mBitRate = (int) (mWidth * mHeight * FRAME_RATE * BPP / 2);
+
+        mBufferInfo = new MediaCodec.BufferInfo();
 
         int videoWidth = width % 2 == 0 ? width : width - 1;
         int videoHeight = height % 2 == 0 ? height : height - 1;
@@ -65,7 +71,73 @@ public class VideoEncoder {
         // this method only can call between #configure and #start
         mSurface = mMediaCodec.createInputSurface();    // API >= 18
         mMediaCodec.start();
+    }
 
+    public void drainEncoder(boolean endOfStream) {
+        final int TIMEOUT_USEC = 10000;
+
+        if (endOfStream) {
+            mMediaCodec.signalEndOfInputStream();
+        }
+
+        ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
+        while (true) {
+            int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                if (!endOfStream) {
+                    break;
+                }
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                encoderOutputBuffers = mMediaCodec.getOutputBuffers();
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MuxerEncoder muxerEncoder = weakReferenceMuxer.get();
+                if (muxerEncoder.isStart()) {
+                    throw new RuntimeException("format changed twice");
+                }
+                MediaFormat newFormat = mMediaCodec.getOutputFormat();
+                mTrackIndex = muxerEncoder.changeFormat(newFormat);
+            } else if (encoderStatus < 0) {
+
+            } else {
+                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+                if (encodedData == null) {
+                    throw new RuntimeException("encoderOutputBuffer " + encoderStatus +
+                            " was null");
+                }
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    mBufferInfo.size = 0;
+                }
+
+                MuxerEncoder muxerEncoder = weakReferenceMuxer.get();
+                if (mBufferInfo.size != 0) {
+                    if (!muxerEncoder.isStart()) {
+                        throw new RuntimeException("muxer hasn't started");
+                    }
+
+                    encodedData.position(mBufferInfo.offset);
+                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+                    muxerEncoder.writeData(mTrackIndex, encodedData, mBufferInfo);
+
+                    Log.d("ttt", "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
+                            mBufferInfo.presentationTimeUs);
+                }
+
+                mMediaCodec.releaseOutputBuffer(encoderStatus, false);
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public void release() {
+        if (mMediaCodec != null) {
+            mMediaCodec.stop();
+            mMediaCodec.release();
+            mMediaCodec = null;
+        }
     }
 
     private int calcBitRate() {
