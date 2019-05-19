@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -45,7 +46,7 @@ public class GLCameraActivity extends AppCompatActivity {
         record.setTotal(MAXTIME);
     }
 
-    @OnClick({R.id.bt_switch, R.id.takephoto, R.id.record})
+    @OnClick({R.id.bt_switch, R.id.takephoto, R.id.record, R.id.recordok})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.bt_switch:
@@ -65,12 +66,19 @@ public class GLCameraActivity extends AppCompatActivity {
                     }
                 });
                 break;
+            case R.id.recordok:
+                record.setProcess(0);
+                mHandler.removeMessages(0);
+                kkcamera.stopRecord();
+                isRecording = false;
+                Toast.makeText(this, kkcamera.getOutputPath(), Toast.LENGTH_SHORT).show();
+                break;
             case R.id.record:
-                if(isRecording){
+                if (isRecording) {
                     mHandler.removeMessages(0);
                     record.pause();
-                    kkcamera.pause();
-                }else {
+                    kkcamera.pauseRecord();
+                } else {
                     mHandler.sendMessageDelayed(mHandler.obtainMessage(0), 50);
                     kkcamera.startRecord();
                 }

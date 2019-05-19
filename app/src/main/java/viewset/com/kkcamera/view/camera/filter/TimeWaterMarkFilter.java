@@ -69,9 +69,7 @@ public class TimeWaterMarkFilter extends NoFilter {
         super.onSurfaceCreated();
         mFilter.onSurfaceCreated();
 
-        if (!mStats) {
-            Gl2Utils.flip(mFilter.getMatrix(), false, true);
-        }
+        Gl2Utils.flip(mFilter.getMatrix(), false, true);
     }
 
     private int[] textures = new int[1];

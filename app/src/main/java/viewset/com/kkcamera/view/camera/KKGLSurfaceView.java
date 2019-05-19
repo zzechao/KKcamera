@@ -37,7 +37,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = false;
+    private boolean useCamera2 = true;
 
     private boolean isSetParm = false;
 
@@ -235,19 +235,59 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
         requestRender();
     }
 
+    /**
+     * 开始录制
+     */
     public void startRecord() {
-        renderer.startRecord();
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                renderer.startRecord();
+            }
+        });
     }
 
-    public void stopRecord(){
-        renderer.stopRecord();
+    /**
+     * 停止录制
+     */
+    public void stopRecord() {
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                renderer.stopRecord();
+            }
+        });
     }
 
-    public void pause() {
-        
+    /**
+     * 暂停录制
+     */
+    public void pauseRecord() {
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                renderer.pauseRecord();
+            }
+        });
+    }
+
+    /**
+     * 恢复录制
+     */
+    public void resumeRecord() {
+        queueEvent(new Runnable() {
+            @Override
+            public void run() {
+                renderer.resumeRecord();
+            }
+        });
     }
 
     public interface Callback<T> {
         void back(T t);
+    }
+
+    public String getOutputPath() {
+        return renderer.getOutputPath();
     }
 }

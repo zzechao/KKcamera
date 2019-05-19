@@ -63,10 +63,6 @@ public class WaterMarkFilter extends NoFilter {
         GLES20.glViewport(0, 0, width, height);
     }
 
-    public void isBitmap(boolean stats) {
-        mStats = stats;
-    }
-
     @Override
     public void onSurfaceCreated() {
         super.onSurfaceCreated();
@@ -94,9 +90,8 @@ public class WaterMarkFilter extends NoFilter {
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
 
             //对画面进行矩阵旋转
-            if (!mStats) {
-                Gl2Utils.flip(mFilter.getMatrix(), false, true);
-            }
+            Gl2Utils.flip(mFilter.getMatrix(), false, true);
+
 
             mFilter.setTextureId(textures[0]);
 

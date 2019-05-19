@@ -38,6 +38,12 @@
             android:layout_height="wrap_content"
             android:text="拍照" />
 
+        <Button
+            android:id="@+id/recordok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="录制完成"/>
+
         <viewset.com.kkcamera.widget.CircularProgressView
             android:id="@+id/record"
             android:layout_width="88dp"

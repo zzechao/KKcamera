@@ -450,4 +450,21 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void stopRecord() {
         recordingEnabled = false;
     }
+
+    public String getOutputPath(){
+        return mOutputPath;
+    }
+
+    public void pauseRecord() {
+        if(recordingStatus==RECORDING_ON){
+            recordingStatus=RECORDING_PAUSE;
+        }
+    }
+
+
+    public void resumeRecord() {
+        if(recordingStatus==RECORDING_ON){
+            recordingStatus=RECORDING_PAUSE;
+        }
+    }
 }
