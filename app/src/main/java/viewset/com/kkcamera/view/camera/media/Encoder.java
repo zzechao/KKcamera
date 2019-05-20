@@ -9,40 +9,31 @@ import android.support.annotation.RequiresApi;
 import java.lang.ref.WeakReference;
 
 
-
+/**
+ * Looper基础类
+ */
 public abstract class Encoder implements Runnable{
 
-    private static final int MSG_START_RECORDING = 1;
-    private static final int MSG_STOP_RECORDING = 2;
-    private static final int MSG_FRAME_AVAILABLE = 3;
-    private static final int MSG_SET_TEXTURE_ID = 4;
-    private static final int MSG_UPDATE_SHARED_CONTEXT = 5;
-    private static final int MSG_QUIT = 6;
-    private static final int MSG_PAUSE_RECORDING = 7;
-    private static final int MSG_RESUME_RECORDING = 8;
+    protected static final int MSG_START_RECORDING = 1;
+    protected static final int MSG_STOP_RECORDING = 2;
+    protected static final int MSG_FRAME_AVAILABLE = 3;
+    protected static final int MSG_SET_TEXTURE_ID = 4;
+    protected static final int MSG_UPDATE_SHARED_CONTEXT = 5;
+    protected static final int MSG_QUIT = 6;
+    protected static final int MSG_PAUSE_RECORDING = 7;
+    protected static final int MSG_RESUME_RECORDING = 8;
 
     /**
      * 锁，同步EncoderHandler创建，再释放锁
      */
-    private byte[] mReadyFence = new byte[0];
+    protected byte[] mReadyFence = new byte[0];
 
-    private EncoderHandler mHandler;
-    private boolean mReady = false;
-
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    @Override
-    public void run() {
-        Looper.prepare();
-        synchronized (mReadyFence) {
-            mHandler = new EncoderHandler(this);
-            mReady = true;
-            mReadyFence.notify();
-        }
-        Looper.loop();
-    }
+    protected EncoderHandler mHandler;
+    protected boolean mReady = false;
+    protected boolean mRunning;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private static class EncoderHandler extends Handler {
+    protected static class EncoderHandler extends Handler {
         private WeakReference<Encoder> mWeakEncoder;
 
         public EncoderHandler(Encoder encoder) {
@@ -89,6 +80,20 @@ public abstract class Encoder implements Runnable{
             }
         }
     }
+
+    public boolean isRecording() {
+        synchronized (mReadyFence) {
+            return mRunning;
+        }
+    }
+
+    protected abstract void start(EncoderConfig config);
+
+    protected abstract void stop();
+
+    protected abstract void pause();
+
+    protected abstract void resume();
 
     protected abstract void handleResumeRecording();
 
