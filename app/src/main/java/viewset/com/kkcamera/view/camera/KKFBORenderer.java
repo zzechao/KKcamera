@@ -222,7 +222,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
                 switch (recordingStatus) {
                     case RECORDING_OFF:
                         muxerEncoder = new MuxerEncoder();
-                        Log.e("ttt", mOutputPath + "---startRecording");
                         muxerEncoder.startRecording(new EncoderConfig(mPreviewWidth, mPreviewHeight, mOutputPath, mContext, EGL14.eglGetCurrentContext()));
                         recordingStatus = RECORDING_ON;
                         break;
@@ -298,11 +297,12 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setViewSize(int width, int height) {
         mWidth = width;
         mHeight = height;
-        calculateMatrix();
+        calculateMatrix(1);
     }
 
     //和拍照一样都是先绘制到drawFilter中，要跟随ImageShowFilter一样的逻辑
-    private void calculateMatrix() {
+    private void calculateMatrix(int i) {
+        Log.e("ttt", "calculateMatrix-" + i);
         float[] matrix = Gl2Utils.getOriginalMatrix();
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         if (mCameraId == 1) { // 前置摄像头矩阵
@@ -323,7 +323,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      */
     public void setCameraId(int cameraId) {
         mCameraId = cameraId;
-        calculateMatrix();
+        calculateMatrix(2);
     }
 
     /**

@@ -52,7 +52,6 @@ public class MagicCameraActivity extends AppCompatActivity {
 
     @OnClick(R.id.just)
     public void onViewClick(View view) {
-        Log.e("ttt", "onViewClick");
         magicCameraView.setFilter(MagicFilterType.N1977);
     }
 }

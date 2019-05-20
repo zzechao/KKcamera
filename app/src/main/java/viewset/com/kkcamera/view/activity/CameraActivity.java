@@ -109,14 +109,12 @@ public class CameraActivity extends AppCompatActivity {
 
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            Log.e("ttt", "onSurfaceTextureAvailable" + width + "---" + height);
             mPreTextureViewSize = new Size(width, height);
             openCamera(width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            Log.e("ttt", "onSurfaceTextureSizeChanged" + width + "---" + height);
             mPreTextureViewSize = new Size(width, height);
             configureTransform(width, height);
         }
@@ -354,7 +352,6 @@ public class CameraActivity extends AppCompatActivity {
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Log.e("ttt", "onImageAvailable");
                 Rect viewRect = new Rect(0, 0, mPreTextureViewSize.getWidth(), mPreTextureViewSize.getHeight());
                 Rect bufferRect = new Rect(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 backgroundHandler.post(new ImageSaver(reader.acquireNextImage(), viewRect, bufferRect));

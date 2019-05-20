@@ -65,7 +65,6 @@ public class EgTexture2dRender implements GLSurfaceView.Renderer {
 
 
     public void setBitmap(Bitmap bitmap) {
-        Log.e("ttt", "setBitmap");
         mBitmap = bitmap;
     }
 

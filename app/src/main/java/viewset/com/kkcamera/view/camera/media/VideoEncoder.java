@@ -105,7 +105,6 @@ public class VideoEncoder {
         ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
         while (true) {
             int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
-            Log.e("ttt", "encoderStatus=" + encoderStatus);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
                 return;
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
