@@ -207,6 +207,16 @@ public class MuxerEncoder implements Runnable, MuxerEncoderListener {
         return (result - pauseTotalTime) / 1000L;
     }
 
+    @Override
+    public void onStart() {
+
+    }
+
+    @Override
+    public void onStop() {
+
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private static class EncoderHandler extends Handler {
         private WeakReference<MuxerEncoder> mWeakEncoder;

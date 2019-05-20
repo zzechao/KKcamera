@@ -13,4 +13,8 @@ public interface MuxerEncoderListener {
     boolean isStart();
 
     long getPTSUs();
+
+    void onStart();
+
+    void onStop();
 }

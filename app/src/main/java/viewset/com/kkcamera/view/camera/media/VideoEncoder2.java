@@ -12,8 +12,17 @@ import android.view.Surface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+import viewset.com.kkcamera.view.camera.filter.NoFilter;
+import viewset.com.kkcamera.view.camera.gles.EglCore;
+import viewset.com.kkcamera.view.camera.gles.WindowSurface;
+
 public class VideoEncoder2 extends Encoder {
+
+    private EglCore mEglCore;
+    private WindowSurface mInputWindowSurface;
+    private NoFilter showFilter;
+    private int mTextureId;
+
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int FRAME_RATE = 25;
     private static final float BPP = 0.25f;
@@ -51,6 +60,7 @@ public class VideoEncoder2 extends Encoder {
         Looper.loop();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void init(int width, int height) throws IOException {
         final MediaCodecInfo videoCodecInfo = selectVideoCodec(MIME_TYPE);
         if (videoCodecInfo == null) {
@@ -106,7 +116,9 @@ public class VideoEncoder2 extends Encoder {
     }
 
     public void signalEndOfInputStream() {
-        mMediaCodec.signalEndOfInputStream();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            mMediaCodec.signalEndOfInputStream();
+        }
     }
 
     public void drainEncoder() {
@@ -149,6 +161,18 @@ public class VideoEncoder2 extends Encoder {
             mMediaCodec.release();
             mMediaCodec = null;
         }
+        if (mInputWindowSurface != null) {
+            mInputWindowSurface.release();
+            mInputWindowSurface = null;
+        }
+        if (showFilter != null) {
+            showFilter.release();
+            showFilter = null;
+        }
+        if (mEglCore != null) {
+            mEglCore.release();
+            mEglCore = null;
+        }
         mListener = null;
     }
 
@@ -171,8 +195,21 @@ public class VideoEncoder2 extends Encoder {
         isEnableHD = enable;
     }
 
-    public Surface getInputSurface() {
+    private Surface getInputSurface() {
         return mSurface;
+    }
+
+    public void updateSharedContext(EncoderConfig config) {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_SHARED_CONTEXT, config));
+    }
+
+    public void setTextureId(int id) {
+        synchronized (mReadyFence) {
+            if (!mReady) {
+                return;
+            }
+        }
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_SET_TEXTURE_ID, id, 0, null));
     }
 
     protected static final MediaCodecInfo selectVideoCodec(final String mimeType) {
@@ -281,13 +318,22 @@ public class VideoEncoder2 extends Encoder {
     }
 
     @Override
-    protected void handleUpdateSharedContext(EncoderConfig obj) {
+    protected void handleUpdateSharedContext(EncoderConfig config) {
+        mInputWindowSurface.releaseEglSurface();
+        showFilter.release();
+        mEglCore.release();
 
+        mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
+        mInputWindowSurface.recreate(mEglCore);
+        mInputWindowSurface.makeCurrent();
+
+        showFilter = new NoFilter(config.context);
+        showFilter.onSurfaceCreated();
     }
 
     @Override
     protected void handleSetTexture(int textureId) {
-
+        mTextureId = textureId;
     }
 
     @Override
@@ -297,15 +343,26 @@ public class VideoEncoder2 extends Encoder {
 
     @Override
     protected void handleStopRecording() {
-
+        mListener.onStop();
     }
 
     @Override
     protected void handleStartRecording(EncoderConfig config) {
         try {
-            init(config.width, config.height);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                init(config.width, config.height);
+
+                mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
+                mInputWindowSurface = new WindowSurface(mEglCore, getInputSurface(), true);
+                mInputWindowSurface.makeCurrent();
+
+                showFilter = new NoFilter(config.context);
+                showFilter.onSurfaceCreated();
+                showFilter.setSize(config.width, config.height);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }
