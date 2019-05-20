@@ -236,6 +236,14 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     }
 
     /**
+     * 是否再暂停中
+     * @return
+     */
+    public boolean isPause() {
+        return renderer.isPause();
+    }
+
+    /**
      * 开始录制
      */
     public void startRecord() {

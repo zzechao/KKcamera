@@ -71,6 +71,7 @@ public class GLCameraActivity extends AppCompatActivity {
                 mHandler.removeMessages(0);
                 kkcamera.stopRecord();
                 isRecording = false;
+                currentTime = 0;
                 Toast.makeText(this, kkcamera.getOutputPath(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.record:
@@ -80,7 +81,11 @@ public class GLCameraActivity extends AppCompatActivity {
                     kkcamera.pauseRecord();
                 } else {
                     mHandler.sendMessageDelayed(mHandler.obtainMessage(0), 50);
-                    kkcamera.startRecord();
+                    if (kkcamera.isPause()) {
+                        kkcamera.resumeRecord();
+                    } else {
+                        kkcamera.startRecord();
+                    }
                 }
                 isRecording = !isRecording;
                 break;
@@ -97,6 +102,7 @@ public class GLCameraActivity extends AppCompatActivity {
             } else {
                 isRecording = false;
                 kkcamera.stopRecord();
+                Toast.makeText(GLCameraActivity.this, kkcamera.getOutputPath(), Toast.LENGTH_SHORT).show();
             }
         }
     };

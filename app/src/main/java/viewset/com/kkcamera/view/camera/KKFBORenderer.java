@@ -32,9 +32,6 @@ import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
 import viewset.com.kkcamera.view.camera.media.EncoderConfig;
 import viewset.com.kkcamera.view.camera.media.MuxerEncoder;
-import viewset.com.kkcamera.view.camera.multimedia.MediaEncoder;
-import viewset.com.kkcamera.view.camera.multimedia.TextureMovieEncoder;
-import viewset.com.kkcamera.view.camera.record.HardcodeEncoder;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;
 
@@ -78,8 +75,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private static final int RECORDING_OFF = 0;
     private static final int RECORDING_ON = 1;
     private static final int RECORDING_RESUMED = 2;
-    private static final int RECORDING_PAUSE = 3;
-    private static final int RECORDING_RESUME = 4;
+    private static final int RECORDING_PAUSED = 3;
+    private static final int RECORDING_PAUSE = 4;
+    private static final int RECORDING_RESUME = 5;
+
 
     private String mOutputPath;
 
@@ -116,8 +115,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         drawFilter = new ShowFilter(context);
         processColorFilter = new ProcessFilter(context);
         ((ProcessFilter) processColorFilter).setFilter(new ColorFilter(context));
-        //processPkmFilter = new ProcessFilter(context);
-        //((ProcessFilter) processPkmFilter).setFilter(new ZipPkmAnimationFilter(context));
         beautyFilter = new ProcessBeautyFilter(context);
 
         setWaterMarkPosition();
@@ -225,18 +222,20 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
                 switch (recordingStatus) {
                     case RECORDING_OFF:
                         muxerEncoder = new MuxerEncoder();
-                        Log.e("ttt", mOutputPath+"---startRecording");
-                        muxerEncoder.startRecording(new EncoderConfig(mPreviewWidth,mPreviewHeight,mOutputPath,mContext,EGL14.eglGetCurrentContext()));
+                        Log.e("ttt", mOutputPath + "---startRecording");
+                        muxerEncoder.startRecording(new EncoderConfig(mPreviewWidth, mPreviewHeight, mOutputPath, mContext, EGL14.eglGetCurrentContext()));
                         recordingStatus = RECORDING_ON;
                         break;
                     case RECORDING_RESUMED:
-                        muxerEncoder.updateSharedContext(new EncoderConfig(0,0,null,mContext,EGL14.eglGetCurrentContext()));
+                        muxerEncoder.updateSharedContext(new EncoderConfig(0, 0, null, mContext, EGL14.eglGetCurrentContext()));
                         recordingStatus = RECORDING_ON;
                         break;
-                    case RECORDING_ON:
+                    case RECORDING_PAUSED:
+                        recordingStatus = RECORDING_ON;
                         break;
                     case RECORDING_PAUSE:
-                        recordingStatus = RECORDING_ON;
+                        break;
+                    case RECORDING_ON:
                         break;
                     case RECORDING_RESUME:
                         recordingStatus = RECORDING_ON;
@@ -245,10 +244,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             } else {
                 switch (recordingStatus) {
                     case RECORDING_ON:
+                    case RECORDING_PAUSED:
                     case RECORDING_RESUMED:
                     case RECORDING_PAUSE:
                     case RECORDING_RESUME:
-                        Log.e("ttt", mOutputPath+"---stopRecording");
+                        Log.e("ttt", mOutputPath + "---stopRecording");
                         muxerEncoder.stopRecording();
                         recordingStatus = RECORDING_OFF;
                         break;
@@ -443,6 +443,10 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter.onDrawFrame();
     }
 
+    public boolean isPause(){
+        return recordingStatus == RECORDING_PAUSE;
+    }
+
     public void startRecord() {
         recordingEnabled = true;
     }
@@ -451,20 +455,20 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         recordingEnabled = false;
     }
 
-    public String getOutputPath(){
+    public String getOutputPath() {
         return mOutputPath;
     }
 
     public void pauseRecord() {
-        if(recordingStatus==RECORDING_ON){
-            recordingStatus=RECORDING_PAUSE;
+        if (recordingStatus == RECORDING_ON) {
+            recordingStatus = RECORDING_PAUSE;
         }
     }
 
 
     public void resumeRecord() {
-        if(recordingStatus==RECORDING_ON){
-            recordingStatus=RECORDING_PAUSE;
+        if (recordingStatus == RECORDING_PAUSE) {
+            recordingStatus = RECORDING_RESUME;
         }
     }
 }
