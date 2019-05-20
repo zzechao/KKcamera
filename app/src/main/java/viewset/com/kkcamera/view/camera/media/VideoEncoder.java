@@ -34,11 +34,11 @@ public class VideoEncoder {
     private MediaCodec.BufferInfo mBufferInfo;
     private Surface mSurface;
 
-    private WeakReference<MuxerEncoder> weakReferenceMuxer;
+    private MuxerEncoderListener mListener;
     private int mTrackIndex;
 
-    public VideoEncoder(MuxerEncoder muxerEncoder) {
-        weakReferenceMuxer = new WeakReference<>(muxerEncoder);
+    public VideoEncoder(MuxerEncoderListener listener) {
+        mListener = listener;
     }
 
     public void start(int width, int height) throws IOException {
@@ -54,76 +54,78 @@ public class VideoEncoder {
 
         int videoWidth = width % 2 == 0 ? width : width - 1;
         int videoHeight = height % 2 == 0 ? height : height - 1;
-        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, videoWidth, videoHeight);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);    // API >= 18
+        final MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, videoWidth, videoHeight);
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);    // API >= 18
 
         if (mBitRate > 0) {
-            format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
         } else {
-            format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         }
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL);
+        //设置视频fps
+        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+        //设置视频关键帧间隔，这里设置两秒一个关键帧
+        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, I_FRAME_INTERVAL);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            /**
+             * 可选配置，设置码率模式
+             * BITRATE_MODE_VBR：恒定质量
+             * BITRATE_MODE_VBR：可变码率
+             * BITRATE_MODE_CBR：恒定码率
+             */
+            mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+            /**
+             * 可选配置，设置H264 Profile
+             * 需要做兼容性检查
+             */
+            mediaFormat.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileHigh);
+            /**
+             * 可选配置，设置H264 Level
+             * 需要做兼容性检查
+             */
+            mediaFormat.setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.HEVCHighTierLevel31);
+        }
+
 
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
-        mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        mMediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         // get Surface for encoder input
         // this method only can call between #configure and #start
         mSurface = mMediaCodec.createInputSurface();    // API >= 18
         mMediaCodec.start();
     }
 
-    public void drainEncoder(boolean endOfStream) {
-        final int TIMEOUT_USEC = 10000;
+    public void signalEndOfInputStream(){
+        mMediaCodec.signalEndOfInputStream();
+    }
 
-        if (endOfStream) {
-            mMediaCodec.signalEndOfInputStream();
-        }
+    public void drainEncoder() {
+        final int TIMEOUT_USEC = 10000;
 
         ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
         while (true) {
             int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
-            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                if (!endOfStream) {
-                    break;
-                }
-            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+            Log.e("ttt", "encoderStatus=" + encoderStatus);
+            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
+                return;
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
                 encoderOutputBuffers = mMediaCodec.getOutputBuffers();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                MuxerEncoder muxerEncoder = weakReferenceMuxer.get();
-                if (muxerEncoder.isStart()) {
-                    throw new RuntimeException("format changed twice");
-                }
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                mTrackIndex = muxerEncoder.changeFormat(newFormat);
+                mTrackIndex = mListener.onFormatChanged(newFormat);
             } else if (encoderStatus < 0) {
 
             } else {
                 ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
-                if (encodedData == null) {
-                    throw new RuntimeException("encoderOutputBuffer " + encoderStatus +
-                            " was null");
-                }
 
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                    mBufferInfo.size = 0;
-                }
-
-                MuxerEncoder muxerEncoder = weakReferenceMuxer.get();
-                if (mBufferInfo.size != 0) {
-                    if (!muxerEncoder.isStart()) {
-                        throw new RuntimeException("muxer hasn't started");
-                    }
-
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+                        && mBufferInfo.size > 0) {
+                    mBufferInfo.presentationTimeUs = mListener.getPTSUs();
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    muxerEncoder.writeData(mTrackIndex, encodedData, mBufferInfo);
-
-                    Log.d("ttt", "sent " + mBufferInfo.size + " bytes to muxer, ts=" +
-                            mBufferInfo.presentationTimeUs);
+                    mListener.writeData(mTrackIndex, encodedData, mBufferInfo);
+                    mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 }
-
-                mMediaCodec.releaseOutputBuffer(encoderStatus, false);
 
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     break;
@@ -138,6 +140,7 @@ public class VideoEncoder {
             mMediaCodec.release();
             mMediaCodec = null;
         }
+        mListener = null;
     }
 
     private int calcBitRate() {
@@ -221,4 +224,6 @@ public class VideoEncoder {
         }
         return false;
     }
+
+
 }

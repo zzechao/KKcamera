@@ -23,6 +23,7 @@ import viewset.com.kkcamera.view.image.opengl.Texture2dFilterActivity;
  * https://blog.csdn.net/oShunz/column/info/androidrealfilter
  * https://blog.csdn.net/qqchenjian318/article/details/77396653
  * https://blog.csdn.net/junzia/column/info/15997
+ * https://www.jianshu.com/u/6bd036a3a723
  */
 public class MainActivity extends AppCompatActivity {
 

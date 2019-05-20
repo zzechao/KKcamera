@@ -248,8 +248,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
                     case RECORDING_RESUMED:
                     case RECORDING_PAUSE:
                     case RECORDING_RESUME:
-                        Log.e("ttt", mOutputPath + "---stopRecording");
-                        muxerEncoder.stopRecording();
                         recordingStatus = RECORDING_OFF;
                         break;
                     case RECORDING_OFF:
@@ -443,7 +441,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         showFilter.onDrawFrame();
     }
 
-    public boolean isPause(){
+    public boolean isPause() {
         return recordingStatus == RECORDING_PAUSE;
     }
 
@@ -453,22 +451,30 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     public void stopRecord() {
         recordingEnabled = false;
+        muxerEncoder.stopRecording();
     }
 
     public String getOutputPath() {
         return mOutputPath;
     }
 
+    /**
+     * 暂停录制
+     */
     public void pauseRecord() {
         if (recordingStatus == RECORDING_ON) {
             recordingStatus = RECORDING_PAUSE;
+            muxerEncoder.pauseRecording();
         }
     }
 
-
+    /**
+     * 继续录制
+     */
     public void resumeRecord() {
         if (recordingStatus == RECORDING_PAUSE) {
             recordingStatus = RECORDING_RESUME;
+            muxerEncoder.resumeRecording();
         }
     }
 }

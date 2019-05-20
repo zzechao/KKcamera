@@ -4,12 +4,12 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
-import android.opengl.EGLContext;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -19,7 +19,7 @@ import viewset.com.kkcamera.view.camera.filter.NoFilter;
 import viewset.com.kkcamera.view.camera.gles.EglCore;
 import viewset.com.kkcamera.view.camera.gles.WindowSurface;
 
-public class MuxerEncoder implements Runnable {
+public class MuxerEncoder implements Runnable, MuxerEncoderListener {
 
     private static final int MSG_START_RECORDING = 1;
     private static final int MSG_STOP_RECORDING = 2;
@@ -27,6 +27,8 @@ public class MuxerEncoder implements Runnable {
     private static final int MSG_SET_TEXTURE_ID = 4;
     private static final int MSG_UPDATE_SHARED_CONTEXT = 5;
     private static final int MSG_QUIT = 6;
+    private static final int MSG_PAUSE_RECORDING = 7;
+    private static final int MSG_RESUME_RECORDING = 8;
 
     /**
      * 锁，同步EncoderHandler创建，再释放锁
@@ -49,7 +51,9 @@ public class MuxerEncoder implements Runnable {
     private int mTextureId;
 
     private boolean mMuxerStarted;
+    private long pauseBeginNans;
     private MediaMuxer mMediaMuxer;
+    private long pauseTotalTime;
 
     /**
      * 创建专门视频录制的loop（message信息传送带）
@@ -98,7 +102,20 @@ public class MuxerEncoder implements Runnable {
     }
 
     /**
-     *
+     * 暂停录制
+     */
+    public void pauseRecording() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_PAUSE_RECORDING));
+    }
+
+    /**
+     * 继续录制
+     */
+    public void resumeRecording() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_RESUME_RECORDING));
+    }
+
+    /**
      * @return
      */
     public boolean isRecording() {
@@ -109,6 +126,7 @@ public class MuxerEncoder implements Runnable {
 
     /**
      * 更新EGLContext
+     *
      * @param config
      */
     public void updateSharedContext(EncoderConfig config) {
@@ -145,18 +163,22 @@ public class MuxerEncoder implements Runnable {
 
     /**
      * 是否已经开始start
+     *
      * @return
      */
+    @Override
     public boolean isStart() {
         return mMuxerStarted;
     }
 
     /**
      * 改变muxer输入渠道
+     *
      * @param newFormat
      */
+    @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public int changeFormat(MediaFormat newFormat) {
+    public int onFormatChanged(MediaFormat newFormat) {
         int trackIndex = mMediaMuxer.addTrack(newFormat);
         mMediaMuxer.start();
         mMuxerStarted = true;
@@ -165,13 +187,25 @@ public class MuxerEncoder implements Runnable {
 
     /**
      * 写信息
+     *
      * @param mTrackIndex
      * @param encodedData
      * @param mBufferInfo
      */
+    @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void writeData(int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo) {
         mMediaMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
+    }
+
+    /**
+     * 获取录制时间
+     * @return
+     */
+    @Override
+    public long getPTSUs() {
+        long result = System.nanoTime();
+        return (result - pauseTotalTime) / 1000L;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -209,6 +243,12 @@ public class MuxerEncoder implements Runnable {
                 case MSG_UPDATE_SHARED_CONTEXT:
                     encoder.handleUpdateSharedContext((EncoderConfig) obj);
                     break;
+                case MSG_PAUSE_RECORDING:
+                    encoder.handlePauseRecording();
+                    break;
+                case MSG_RESUME_RECORDING:
+                    encoder.handleResumeRecording();
+                    break;
                 case MSG_QUIT:
                     Looper.myLooper().quit();
                     break;
@@ -217,8 +257,24 @@ public class MuxerEncoder implements Runnable {
         }
     }
 
+
+    /**
+     *
+     */
+    private void handleResumeRecording() {
+        pauseTotalTime += System.nanoTime() - pauseBeginNans;
+    }
+
+    /**
+     *
+     */
+    private void handlePauseRecording() {
+        pauseBeginNans = System.nanoTime();
+    }
+
     /**
      * Handler回调
+     *
      * @param config
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -236,7 +292,7 @@ public class MuxerEncoder implements Runnable {
             showFilter = new NoFilter(config.context);
             showFilter.onSurfaceCreated();
             showFilter.setSize(config.width, config.height);
-        }catch (IOException e){
+        } catch (IOException e) {
 
         }
     }
@@ -246,12 +302,11 @@ public class MuxerEncoder implements Runnable {
     }
 
     /**
-     *
      * @param timestampNanos
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void handleFrameAvailable(long timestampNanos) {
-        mVideoEncoder.drainEncoder(false);
+        mVideoEncoder.drainEncoder();
 
         showFilter.setTextureId(mTextureId);
         showFilter.onDrawFrame();
@@ -261,7 +316,6 @@ public class MuxerEncoder implements Runnable {
     }
 
     /**
-     *
      * @param config
      */
     private void handleUpdateSharedContext(EncoderConfig config) {
@@ -282,7 +336,11 @@ public class MuxerEncoder implements Runnable {
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void handleStopRecording() {
-        mVideoEncoder.drainEncoder(true);
+        if (mVideoEncoder != null) {
+            mVideoEncoder.signalEndOfInputStream();
+            mVideoEncoder.release();
+            mVideoEncoder = null;
+        }
         releaseEncoder();
     }
 
@@ -291,7 +349,6 @@ public class MuxerEncoder implements Runnable {
      */
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     private void releaseEncoder() {
-        mVideoEncoder.release();
         if (mMediaMuxer != null) {
             mMediaMuxer.stop();
             mMediaMuxer.release();
