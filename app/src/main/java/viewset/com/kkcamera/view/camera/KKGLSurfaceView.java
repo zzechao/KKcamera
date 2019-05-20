@@ -37,7 +37,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     private KKFBORenderer renderer;
     private KKCamera mCamera2;
 
-    private boolean useCamera2 = true;
+    private boolean useCamera2 = false;
 
     private boolean isSetParm = false;
 

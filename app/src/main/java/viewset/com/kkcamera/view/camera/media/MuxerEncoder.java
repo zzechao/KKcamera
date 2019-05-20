@@ -9,7 +9,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
