@@ -68,6 +68,7 @@ public class GLCameraActivity extends AppCompatActivity {
                 break;
             case R.id.recordok:
                 record.setProcess(0);
+                record.clear();
                 mHandler.removeMessages(0);
                 kkcamera.stopRecord();
                 isRecording = false;
@@ -110,13 +111,13 @@ public class GLCameraActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        //kkcamera.onResume();
+        kkcamera.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        //kkcamera.onPause();
+        kkcamera.onPause();
     }
 
     @Override

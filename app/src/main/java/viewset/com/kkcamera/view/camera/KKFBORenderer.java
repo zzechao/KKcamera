@@ -10,7 +10,6 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Handler;
 import android.util.Log;
 
 import java.io.File;
@@ -32,7 +31,6 @@ import viewset.com.kkcamera.view.camera.filter.ShowFilter;
 import viewset.com.kkcamera.view.camera.filter.TimeWaterMarkFilter;
 import viewset.com.kkcamera.view.camera.filter.WaterMarkFilter;
 import viewset.com.kkcamera.view.camera.media.EncoderConfig;
-import viewset.com.kkcamera.view.camera.media.MuxerEncoder;
 import viewset.com.kkcamera.view.camera.media.MuxerWapper;
 import viewset.com.kkcamera.view.image.opengl.texture.OpenGlUtils;
 import viewset.com.kkcamera.view.image.opengl.util.Gl2Utils;

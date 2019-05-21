@@ -94,6 +94,10 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
         mPauseAngle.add(mStartAngle + mProcess * 360 / (float) mTotal);
     }
 
+    public void clear(){
+        mPauseAngle.clear();
+    }
+
     private class Progress extends Drawable {
         @Override
         public void draw(Canvas canvas) {
