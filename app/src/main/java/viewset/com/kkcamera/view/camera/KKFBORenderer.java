@@ -10,6 +10,7 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
 
 import java.io.File;
@@ -337,6 +338,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      * @param cameraId
      */
     public void setCameraId(int cameraId) {
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         mCameraId = cameraId;
         calculateMatrix(2);
     }

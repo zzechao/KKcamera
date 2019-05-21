@@ -6,6 +6,7 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,7 +15,11 @@ public class MuxerWapper implements MuxerEncoderListener {
 
     private MediaMuxer mMediaMuxer;
 
-    private VideoEncoder2 mVideoEncoder;
+    private VideoEncoder mVideoEncoder;
+    private boolean mMuxerStarted;
+
+    private volatile long pauseBeginNans;
+    private volatile long pauseTotalTime;
 
     /**
      * 开始播放
@@ -23,7 +28,7 @@ public class MuxerWapper implements MuxerEncoderListener {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 mMediaMuxer = new MediaMuxer(config.outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-                mVideoEncoder = new VideoEncoder2(this);
+                mVideoEncoder = new VideoEncoder(this);
                 mVideoEncoder.start(config);
             }
         } catch (IOException e) {
@@ -52,24 +57,32 @@ public class MuxerWapper implements MuxerEncoderListener {
         mVideoEncoder.resume();
     }
 
+
     @Override
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public int onFormatChanged(MediaFormat newFormat) {
-        return 0;
+        int trackIndex = mMediaMuxer.addTrack(newFormat);
+        mMediaMuxer.start();
+        mMuxerStarted = true;
+        return trackIndex;
     }
 
-    @Override
-    public void writeData(int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo) {
 
+    @Override
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    public void writeData(int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo) {
+        mMediaMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
     }
 
     @Override
     public boolean isStart() {
-        return false;
+        return mMuxerStarted;
     }
 
     @Override
     public long getPTSUs() {
-        return 0;
+        long result = System.nanoTime();
+        return (result - pauseTotalTime) / 1000L;
     }
 
     @Override
@@ -77,8 +90,9 @@ public class MuxerWapper implements MuxerEncoderListener {
 
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+
     @Override
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onStop() {
         if (mVideoEncoder != null) {
             mVideoEncoder.signalEndOfInputStream();
@@ -90,6 +104,16 @@ public class MuxerWapper implements MuxerEncoderListener {
             mMediaMuxer.release();
             mMediaMuxer = null;
         }
+    }
+
+    @Override
+    public void onResume() {
+        pauseTotalTime += System.nanoTime() - pauseBeginNans;
+    }
+
+    @Override
+    public void onPause() {
+        pauseBeginNans = System.nanoTime();
     }
 
     /**
@@ -110,8 +134,8 @@ public class MuxerWapper implements MuxerEncoderListener {
     }
 
     public void frameAvailable(SurfaceTexture mSurfaceTexture) {
-        if (mSurfaceTexture != null) {
-
+        if (mVideoEncoder != null) {
+            mVideoEncoder.frameAvailable(mSurfaceTexture);
         }
     }
 }

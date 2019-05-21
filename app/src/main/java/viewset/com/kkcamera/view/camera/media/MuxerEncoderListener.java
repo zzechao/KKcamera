@@ -14,7 +14,14 @@ public interface MuxerEncoderListener {
 
     long getPTSUs();
 
+    /**
+     * 遵循Looper的MessageQueue顺序
+     */
     void onStart();
 
     void onStop();
+
+    void onResume();
+
+    void onPause();
 }

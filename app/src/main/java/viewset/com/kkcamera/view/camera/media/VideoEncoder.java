@@ -1,21 +1,28 @@
 package viewset.com.kkcamera.view.camera.media;
 
+import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.media.MediaMuxer;
 import android.os.Build;
+import android.os.Looper;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class VideoEncoder {
+import viewset.com.kkcamera.view.camera.filter.NoFilter;
+import viewset.com.kkcamera.view.camera.gles.EglCore;
+import viewset.com.kkcamera.view.camera.gles.WindowSurface;
+
+public class VideoEncoder extends Encoder {
+
+    private EglCore mEglCore;
+    private WindowSurface mInputWindowSurface;
+    private NoFilter showFilter;
+    private int mTextureId;
 
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int FRAME_RATE = 25;
@@ -41,7 +48,21 @@ public class VideoEncoder {
         mListener = listener;
     }
 
-    public void start(int width, int height) throws IOException {
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @Override
+    public void run() {
+        Looper.prepare();
+        synchronized (mReadyFence) {
+            mHandler = new EncoderHandler(this);
+            mReady = true;
+            mReadyFence.notify();
+        }
+        Looper.loop();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    private void init(int width, int height) throws IOException {
         final MediaCodecInfo videoCodecInfo = selectVideoCodec(MIME_TYPE);
         if (videoCodecInfo == null) {
             return;
@@ -95,11 +116,13 @@ public class VideoEncoder {
         mMediaCodec.start();
     }
 
-    public void signalEndOfInputStream(){
-        mMediaCodec.signalEndOfInputStream();
+    public void signalEndOfInputStream() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            mMediaCodec.signalEndOfInputStream();
+        }
     }
 
-    public void drainEncoder() {
+    private void drainEncoder() {
         final int TIMEOUT_USEC = 10000;
 
         ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
@@ -139,6 +162,18 @@ public class VideoEncoder {
             mMediaCodec.release();
             mMediaCodec = null;
         }
+        if (mInputWindowSurface != null) {
+            mInputWindowSurface.release();
+            mInputWindowSurface = null;
+        }
+        if (showFilter != null) {
+            showFilter.release();
+            showFilter = null;
+        }
+        if (mEglCore != null) {
+            mEglCore.release();
+            mEglCore = null;
+        }
         mListener = null;
     }
 
@@ -161,8 +196,39 @@ public class VideoEncoder {
         isEnableHD = enable;
     }
 
-    public Surface getInputSurface() {
+    private Surface getInputSurface() {
         return mSurface;
+    }
+
+    public void updateSharedContext(EncoderConfig config) {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_UPDATE_SHARED_CONTEXT, config));
+    }
+
+    public void setTextureId(int id) {
+        synchronized (mReadyFence) {
+            if (!mReady) {
+                return;
+            }
+        }
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_SET_TEXTURE_ID, id, 0, null));
+    }
+
+    public void frameAvailable(SurfaceTexture st) {
+        synchronized (mReadyFence) {
+            if (!mReady) {
+                return;
+            }
+        }
+
+        float[] transform = new float[16];
+        st.getTransformMatrix(transform);
+        long timestamp = st.getTimestamp();
+        if (timestamp == 0) {
+            return;
+        }
+
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_FRAME_AVAILABLE,
+                (int) (timestamp >> 32), (int) timestamp, transform));
     }
 
     protected static final MediaCodecInfo selectVideoCodec(final String mimeType) {
@@ -224,5 +290,103 @@ public class VideoEncoder {
         return false;
     }
 
+    @Override
+    protected void start(EncoderConfig config) {
+        synchronized (mReadyFence) {
+            if (mRunning) {
+                return;
+            }
+            mRunning = true;
+            new Thread(this, "MuxerEncoder").start();
+            while (!mReady) {
+                try {
+                    mReadyFence.wait();
+                } catch (InterruptedException ignore) {
+                }
+            }
+        }
 
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_START_RECORDING, config));
+    }
+
+
+    @Override
+    protected void stop() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
+    }
+
+    @Override
+    protected void pause() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_PAUSE_RECORDING));
+    }
+
+    @Override
+    protected void resume() {
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_RESUME_RECORDING));
+    }
+
+    @Override
+    protected void handleResumeRecording() {
+        mListener.onResume();
+    }
+
+    @Override
+    protected void handlePauseRecording() {
+        mListener.onPause();
+    }
+
+    @Override
+    protected void handleUpdateSharedContext(EncoderConfig config) {
+        mInputWindowSurface.releaseEglSurface();
+        showFilter.release();
+        mEglCore.release();
+
+        mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
+        mInputWindowSurface.recreate(mEglCore);
+        mInputWindowSurface.makeCurrent();
+
+        showFilter = new NoFilter(config.context);
+        showFilter.onSurfaceCreated();
+    }
+
+    @Override
+    protected void handleSetTexture(int textureId) {
+        mTextureId = textureId;
+    }
+
+    @Override
+    protected void handleFrameAvailable(long timestamp) {
+        drainEncoder();
+
+        showFilter.setTextureId(mTextureId);
+        showFilter.onDrawFrame();
+
+        mInputWindowSurface.setPresentationTime(timestamp);
+        mInputWindowSurface.swapBuffers();
+    }
+
+    @Override
+    protected void handleStopRecording() {
+        mListener.onStop();
+    }
+
+    @Override
+    protected void handleStartRecording(EncoderConfig config) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                init(config.width, config.height);
+
+                mEglCore = new EglCore(config.mEglContext, EglCore.FLAG_RECORDABLE);
+                mInputWindowSurface = new WindowSurface(mEglCore, getInputSurface(), true);
+                mInputWindowSurface.makeCurrent();
+
+                showFilter = new NoFilter(config.context);
+                showFilter.onSurfaceCreated();
+                showFilter.setSize(config.width, config.height);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
