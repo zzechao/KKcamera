@@ -22,11 +22,12 @@ public abstract class Encoder implements Runnable{
     protected static final int MSG_QUIT = 6;
     protected static final int MSG_PAUSE_RECORDING = 7;
     protected static final int MSG_RESUME_RECORDING = 8;
+    protected static final int MSG_AUDIO_STEP = 9;
 
     /**
      * 锁，同步EncoderHandler创建，再释放锁
      */
-    protected byte[] mReadyFence = new byte[0];
+    protected byte[] mReadyFence = new byte[0]; //
 
     protected EncoderHandler mHandler;
     protected boolean mReady = false;
@@ -73,6 +74,9 @@ public abstract class Encoder implements Runnable{
                 case MSG_RESUME_RECORDING:
                     encoder.handleResumeRecording();
                     break;
+                case MSG_AUDIO_STEP:
+                    encoder.handleAudioStep();
+                    break;
                 case MSG_QUIT:
                     Looper.myLooper().quit();
                     break;
@@ -80,6 +84,8 @@ public abstract class Encoder implements Runnable{
             }
         }
     }
+
+
 
     public boolean isRecording() {
         synchronized (mReadyFence) {
@@ -108,4 +114,6 @@ public abstract class Encoder implements Runnable{
     protected abstract void handleStopRecording();
 
     protected abstract void handleStartRecording(EncoderConfig obj);
+
+    protected abstract void handleAudioStep();
 }

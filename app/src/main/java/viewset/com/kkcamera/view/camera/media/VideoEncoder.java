@@ -78,6 +78,11 @@ public class VideoEncoder extends Encoder {
         final MediaFormat mediaFormat = MediaFormat.createVideoFormat(MIME_TYPE, videoWidth, videoHeight);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);    // API >= 18
 
+        //设置视频宽度
+        mediaFormat.setInteger(MediaFormat.KEY_WIDTH, width);
+        //设置视频高度
+        mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, height);
+
         if (mBitRate > 0) {
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
         } else {
@@ -388,5 +393,10 @@ public class VideoEncoder extends Encoder {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void handleAudioStep() {
+
     }
 }

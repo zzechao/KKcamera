@@ -14,8 +14,8 @@ import java.nio.ByteBuffer;
 public class MuxerWapper implements MuxerEncoderListener {
 
     private MediaMuxer mMediaMuxer;
-
     private VideoEncoder mVideoEncoder;
+    private AudioEncoder mAudioEncoder;
     private boolean mMuxerStarted;
 
     private volatile long pauseBeginNans;
@@ -30,6 +30,8 @@ public class MuxerWapper implements MuxerEncoderListener {
                 mMediaMuxer = new MediaMuxer(config.outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
                 mVideoEncoder = new VideoEncoder(this);
                 mVideoEncoder.start(config);
+                mAudioEncoder = new AudioEncoder();
+                mAudioEncoder.start(config);
             }
         } catch (IOException e) {
             e.printStackTrace();
