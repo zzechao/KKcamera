@@ -24,10 +24,10 @@ public class VideoEncoder extends Encoder {
     private NoFilter showFilter;
     private int mTextureId;
 
-    private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
-    private static final int FRAME_RATE = 25;
-    private static final float BPP = 0.25f;
-    private static final int I_FRAME_INTERVAL = 5; // I帧间隔
+    private final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
+    private final int FRAME_RATE = 25;
+    private final float BPP = 0.25f;
+    private final int I_FRAME_INTERVAL = 5; // I帧间隔
     private int mBitRate;
     private int mWidth;
     private int mHeight;
@@ -297,7 +297,7 @@ public class VideoEncoder extends Encoder {
                 return;
             }
             mRunning = true;
-            new Thread(this, "MuxerEncoder").start();
+            new Thread(this, "VideoEncoder").start();
             while (!mReady) {
                 try {
                     mReadyFence.wait();
