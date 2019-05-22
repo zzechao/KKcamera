@@ -139,7 +139,8 @@ public class VideoEncoder extends Encoder {
                 encoderOutputBuffers = mMediaCodec.getOutputBuffers();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                mTrackIndex = mListener.onFormatChanged(newFormat);
+                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_VIDEO, newFormat);
+                mListener.onStart();
             } else if (encoderStatus < 0) {
 
             } else {
@@ -150,7 +151,7 @@ public class VideoEncoder extends Encoder {
                     mBufferInfo.presentationTimeUs = mListener.getPTSUs();
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    mListener.writeData(mTrackIndex, encodedData, mBufferInfo);
+                    mListener.writeData(MuxerWapper.DATA_VIDEO, mTrackIndex, encodedData, mBufferInfo);
                     mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 }
 

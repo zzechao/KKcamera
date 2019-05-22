@@ -12,6 +12,7 @@ import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class AudioEncoder extends Encoder {
 
@@ -27,9 +28,19 @@ public class AudioEncoder extends Encoder {
 
     private int bufferSize;
     private AudioRecord mAudioRecorder;   //录音器
-    private MediaCodec mAudioEncorder;   //编码器，用于音频编码
+    private MediaCodec mAudioCodes;   //编码器，用于音频编码
+    private MediaCodec.BufferInfo mBufferInfo;
+
+    private MuxerEncoderListener mListener;
 
     private volatile boolean isPause = true;
+    private volatile boolean isStop = true;
+    private int mTrackIndex;
+
+    public AudioEncoder(MuxerEncoderListener listener) {
+        super();
+        mListener = listener;
+    }
 
     @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -43,6 +54,14 @@ public class AudioEncoder extends Encoder {
         Looper.loop();
     }
 
+    public void release() {
+        if (mAudioCodes != null) {
+            mAudioCodes.stop();
+            mAudioCodes.release();
+            mAudioCodes = null;
+        }
+    }
+
     private void init() throws IOException {
         int minBufferSize = AudioRecord.getMinBufferSize(OUTPUT_AUDIO_SAMPLE_RATE_HZ,
                 AUDIO_CONFIG, AUDIO_FORMAT);
@@ -53,27 +72,73 @@ public class AudioEncoder extends Encoder {
             bufferSize = (minBufferSize / OUTPUT_AUDIO_SAMPLE_PER_RATE + 1) * OUTPUT_AUDIO_SAMPLE_PER_RATE * 2;
         }
 
+        mBufferInfo = new MediaCodec.BufferInfo();
+
         mAudioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, OUTPUT_AUDIO_SAMPLE_RATE_HZ, AUDIO_CONFIG,
                 AUDIO_FORMAT, bufferSize);//初始化录音器
 
         MediaFormat audioFormat = MediaFormat.createAudioFormat(MIME_TYPE, OUTPUT_AUDIO_SAMPLE_RATE_HZ, OUTPUT_AUDIO_CHANNEL_COUNT);//创建音频的格式,参数 MIME,采样率,通道数
         audioFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, OUTPUT_AUDIO_AAC_PROFILE);//编码方式
         audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_AUDIO_BIT_RATE);//比特率
-        mAudioEncorder = MediaCodec.createEncoderByType(MIME_TYPE);//创建音频编码器
-        mAudioEncorder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);//配置
+        mAudioCodes = MediaCodec.createEncoderByType(MIME_TYPE);//创建音频编码器
+        mAudioCodes.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);//配置
 
-        mAudioEncorder.start();
+        mAudioCodes.start();
         mAudioRecorder.startRecording();
 
         Log.e("ttt", "init");
     }
 
     private void recordEncorder() {
-
+        int inputBufIndex = mAudioCodes.dequeueInputBuffer(1000);
+        if (inputBufIndex >= 0) {
+            ByteBuffer mInputBuffer;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                mInputBuffer = mAudioCodes.getInputBuffer(inputBufIndex);
+            } else {
+                mInputBuffer = mAudioCodes.getInputBuffers()[inputBufIndex];
+            }
+            assert mInputBuffer != null;
+            int length = mAudioRecorder.read(mInputBuffer, bufferSize); //读入数据
+            if (length > 0) {
+                mAudioCodes.queueInputBuffer(inputBufIndex, 0, length, mListener.getPTSUs() - 500, isStop ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+            }
+        }
     }
 
-    private void drainEncoder(){
-        
+    private void drainEncoder() {
+        final int TIMEOUT_USEC = 10000;
+
+        ByteBuffer[] encoderOutputBuffers = mAudioCodes.getOutputBuffers();
+        while (true) {
+            int encoderStatus = mAudioCodes.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
+                return;
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
+                encoderOutputBuffers = mAudioCodes.getOutputBuffers();
+            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat newFormat = mAudioCodes.getOutputFormat();
+                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_AUDIO, newFormat);
+                mListener.onStart();
+            } else if (encoderStatus < 0) {
+
+            } else {
+                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+                        && mBufferInfo.size > 0) {
+                    mBufferInfo.presentationTimeUs = mListener.getPTSUs() - 500;
+                    encodedData.position(mBufferInfo.offset);
+                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+                    mListener.writeData(MuxerWapper.DATA_AUDIO, mTrackIndex, encodedData, mBufferInfo);
+                    mAudioCodes.releaseOutputBuffer(encoderStatus, false);
+                }
+
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -114,11 +179,13 @@ public class AudioEncoder extends Encoder {
     @Override
     protected void handleResumeRecording() {
         isPause = false;
+        mAudioRecorder.stop();
     }
 
     @Override
     protected void handlePauseRecording() {
         isPause = true;
+        mAudioRecorder.stop();
     }
 
     @Override
@@ -138,13 +205,14 @@ public class AudioEncoder extends Encoder {
 
     @Override
     protected void handleStopRecording() {
-
+        isStop = true;
     }
 
     @Override
     protected void handleStartRecording(EncoderConfig obj) {
         try {
             isPause = false;
+            isStop = false;
             init();
         } catch (IOException e) {
             e.printStackTrace();
@@ -164,6 +232,4 @@ public class AudioEncoder extends Encoder {
             mHandler.sendMessage(mHandler.obtainMessage(MSG_AUDIO_STEP));
         }
     }
-
-
 }

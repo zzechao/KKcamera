@@ -15,21 +15,20 @@ package viewset.com.kkcamera.view.camera.record;
  * Thread.sleep()与Object.wait()二者都可以暂停当前线程，释放CPU控制权，
  * 主要的区别在于Object.wait()在释放CPU同时，释放了对象锁的控制。
  */
-public class VideoMain {
+public class Video2Main {
 
     private byte[] VideoObject = new byte[0];
     private byte[] AudioObject = new byte[0];
-    private byte[] MixtureObject = new byte[0];
 
     public static void main(String[] args) {
-        VideoMain main = new VideoMain();
+        Video2Main main = new Video2Main();
         MixtureThread mixtureThread = main.new MixtureThread();
         mixtureThread.start();
     }
 
     class MixtureThread extends Thread {
 
-        volatile int i = 1;
+        volatile int i = 0;
         volatile boolean stop = false;
         VideoThread videoThread;
         AudioThread audioThread;
@@ -40,29 +39,6 @@ public class VideoMain {
             videoThread.start();
             audioThread.start();
         }
-
-
-        @Override
-        public void run() {
-            while (!stop) {
-                try {
-                    synchronized (MixtureObject) {
-                        synchronized (VideoObject) {
-                            System.out.println("合成视频" + i);
-                            VideoObject.notifyAll();
-                            i++;
-                            if (i > 6) {
-                                stop = true;
-                            }
-                        }
-                        MixtureObject.wait();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
 
         class VideoThread extends Thread {
             @Override
@@ -97,9 +73,13 @@ public class VideoMain {
                 while (!stop) {
                     try {
                         synchronized (AudioObject) {
-                            synchronized (MixtureObject) {
+                            synchronized (VideoObject) {
                                 System.out.println("插入音频" + i);
-                                MixtureObject.notifyAll();
+                                i++;
+                                if (i > 6) {
+                                    stop = true;
+                                }
+                                VideoObject.notifyAll();
                             }
                             AudioObject.wait();
                         }

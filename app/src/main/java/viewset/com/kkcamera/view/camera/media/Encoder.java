@@ -27,7 +27,7 @@ public abstract class Encoder implements Runnable{
     /**
      * 锁，同步EncoderHandler创建，再释放锁
      */
-    protected byte[] mReadyFence = new byte[0]; //
+    protected final byte[] mReadyFence = new byte[0]; //
 
     protected EncoderHandler mHandler;
     protected boolean mReady = false;

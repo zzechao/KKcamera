@@ -7,6 +7,7 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,10 +17,19 @@ public class MuxerWapper implements MuxerEncoderListener {
     private MediaMuxer mMediaMuxer;
     private VideoEncoder mVideoEncoder;
     private AudioEncoder mAudioEncoder;
-    private boolean mMuxerStarted;
+    private volatile boolean mMuxerStarted;
 
     private volatile long pauseBeginNans;
     private volatile long pauseTotalTime;
+
+    public static final int DATA_VIDEO = 1;
+    public static final int DATA_AUDIO = 2;
+
+    private final byte[] mLock = new byte[0];
+    private final byte[] mVideoLock = new byte[0];
+    private final byte[] mAudioLock = new byte[0];
+
+    private boolean mVideoTrack, mAudioTrack;
 
     /**
      * 开始播放
@@ -30,7 +40,7 @@ public class MuxerWapper implements MuxerEncoderListener {
                 mMediaMuxer = new MediaMuxer(config.outputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
                 mVideoEncoder = new VideoEncoder(this);
                 mVideoEncoder.start(config);
-                mAudioEncoder = new AudioEncoder();
+                mAudioEncoder = new AudioEncoder(this);
                 mAudioEncoder.start(config);
             }
         } catch (IOException e) {
@@ -43,6 +53,7 @@ public class MuxerWapper implements MuxerEncoderListener {
      */
     public void stopRecording() {
         mVideoEncoder.stop();
+        mAudioEncoder.stop();
     }
 
     /**
@@ -50,6 +61,7 @@ public class MuxerWapper implements MuxerEncoderListener {
      */
     public void pauseRecording() {
         mVideoEncoder.pause();
+        mAudioEncoder.pause();
     }
 
     /**
@@ -57,22 +69,38 @@ public class MuxerWapper implements MuxerEncoderListener {
      */
     public void resumeRecording() {
         mVideoEncoder.resume();
+        mAudioEncoder.resume();
     }
 
 
     @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public int onFormatChanged(MediaFormat newFormat) {
-        int trackIndex = mMediaMuxer.addTrack(newFormat);
-        mMediaMuxer.start();
-        mMuxerStarted = true;
-        return trackIndex;
+    public int onFormatChanged(int dataStats, MediaFormat newFormat) {
+        Log.e("ttt", dataStats + "---addTrack");
+        int mIndexTrack = mMediaMuxer.addTrack(newFormat);
+        if (dataStats == DATA_VIDEO) {
+            mVideoTrack = true;
+        } else if (dataStats == DATA_AUDIO) {
+            mAudioTrack = true;
+        }
+        return mIndexTrack;
     }
 
 
     @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void writeData(int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo) {
+    public void writeData(int dataStats, int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo) {
+        Log.e("ttt", dataStats + "---writeData");
+        synchronized (mLock) { // 锁进行mMediaMuxer.start();和writeSampleData互斥
+            while (!mMuxerStarted) {
+                Log.e("ttt", "---mLock.wait();");
+                try {
+                    mLock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         mMediaMuxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
     }
 
@@ -88,18 +116,32 @@ public class MuxerWapper implements MuxerEncoderListener {
     }
 
     @Override
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onStart() {
-
+        synchronized (mLock) {
+            Log.e("ttt", "onStart");
+            if (mAudioTrack && mVideoTrack) {
+                Log.e("ttt", "start");
+                mMediaMuxer.start();
+                mMuxerStarted = true;
+                mLock.notify();
+            }
+        }
     }
-
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void onStop() {
+        mVideoTrack = false;
+        mAudioTrack = false;
         if (mVideoEncoder != null) {
             mVideoEncoder.signalEndOfInputStream();
             mVideoEncoder.release();
             mVideoEncoder = null;
+        }
+        if (mAudioEncoder != null) {
+            mAudioEncoder.release();
+            mAudioEncoder = null;
         }
         if (mMediaMuxer != null) {
             mMediaMuxer.stop();

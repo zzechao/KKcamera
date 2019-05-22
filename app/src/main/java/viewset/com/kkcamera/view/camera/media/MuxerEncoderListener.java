@@ -6,9 +6,9 @@ import android.media.MediaFormat;
 import java.nio.ByteBuffer;
 
 public interface MuxerEncoderListener {
-    int onFormatChanged(MediaFormat newFormat);
+    int onFormatChanged(int dataStats,MediaFormat newFormat);
 
-    void writeData(int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo);
+    void writeData(int dataStats, int mTrackIndex, ByteBuffer encodedData, MediaCodec.BufferInfo mBufferInfo);
 
     boolean isStart();
 
