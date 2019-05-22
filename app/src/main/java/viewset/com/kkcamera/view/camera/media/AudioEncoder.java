@@ -101,7 +101,7 @@ public class AudioEncoder extends Encoder {
             assert mInputBuffer != null;
             int length = mAudioRecorder.read(mInputBuffer, bufferSize); //读入数据
             if (length > 0) {
-                mAudioCodes.queueInputBuffer(inputBufIndex, 0, length, mListener.getPTSUs() - 500, isStop ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                mAudioCodes.queueInputBuffer(inputBufIndex, 0, length, mListener.getPTSUs(), isStop ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
             }
         }
     }
@@ -127,7 +127,7 @@ public class AudioEncoder extends Encoder {
 
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
                         && mBufferInfo.size > 0) {
-                    mBufferInfo.presentationTimeUs = mListener.getPTSUs() - 500;
+                    mBufferInfo.presentationTimeUs = mListener.getPTSUs();
                     encodedData.position(mBufferInfo.offset);
                     encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
                     mListener.writeData(MuxerWapper.DATA_AUDIO, mTrackIndex, encodedData, mBufferInfo);
@@ -164,6 +164,7 @@ public class AudioEncoder extends Encoder {
     @Override
     protected void stop() {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_STOP_RECORDING));
+        mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
     }
 
     @Override
@@ -179,7 +180,7 @@ public class AudioEncoder extends Encoder {
     @Override
     protected void handleResumeRecording() {
         isPause = false;
-        mAudioRecorder.stop();
+        mAudioRecorder.startRecording();
     }
 
     @Override
