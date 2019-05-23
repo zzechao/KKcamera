@@ -1,0 +1,71 @@
+apply plugin: 'com.android.library'
+
+def siteUrl = 'https://github.com/DmcSDK/MediaPickerPoject'   // 项目的主页
+def gitUrl = 'https://github.com/DmcSDK/MediaPickerPoject.git'   // Git仓库的url
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+version = "3.3" //发布版本号
+group = "com.dmcBig" //最终引用形式，如compile 'com.**;
+android {
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "3.3"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:appcompat-v7:28.0.0'
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:recyclerview-v7:28.0.0'
+    compile 'com.github.bumptech.glide:glide:4.8.0'
+    compile 'com.android.support:support-v4:28.0.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
+    compile 'pub.devrel:easypermissions:1.0.0'
+    compile 'com.github.chrisbanes.photoview:library:1.2.4'
+}
+
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+task javadoc(type: Javadoc) {
+    failOnError false //必须添加以免出错
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+javadoc {
+    options{
+        //如果你的项目里面有中文注释的话，必须将格式设置为UTF-8，不然会出现乱码
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        links "http://docs.oracle.com/javase/7/docs/api"
+    }
+}

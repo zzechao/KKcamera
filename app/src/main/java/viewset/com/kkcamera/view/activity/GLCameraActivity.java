@@ -1,18 +1,26 @@
 package viewset.com.kkcamera.view.activity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dmcbig.mediapicker.PickerActivity;
+import com.dmcbig.mediapicker.TakePhotoActivity;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
 import butterknife.Unbinder;
 import viewset.com.kkcamera.R;
@@ -30,6 +38,9 @@ public class GLCameraActivity extends AppCompatActivity {
     @BindView(R.id.record)
     CircularProgressView record;
 
+    @BindView(R.id.bt_mode)
+    RadioGroup bt_mode;
+
     private Unbinder unbinder;
 
     private boolean isRecording = false;
@@ -44,9 +55,28 @@ public class GLCameraActivity extends AppCompatActivity {
         unbinder = ButterKnife.bind(this);
 
         record.setTotal(MAXTIME);
+
+        record.photo();
     }
 
-    @OnClick({R.id.bt_switch, R.id.takephoto, R.id.record, R.id.recordok})
+    @OnCheckedChanged({R.id.photo, R.id.video})
+    public void onCheckedChanged(CompoundButton view, boolean ischanged) {
+        switch (view.getId()) {
+            case R.id.photo:
+                if (ischanged) {
+                    record.photo();
+                }
+                break;
+            case R.id.video:
+                if (ischanged) {
+                    record.video();
+                }
+                break;
+        }
+    }
+
+
+    @OnClick({R.id.bt_switch, R.id.takephoto, R.id.record, R.id.recordok, R.id.file})
     public void onViewClick(View view) {
         switch (view.getId()) {
             case R.id.bt_switch:
@@ -76,19 +106,39 @@ public class GLCameraActivity extends AppCompatActivity {
                 Toast.makeText(this, kkcamera.getOutputPath(), Toast.LENGTH_SHORT).show();
                 break;
             case R.id.record:
-                if (isRecording) {
-                    mHandler.removeMessages(0);
-                    record.pause();
-                    kkcamera.pauseRecord();
+                int id = bt_mode.getCheckedRadioButtonId();
+                if (id == R.id.photo) {
+                    kkcamera.takePhoto(new KKGLSurfaceView.Callback<Bitmap>() {
+                        @Override
+                        public void back(final Bitmap bitmap) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    iv_pic.setVisibility(View.VISIBLE);
+                                    iv_pic.setImageBitmap(bitmap);
+                                }
+                            });
+                        }
+                    });
                 } else {
-                    mHandler.sendMessageDelayed(mHandler.obtainMessage(0), 50);
-                    if (kkcamera.isPause()) {
-                        kkcamera.resumeRecord();
+                    if (isRecording) {
+                        mHandler.removeMessages(0);
+                        record.pause();
+                        kkcamera.pauseRecord();
                     } else {
-                        kkcamera.startRecord();
+                        mHandler.sendMessageDelayed(mHandler.obtainMessage(0), 50);
+                        if (kkcamera.isPause()) {
+                            kkcamera.resumeRecord();
+                        } else {
+                            kkcamera.startRecord();
+                        }
                     }
+                    isRecording = !isRecording;
                 }
-                isRecording = !isRecording;
+                break;
+            case R.id.file:
+                Intent intent = new Intent(GLCameraActivity.this, PickerActivity.class); //Take a photo with a camera
+                GLCameraActivity.this.startActivityForResult(intent, 200);
                 break;
         }
     }

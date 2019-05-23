@@ -18,38 +18,87 @@
         android:scaleType="fitXY"
         android:visibility="gone" />
 
-
-    <LinearLayout
+    <ImageButton
+        android:id="@+id/bt_switch"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="10dp"
+        android:background="@android:color/transparent"
+        android:src="@mipmap/qiehuanshexiangtou" />
+
+    <RadioGroup
+        android:id="@+id/bt_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="80dp"
+        android:layout_centerVertical="true"
+        android:checkedButton="@+id/photo"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="10dp">
+
+        <RadioButton
+            android:id="@+id/photo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:buttonTint="#3396db"
+            android:textSize="15sp"
+            android:text="拍照"
+            android:textColor="@android:color/white"/>
+
+        <RadioButton
+            android:id="@+id/video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:buttonTint="#3396db"
+            android:textSize="15sp"
+            android:text="视频"
+            android:textColor="@android:color/white"/>
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/takephoto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="拍照" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerVertical="true"
+        android:layout_marginBottom="20dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/bt_switch"
+        <ImageButton
+            android:id="@+id/file"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="转换" />
-
-        <Button
-            android:id="@+id/takephoto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="拍照" />
-
-        <Button
-            android:id="@+id/recordok"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="录制完成"/>
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/record"
+            android:background="@android:color/transparent"
+            android:src="@mipmap/wenjian" />
 
         <viewset.com.kkcamera.widget.CircularProgressView
             android:id="@+id/record"
             android:layout_width="88dp"
             android:layout_height="88dp"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
             android:background="@drawable/bt_capture"
             android:clickable="true" />
 
-    </LinearLayout>
+        <ImageButton
+            android:id="@+id/recordok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/record"
+            android:background="@android:color/transparent"
+            android:src="@mipmap/wancheng" />
+
+    </RelativeLayout>
 </RelativeLayout>

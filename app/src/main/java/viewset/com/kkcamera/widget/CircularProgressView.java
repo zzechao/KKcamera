@@ -2,6 +2,7 @@ package viewset.com.kkcamera.widget;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -22,8 +23,8 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
     private int mStroke = 5;
     private int mProcess = 0;
     private int mTotal = 100;
-    private int mNormalColor = 0xFFFFFFFF;
-    private int mSecondColor = 0xFFFEE300;
+    private int mNormalColor = 0x99FFFFFF;
+    private int mSecondColor = 0xFF3396db;
     private int mStartAngle = -90;
     private List<Float> mPauseAngle = new ArrayList<>();
     private RectF mRectF;
@@ -50,6 +51,7 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
         mPaint.setColor(mNormalColor);
         mPaint.setStrokeWidth(mStroke);
         mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);//作用于圆环结尾
         mPaint.setAntiAlias(true);
         mDrawable = new Progress();
         setImageDrawable(mDrawable);
@@ -97,6 +99,16 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
         mPauseAngle.clear();
     }
 
+    public void photo() {
+        mNormalColor = 0x00FFFFFF;
+        mDrawable.invalidateSelf();
+    }
+
+    public void video() {
+        mNormalColor = 0x99FFFFFF;
+        mDrawable.invalidateSelf();
+    }
+
     private class Progress extends Drawable {
         @Override
         public void draw(Canvas canvas) {
@@ -110,7 +122,7 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
             canvas.drawCircle(width / 2, width / 2, width / 2 - pd, mPaint);
             mPaint.setColor(mSecondColor);
             canvas.drawArc(mRectF, mStartAngle, mProcess * 360 / (float) mTotal, false, mPaint);
-            mPaint.setColor(mNormalColor);
+            mPaint.setColor(Color.TRANSPARENT);
             for (int i = 0; i < mPauseAngle.size(); i++) {
                 canvas.drawArc(mRectF, mPauseAngle.get(i), 3, false, mPaint);
             }

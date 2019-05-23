@@ -1,1 +1,1 @@
-include ':app',':capturefilter',':magicfilter'
+include ':app',':capturefilter',':magicfilter',':mediapicker'
