@@ -337,7 +337,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
      */
     public void setCameraId(int cameraId) {
         try {
-            Thread.sleep(200);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
