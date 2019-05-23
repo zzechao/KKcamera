@@ -77,13 +77,7 @@ public class MuxerWapper implements MuxerEncoderListener {
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public int onFormatChanged(int dataStats, MediaFormat newFormat) {
         Log.e("ttt", dataStats + "---addTrack");
-        int mIndexTrack = mMediaMuxer.addTrack(newFormat);
-        if (dataStats == DATA_VIDEO) {
-            mVideoTrack = true;
-        } else if (dataStats == DATA_AUDIO) {
-            mAudioTrack = true;
-        }
-        return mIndexTrack;
+        return mMediaMuxer.addTrack(newFormat);
     }
 
 
@@ -117,7 +111,12 @@ public class MuxerWapper implements MuxerEncoderListener {
 
     @Override
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void onStart() {
+    public void onStart(int dataStats) {
+        if (dataStats == DATA_VIDEO) {
+            mVideoTrack = true;
+        } else if (dataStats == DATA_AUDIO) {
+            mAudioTrack = true;
+        }
         synchronized (mLock) {
             Log.e("ttt", "onStart");
             if (mAudioTrack && mVideoTrack) {
@@ -131,19 +130,22 @@ public class MuxerWapper implements MuxerEncoderListener {
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    public void onStop() {
-        mVideoTrack = false;
-        mAudioTrack = false;
-        if (mVideoEncoder != null) {
-            mVideoEncoder.signalEndOfInputStream();
-            mVideoEncoder.release();
-            mVideoEncoder = null;
+    public void onStop(int dataStats) {
+        if (dataStats == MuxerWapper.DATA_VIDEO) {
+            mVideoTrack = false;
+            if (mVideoEncoder != null) {
+                mVideoEncoder.signalEndOfInputStream();
+                mVideoEncoder.release();
+                mVideoEncoder = null;
+            }
+        } else if (dataStats == MuxerWapper.DATA_AUDIO) {
+            mAudioTrack = false;
+            if (mAudioEncoder != null) {
+                mAudioEncoder.release();
+                mAudioEncoder = null;
+            }
         }
-        if (mAudioEncoder != null) {
-            mAudioEncoder.release();
-            mAudioEncoder = null;
-        }
-        if (mMediaMuxer != null) {
+        if (mMediaMuxer != null && !mVideoTrack && !mAudioTrack) {
             mMediaMuxer.stop();
             mMediaMuxer.release();
             mMediaMuxer = null;

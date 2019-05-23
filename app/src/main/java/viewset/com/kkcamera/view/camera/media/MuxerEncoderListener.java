@@ -17,9 +17,9 @@ public interface MuxerEncoderListener {
     /**
      * 遵循Looper的MessageQueue顺序
      */
-    void onStart();
+    void onStart(int dataStats);
 
-    void onStop();
+    void onStop(int dataStats);
 
     void onResume();
 

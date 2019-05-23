@@ -68,7 +68,6 @@ public class CircularProgressView extends android.support.v7.widget.AppCompatIma
                 mDrawable.invalidateSelf();
             }
         });
-        Log.e("wuwang", "process-->" + process);
     }
 
     public int getProcess() {

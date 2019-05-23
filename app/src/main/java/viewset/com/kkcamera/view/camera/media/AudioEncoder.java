@@ -55,6 +55,11 @@ public class AudioEncoder extends Encoder {
     }
 
     public void release() {
+        if (mAudioRecorder != null) {
+            mAudioRecorder.stop();
+            mAudioRecorder.release();
+            mAudioRecorder = null;
+        }
         if (mAudioCodes != null) {
             mAudioCodes.stop();
             mAudioCodes.release();
@@ -119,7 +124,7 @@ public class AudioEncoder extends Encoder {
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat newFormat = mAudioCodes.getOutputFormat();
                 mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_AUDIO, newFormat);
-                mListener.onStart();
+                mListener.onStart(MuxerWapper.DATA_AUDIO);
             } else if (encoderStatus < 0) {
 
             } else {
@@ -207,6 +212,7 @@ public class AudioEncoder extends Encoder {
     @Override
     protected void handleStopRecording() {
         isStop = true;
+        mListener.onStop(MuxerWapper.DATA_AUDIO);
     }
 
     @Override
@@ -225,12 +231,14 @@ public class AudioEncoder extends Encoder {
      */
     @Override
     protected void handleAudioStep() {
-        if (!isPause) {
-            recordEncorder();
-            drainEncoder();
-            mHandler.sendMessage(mHandler.obtainMessage(MSG_AUDIO_STEP));
-        } else {
-            mHandler.sendMessage(mHandler.obtainMessage(MSG_AUDIO_STEP));
+        if (!isStop) {
+            if (!isPause) {
+                recordEncorder();
+                drainEncoder();
+                mHandler.sendMessage(mHandler.obtainMessage(MSG_AUDIO_STEP));
+            } else {
+                mHandler.sendMessage(mHandler.obtainMessage(MSG_AUDIO_STEP));
+            }
         }
     }
 }

@@ -140,7 +140,7 @@ public class VideoEncoder extends Encoder {
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat newFormat = mMediaCodec.getOutputFormat();
                 mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_VIDEO, newFormat);
-                mListener.onStart();
+                mListener.onStart(MuxerWapper.DATA_VIDEO);
             } else if (encoderStatus < 0) {
 
             } else {
@@ -374,7 +374,7 @@ public class VideoEncoder extends Encoder {
 
     @Override
     protected void handleStopRecording() {
-        mListener.onStop();
+        mListener.onStop(MuxerWapper.DATA_VIDEO);
     }
 
     @Override
