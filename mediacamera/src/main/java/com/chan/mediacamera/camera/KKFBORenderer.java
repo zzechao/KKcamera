@@ -8,9 +8,9 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 
 import com.chan.mediacamera.R;
 import com.chan.mediacamera.camera.egl.FrameBuffer;
@@ -34,7 +34,6 @@ import java.io.File;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
 
 
 public class KKFBORenderer implements GLSurfaceView.Renderer {
@@ -68,8 +67,6 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     private int[] fFrame = new int[1];
     private int[] fTexture = {OpenGlUtils.NO_TEXTURE};
 
-    private int width;
-    private int height;
     private int mCameraId;
 
     private boolean recordingEnabled;
@@ -152,9 +149,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        if (this.width != width && this.height != height) {
-            this.width = width;
-            this.height = height;
+        if (mWidth != width && mHeight != height) {
             GLES20.glDeleteFramebuffers(1, fFrame, 0);
             GLES20.glDeleteTextures(1, fTexture, 0);
 
@@ -313,12 +308,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
     public void setViewSize(int width, int height) {
         mWidth = width;
         mHeight = height;
-        calculateMatrix(1);
+        calculateMatrix();
     }
 
     //和拍照一样都是先绘制到drawFilter中，要跟随ImageShowFilter一样的逻辑
-    private void calculateMatrix(int i) {
-        Log.e("ttt", "calculateMatrix-" + i);
+    private void calculateMatrix() {
         float[] matrix = Gl2Utils.getOriginalMatrix();
         Gl2Utils.getShowMatrix(matrix, mPreviewWidth, mPreviewHeight, mWidth, mHeight);
         if (mCameraId == 1) { // 前置摄像头矩阵
@@ -344,7 +338,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
             e.printStackTrace();
         }
         mCameraId = cameraId;
-        calculateMatrix(2);
+        calculateMatrix();
     }
 
     /**
@@ -500,5 +494,22 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
             //muxerEncoder.resumeRecording();
         }
+    }
+
+    /**
+     * 设置video的长宽
+     *
+     * @param videoWidth
+     * @param videoHeight
+     */
+    public void setVideoSize(int videoWidth, int videoHeight) {
+        float[] matrix = Gl2Utils.getOriginalMatrix();
+        float screenRatio = (float) mWidth / mHeight;
+        float videoRatio = (float) videoWidth / videoHeight;
+        if (videoRatio > screenRatio) {
+            Matrix.orthoM(matrix, 0, -1f, 1f, -videoRatio / screenRatio, videoRatio / screenRatio, -1f, 1f);
+        } else
+            Matrix.orthoM(matrix, 0, -screenRatio / videoRatio, screenRatio / videoRatio, -1f, 1f, -1f, 1f);
+        drawFilter.setMatrix(matrix);
     }
 }

@@ -1,4 +1,4 @@
-package com.chan.mediacamera.camera;
+package com.chan.mediacamera.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -10,6 +10,10 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import com.chan.mediacamera.camera.ICamera;
+import com.chan.mediacamera.camera.KKCamera;
+import com.chan.mediacamera.camera.KKFBORenderer;
+import com.chan.mediacamera.camera.KitkatCamera;
 import com.chan.mediacamera.camera.egl.GLESBackEnv;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -68,9 +72,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
                     renderer.setCameraId(cameraId);
                 }
             });
-            renderer = new
-
-                    KKFBORenderer(getContext());
+            renderer = new KKFBORenderer(getContext());
         } else {
             /**初始化相机的管理类*/
             mCamera1 = new KitkatCamera();

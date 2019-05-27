@@ -24,6 +24,7 @@ public class PkmFilter extends NoFilter {
     private int[] textures = new int[fTextureSize];
     private int width, height, pkmWidth, pkmHeight;
     private ByteBuffer emptyBuffer;
+    private ByteBuffer emptyBuffer2;
     private int x, y;
 
     public PkmFilter(Context context) {
@@ -85,7 +86,7 @@ public class PkmFilter extends NoFilter {
                     GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + 1 + getTextureType());
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[1]);
                     ETC1Util.loadTexture(GLES20.GL_TEXTURE_2D, 0, 0, GLES20.GL_RGB, GLES20
-                            .GL_UNSIGNED_SHORT_5_6_5, new ETC1Util.ETC1Texture(width, height, emptyBuffer));
+                            .GL_UNSIGNED_SHORT_5_6_5, new ETC1Util.ETC1Texture(width, height, emptyBuffer2));
                     GLES20.glUniform1i(glAlphaTexture, 1 + getTextureType());
                 }
             }
@@ -115,6 +116,7 @@ public class PkmFilter extends NoFilter {
             this.height = height;
             mFilter.setSize(width, height);
             emptyBuffer = ByteBuffer.allocateDirect(ETC1.getEncodedDataSize(width, height));
+            emptyBuffer2 = ByteBuffer.allocateDirect(ETC1.getEncodedDataSize(width, height));
         }
     }
 

@@ -12,13 +12,16 @@ import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import com.chan.mediacamera.camera.KKGLSurfaceView;
+import com.chan.mediacamera.widget.KKGLSurfaceView;
 import com.chan.mediacamera.widget.CircularProgressView;
 import com.dmcbig.mediapicker.PickerActivity;
+import com.dmcbig.mediapicker.PickerConfig;
+import com.dmcbig.mediapicker.entity.Media;
+
+import java.util.ArrayList;
 
 
-
-public class GLCameraActivity extends AppCompatActivity implements View.OnClickListener{
+public class GLCameraActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     KKGLSurfaceView kkcamera;
@@ -159,7 +162,19 @@ public class GLCameraActivity extends AppCompatActivity implements View.OnClickL
             }
         } else if (i == R.id.file) {
             Intent intent = new Intent(GLCameraActivity.this, PickerActivity.class); //Take a photo with a camera
+            intent.putExtra(PickerConfig.MAX_SELECT_COUNT, 1);
             GLCameraActivity.this.startActivityForResult(intent, 200);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 200) {
+            ArrayList<Media> mediaList = data.getParcelableArrayListExtra(PickerConfig.EXTRA_RESULT);
+            if(!mediaList.isEmpty()){
+                GLVideoActivity.startActivity(this, mediaList.get(0));
+            }
         }
     }
 }
