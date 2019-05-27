@@ -8,7 +8,7 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Looper;
-import androidx.annotation.RequiresApi;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.IOException;

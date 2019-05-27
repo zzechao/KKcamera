@@ -37,4 +37,5 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
     implementation project(':magicfilter')
     implementation project(':mediapicker')
+    compile project(path: ':mediacamera')
 }

@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class CircularProgressView extends androidx.appcompat.widget.AppCompatImageView {
+public class CircularProgressView extends AppCompatImageView {
 
     private int mStroke = 5;
     private int mProcess = 0;

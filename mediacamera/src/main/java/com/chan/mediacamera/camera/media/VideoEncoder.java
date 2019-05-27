@@ -7,15 +7,15 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Looper;
-import androidx.annotation.RequiresApi;
+import android.support.annotation.RequiresApi;
 import android.view.Surface;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import com.chan.mediacamera.camera.filter.NoFilter;
 import com.chan.mediacamera.camera.gles.EglCore;
 import com.chan.mediacamera.camera.gles.WindowSurface;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class VideoEncoder extends Encoder {
 

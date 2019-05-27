@@ -4,7 +4,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import androidx.annotation.RequiresApi;
+import android.support.annotation.RequiresApi;
 
 import java.lang.ref.WeakReference;
 
