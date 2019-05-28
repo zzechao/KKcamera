@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 public abstract class BaseFilter {
 
-    private FloatBuffer mVerBuffer, mTexBuffer;
+    protected FloatBuffer mVerBuffer, mTexBuffer;
 
     protected String mVertexShader;
     protected String mFragmentShader;
@@ -107,7 +107,7 @@ public abstract class BaseFilter {
      * 清除屏幕
      */
     protected void onClear() {
-        GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
     }
 

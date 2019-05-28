@@ -32,8 +32,8 @@ public class ColorFilter extends BaseFilter {
     @Override
     protected void onSetExpandData() {
         GLES20.glUniform1i(glIsHalf, 0);
-        GLES20.glUniform1i(glChangeType, FilterState.Filter.WARM.getType());
-        GLES20.glUniform3fv(glChangeColor, 1, FilterState.Filter.WARM.data(), 0);
+        GLES20.glUniform1i(glChangeType, FilterState.Filter.GRAY.getType());
+        GLES20.glUniform3fv(glChangeColor, 1, FilterState.Filter.GRAY.data(), 0);
         super.onSetExpandData();
     }
 

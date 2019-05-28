@@ -8,9 +8,9 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
 import android.os.Build;
 import android.os.Environment;
+import android.util.Log;
 
 import com.chan.mediacamera.R;
 import com.chan.mediacamera.camera.egl.FrameBuffer;
@@ -160,9 +160,16 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
 
             /**将生产的纹理名称和对应纹理进行绑定*/
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fTexture[0]);
-            /**根据指定的参数 生产一个2D的纹理 调用该函数前  必须调用glBindTexture以指定要操作的纹理*/
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mPreviewWidth, mPreviewHeight,
-                    0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+
+            if (mPreviewWidth != 0 && mPreviewHeight != 0) {
+                Log.e("ttt", mPreviewWidth + "--" + mPreviewHeight);
+                /**根据指定的参数 生产一个2D的纹理 调用该函数前  必须调用glBindTexture以指定要操作的纹理*/
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mPreviewWidth, mPreviewHeight,
+                        0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+            } else {
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height,
+                        0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null);
+            }
 
             //设置缩小过滤为使用纹理中坐标最接近的一个像素的颜色作为需要绘制的像素颜色
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
@@ -496,20 +503,11 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    /**
-     * 设置video的长宽
-     *
-     * @param videoWidth
-     * @param videoHeight
-     */
+
     public void setVideoSize(int videoWidth, int videoHeight) {
         float[] matrix = Gl2Utils.getOriginalMatrix();
-        float screenRatio = (float) mWidth / mHeight;
-        float videoRatio = (float) videoWidth / videoHeight;
-        if (videoRatio > screenRatio) {
-            Matrix.orthoM(matrix, 0, -1f, 1f, -videoRatio / screenRatio, videoRatio / screenRatio, -1f, 1f);
-        } else
-            Matrix.orthoM(matrix, 0, -screenRatio / videoRatio, screenRatio / videoRatio, -1f, 1f, -1f, 1f);
+        Gl2Utils.getMatrix(matrix, Gl2Utils.TYPE_CENTERINSIDE, videoWidth, videoHeight, mWidth, mHeight);
+        Gl2Utils.flip(matrix, false, true);
         drawFilter.setMatrix(matrix);
     }
 }

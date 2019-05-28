@@ -19,9 +19,11 @@ public class ProcessFilter extends BaseFilter {
 
     public ProcessFilter(Context context) {
         super(context);
+
+        mFilter = new NoFilter(context);
     }
 
-    public void setFilter(BaseFilter filter){
+    public void setFilter(BaseFilter filter) {
         mFilter = filter;
         float[] OM = Gl2Utils.getOriginalMatrix();
         Gl2Utils.flip(OM, false, true);//矩阵上下翻转

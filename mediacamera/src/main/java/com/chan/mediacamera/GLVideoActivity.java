@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 
 import com.chan.mediacamera.widget.KKVideoGLSurfaceView;
 import com.dmcbig.mediapicker.entity.Media;
@@ -12,7 +11,6 @@ import com.dmcbig.mediapicker.entity.Media;
 public class GLVideoActivity extends AppCompatActivity {
 
     KKVideoGLSurfaceView gl_video;
-    RecyclerView rcv_video;
 
     public static void startActivity(AppCompatActivity activity, Media media) {
         Intent intent = new Intent(activity, GLVideoActivity.class);
