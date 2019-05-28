@@ -6,20 +6,19 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
 
 import com.chan.mediacamera.camera.ICamera;
 import com.chan.mediacamera.camera.KKCamera;
-import com.chan.mediacamera.camera.KKFBORenderer;
+import com.chan.mediacamera.camera.FBOCameraRenderer;
 import com.chan.mediacamera.camera.KitkatCamera;
 import com.chan.mediacamera.camera.egl.GLESBackEnv;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
+public class GLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
     /**
      * Camera1
@@ -30,7 +29,7 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
     /**
      * Camera2
      */
-    private KKFBORenderer renderer;
+    private FBOCameraRenderer renderer;
     private KKCamera mCamera2;
 
     private boolean useCamera2 = false;
@@ -39,11 +38,11 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
 
     private int mWidth, mHeight;
 
-    public KKGLSurfaceView(Context context) {
+    public GLSurfaceView(Context context) {
         this(context, null);
     }
 
-    public KKGLSurfaceView(Context context, AttributeSet attrs) {
+    public GLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         init();
@@ -72,11 +71,11 @@ public class KKGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Rend
                     renderer.setCameraId(cameraId);
                 }
             });
-            renderer = new KKFBORenderer(getContext());
+            renderer = new FBOCameraRenderer(getContext());
         } else {
             /**初始化相机的管理类*/
             mCamera1 = new KitkatCamera();
-            renderer = new KKFBORenderer(getContext());
+            renderer = new FBOCameraRenderer(getContext());
         }
     }
 

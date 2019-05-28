@@ -10,24 +10,24 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 
-import com.chan.mediacamera.camera.KKRenderer;
+import com.chan.mediacamera.camera.FBOVideoRenderer;
 
 import java.io.IOException;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class KKVideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, MediaPlayer.OnVideoSizeChangedListener, SurfaceTexture.OnFrameAvailableListener {
+public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, MediaPlayer.OnVideoSizeChangedListener, SurfaceTexture.OnFrameAvailableListener {
 
-    private KKRenderer mRenderer;
+    private FBOVideoRenderer mRenderer;
     private MediaPlayer mediaPlayer;
     private String mPath;
 
-    public KKVideoGLSurfaceView(Context context) {
+    public VideoGLSurfaceView(Context context) {
         this(context, null);
     }
 
-    public KKVideoGLSurfaceView(Context context, AttributeSet attrs) {
+    public VideoGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         init();
@@ -68,7 +68,7 @@ public class KKVideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView
         setRenderMode(RENDERMODE_WHEN_DIRTY);
         setPreserveEGLContextOnPause(true);//保存Context当pause时
 
-        mRenderer = new KKRenderer(getContext());
+        mRenderer = new FBOVideoRenderer(getContext());
     }
 
     private void initMediaPlayer() {

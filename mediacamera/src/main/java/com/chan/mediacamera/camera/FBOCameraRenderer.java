@@ -36,7 +36,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 
-public class KKFBORenderer implements GLSurfaceView.Renderer {
+public class FBOCameraRenderer implements GLSurfaceView.Renderer {
 
     /**
      * 显示
@@ -107,7 +107,7 @@ public class KKFBORenderer implements GLSurfaceView.Renderer {
         return path;
     }
 
-    public KKFBORenderer(Context context) {
+    public FBOCameraRenderer(Context context) {
         mContext = context;
 
         mOutputPath = getVideoCachePath(context);

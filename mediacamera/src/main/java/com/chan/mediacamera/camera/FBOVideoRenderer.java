@@ -27,7 +27,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 
-public class KKRenderer implements GLSurfaceView.Renderer {
+public class FBOVideoRenderer implements GLSurfaceView.Renderer {
 
 
     /**
@@ -55,7 +55,7 @@ public class KKRenderer implements GLSurfaceView.Renderer {
     private int mImgWidth;
     private int mImgHeight;
 
-    public KKRenderer(Context context) {
+    public FBOVideoRenderer(Context context) {
         mContext = context;
 
         drawFilter = new ShowFilter(context);

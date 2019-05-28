@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.chan.mediacamera.widget.KKVideoGLSurfaceView
+    <com.chan.mediacamera.widget.VideoGLSurfaceView
         android:id="@+id/gl_video"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
