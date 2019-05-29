@@ -20,3 +20,11 @@ dependencies {
     implementation project(path: ':mediapicker')
     implementation project(path: ':magicfilter')
 }
+
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs  << "-Xlint:deprecation" << "-Xlint:unchecked"
+        }
+    }
+}

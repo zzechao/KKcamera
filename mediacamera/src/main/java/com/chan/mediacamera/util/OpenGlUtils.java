@@ -22,7 +22,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera.Size;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -84,7 +83,7 @@ public class OpenGlUtils {
         return textures[0];
     }
 
-    public static int loadTexture(final IntBuffer data, final Size size, final int usedTexId) {
+    public static int loadTexture(final IntBuffer data, int width,int height, final int usedTexId) {
         int textures[] = new int[1];
         if (usedTexId == NO_TEXTURE) {
             GLES20.glGenTextures(1, textures, 0);
@@ -97,12 +96,12 @@ public class OpenGlUtils {
                     GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
             GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D,
                     GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, size.width, size.height,
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height,
                     0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, data);
         } else {
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, usedTexId);
-            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0, size.width,
-                    size.height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, data);
+            GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0, width,
+                    height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, data);
             textures[0] = usedTexId;
         }
         return textures[0];
@@ -153,9 +152,9 @@ public class OpenGlUtils {
         return image;
     }
 
-    public static int loadTextureAsBitmap(final IntBuffer data, final Size size, final int usedTexId) {
+    public static int loadTextureAsBitmap(final IntBuffer data, int width,int height, final int usedTexId) {
         Bitmap bitmap = Bitmap
-                .createBitmap(data.array(), size.width, size.height, Config.ARGB_8888);
+                .createBitmap(data.array(), width, height, Config.ARGB_8888);
         return loadTexture(bitmap, usedTexId);
     }
 
