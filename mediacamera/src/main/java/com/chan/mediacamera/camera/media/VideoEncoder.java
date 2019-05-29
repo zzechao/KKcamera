@@ -129,37 +129,63 @@ public class VideoEncoder extends Encoder {
 
     private void drainEncoder() {
         final int TIMEOUT_USEC = 10000;
+        int outputIndex = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+        if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
 
-        ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
-        while (true) {
-            int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
-            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
-                return;
-            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
-                encoderOutputBuffers = mMediaCodec.getOutputBuffers();
-            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                MediaFormat newFormat = mMediaCodec.getOutputFormat();
-                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_VIDEO, newFormat);
-                mListener.onStart(MuxerWapper.DATA_VIDEO);
-            } else if (encoderStatus < 0) {
-
+        } else if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            MediaFormat newFormat = mMediaCodec.getOutputFormat();
+            mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_VIDEO, newFormat);
+            mListener.onStart(MuxerWapper.DATA_VIDEO);
+        } else if (outputIndex < 0) {
+            drainEncoder();
+        } else {
+            ByteBuffer encodedData;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                encodedData = mMediaCodec.getOutputBuffer(outputIndex);
             } else {
-                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
-
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                        && mBufferInfo.size > 0) {
-                    mBufferInfo.presentationTimeUs = mListener.getPTSUs();
-                    encodedData.position(mBufferInfo.offset);
-                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    mListener.writeData(MuxerWapper.DATA_VIDEO, mTrackIndex, encodedData, mBufferInfo);
-                    mMediaCodec.releaseOutputBuffer(encoderStatus, false);
-                }
-
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    break;
-                }
+                encodedData = mMediaCodec.getOutputBuffers()[outputIndex];
+            }
+            if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+                    && mBufferInfo.size > 0 && encodedData != null) {
+                mBufferInfo.presentationTimeUs = mListener.getPTSUs();
+                encodedData.position(mBufferInfo.offset);
+                encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+                mListener.writeData(MuxerWapper.DATA_VIDEO, mTrackIndex, encodedData, mBufferInfo);
+                mMediaCodec.releaseOutputBuffer(outputIndex, false);
             }
         }
+
+//        此流程已经deprecated
+//        ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
+//        while (true) {
+//            int encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+//            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
+//                return;
+//            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
+//                encoderOutputBuffers = mMediaCodec.getOutputBuffers();
+//            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+//                MediaFormat newFormat = mMediaCodec.getOutputFormat();
+//                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_VIDEO, newFormat);
+//                mListener.onStart(MuxerWapper.DATA_VIDEO);
+//            } else if (encoderStatus < 0) {
+//
+//            } else {
+//                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+//
+//                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+//                        && mBufferInfo.size > 0) {
+//                    mBufferInfo.presentationTimeUs = mListener.getPTSUs();
+//                    encodedData.position(mBufferInfo.offset);
+//                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+//                    mListener.writeData(MuxerWapper.DATA_VIDEO, mTrackIndex, encodedData, mBufferInfo);
+//                    mMediaCodec.releaseOutputBuffer(encoderStatus, false);
+//                }
+//
+//                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+//                    break;
+//                }
+//            }
+//        }
     }
 
     public void release() {

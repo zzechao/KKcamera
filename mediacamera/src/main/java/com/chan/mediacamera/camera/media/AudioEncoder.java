@@ -113,37 +113,63 @@ public class AudioEncoder extends Encoder {
 
     private void drainEncoder() {
         final int TIMEOUT_USEC = 10000;
+        int outputIndex = mAudioCodes.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+        if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
 
-        ByteBuffer[] encoderOutputBuffers = mAudioCodes.getOutputBuffers();
-        while (true) {
-            int encoderStatus = mAudioCodes.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
-            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
-                return;
-            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
-                encoderOutputBuffers = mAudioCodes.getOutputBuffers();
-            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                MediaFormat newFormat = mAudioCodes.getOutputFormat();
-                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_AUDIO, newFormat);
-                mListener.onStart(MuxerWapper.DATA_AUDIO);
-            } else if (encoderStatus < 0) {
-
+        } else if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            MediaFormat newFormat = mAudioCodes.getOutputFormat();
+            mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_AUDIO, newFormat);
+            mListener.onStart(MuxerWapper.DATA_AUDIO);
+        } else if (outputIndex < 0) {
+            drainEncoder();
+        } else {
+            ByteBuffer encodedData;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                encodedData = mAudioCodes.getOutputBuffer(outputIndex);
             } else {
-                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
-
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                        && mBufferInfo.size > 0) {
-                    mBufferInfo.presentationTimeUs = mListener.getPTSUs() - 2000;
-                    encodedData.position(mBufferInfo.offset);
-                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
-                    mListener.writeData(MuxerWapper.DATA_AUDIO, mTrackIndex, encodedData, mBufferInfo);
-                    mAudioCodes.releaseOutputBuffer(encoderStatus, false);
-                }
-
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                    break;
-                }
+                encodedData = mAudioCodes.getOutputBuffers()[outputIndex];
+            }
+            if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+                    && mBufferInfo.size > 0 && encodedData != null) {
+                mBufferInfo.presentationTimeUs = mListener.getPTSUs() - 2000;
+                encodedData.position(mBufferInfo.offset);
+                encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+                mListener.writeData(MuxerWapper.DATA_AUDIO, mTrackIndex, encodedData, mBufferInfo);
+                mAudioCodes.releaseOutputBuffer(outputIndex, false);
             }
         }
+
+//        此流程已经deprecated
+//        ByteBuffer[] encoderOutputBuffers = mAudioCodes.getOutputBuffers();
+//        while (true) {
+//            int encoderStatus = mAudioCodes.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
+//            if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) { //等待超时，需要再次等待，通常忽略
+//                return;
+//            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) { //输出缓冲区改变，通常忽略
+//                encoderOutputBuffers = mAudioCodes.getOutputBuffers();
+//            } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+//                MediaFormat newFormat = mAudioCodes.getOutputFormat();
+//                mTrackIndex = mListener.onFormatChanged(MuxerWapper.DATA_AUDIO, newFormat);
+//                mListener.onStart(MuxerWapper.DATA_AUDIO);
+//            } else if (encoderStatus < 0) {
+//
+//            } else {
+//                ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+//
+//                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
+//                        && mBufferInfo.size > 0) {
+//                    mBufferInfo.presentationTimeUs = mListener.getPTSUs() - 2000;
+//                    encodedData.position(mBufferInfo.offset);
+//                    encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+//                    mListener.writeData(MuxerWapper.DATA_AUDIO, mTrackIndex, encodedData, mBufferInfo);
+//                    mAudioCodes.releaseOutputBuffer(encoderStatus, false);
+//                }
+//
+//                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+//                    break;
+//                }
+//            }
+//        }
     }
 
     @Override
