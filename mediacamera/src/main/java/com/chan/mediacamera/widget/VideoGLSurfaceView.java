@@ -70,6 +70,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
         setRenderer(this);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
         setPreserveEGLContextOnPause(true);//保存Context当pause时
+        setCameraDistance(100);
 
         mRenderer = new FBOVideoRenderer(getContext());
     }
