@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.chan.mediacamera.widget.GLSurfaceView
+    <com.chan.mediacamera.widget.CameraGLSurfaceView
         android:id="@+id/kkcamera"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

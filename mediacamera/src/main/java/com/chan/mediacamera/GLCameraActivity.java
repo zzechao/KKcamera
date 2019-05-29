@@ -12,7 +12,7 @@ import android.widget.ImageView;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import com.chan.mediacamera.widget.GLSurfaceView;
+import com.chan.mediacamera.widget.CameraGLSurfaceView;
 import com.chan.mediacamera.widget.CircularProgressView;
 import com.dmcbig.mediapicker.PickerActivity;
 import com.dmcbig.mediapicker.PickerConfig;
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class GLCameraActivity extends AppCompatActivity implements View.OnClickListener {
 
 
-    GLSurfaceView kkcamera;
+    CameraGLSurfaceView kkcamera;
     ImageView iv_pic;
     CircularProgressView record;
     RadioGroup bt_mode;
@@ -110,7 +110,7 @@ public class GLCameraActivity extends AppCompatActivity implements View.OnClickL
         if (i == R.id.bt_switch) {
             kkcamera.switchCamera();
         } else if (i == R.id.takephoto) {
-            kkcamera.takePhoto(new GLSurfaceView.Callback<Bitmap>() {
+            kkcamera.takePhoto(new CameraGLSurfaceView.Callback<Bitmap>() {
                 @Override
                 public void back(final Bitmap bitmap) {
                     runOnUiThread(new Runnable() {
@@ -133,7 +133,7 @@ public class GLCameraActivity extends AppCompatActivity implements View.OnClickL
         } else if (i == R.id.record) {
             int id = bt_mode.getCheckedRadioButtonId();
             if (id == R.id.photo) {
-                kkcamera.takePhoto(new GLSurfaceView.Callback<Bitmap>() {
+                kkcamera.takePhoto(new CameraGLSurfaceView.Callback<Bitmap>() {
                     @Override
                     public void back(final Bitmap bitmap) {
                         runOnUiThread(new Runnable() {
@@ -163,6 +163,7 @@ public class GLCameraActivity extends AppCompatActivity implements View.OnClickL
         } else if (i == R.id.file) {
             Intent intent = new Intent(GLCameraActivity.this, PickerActivity.class); //Take a photo with a camera
             intent.putExtra(PickerConfig.MAX_SELECT_COUNT, 1);
+            intent.putExtra(PickerConfig.SELECT_MODE, PickerConfig.PICKER_VIDEO);
             GLCameraActivity.this.startActivityForResult(intent, 200);
         }
     }

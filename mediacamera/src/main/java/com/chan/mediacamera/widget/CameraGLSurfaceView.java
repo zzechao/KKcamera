@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -18,7 +19,7 @@ import com.chan.mediacamera.camera.egl.GLESBackEnv;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class GLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
+public class CameraGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
     /**
      * Camera1
@@ -38,11 +39,11 @@ public class GLSurfaceView extends GLSurfaceView implements GLSurfaceView.Render
 
     private int mWidth, mHeight;
 
-    public GLSurfaceView(Context context) {
+    public CameraGLSurfaceView(Context context) {
         this(context, null);
     }
 
-    public GLSurfaceView(Context context, AttributeSet attrs) {
+    public CameraGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         init();
