@@ -137,6 +137,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
 
     @Override
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        Log.e("ttt", "width : " + width + "---height :" + height);
         mRenderer.setVideoSize(width, height);
     }
 }

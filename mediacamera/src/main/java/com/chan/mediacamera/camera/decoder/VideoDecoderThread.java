@@ -18,23 +18,32 @@ public class VideoDecoderThread extends Thread {
 
     private boolean eosReceived;
 
+    private int videoWidth;
+    private int videoHeight;
+    private long videoTime;
+
     public boolean init(Surface surface, String filePath) {
         eosReceived = false;
         try {
             mExtractor = new MediaExtractor();
             mExtractor.setDataSource(filePath);
             //分离出音轨和视轨
-            Log.d(TAG, "getTrackCount: " + mExtractor.getTrackCount() );
+            Log.d(TAG, "getTrackCount: " + mExtractor.getTrackCount());
             for (int i = 0; i < mExtractor.getTrackCount(); i++) {
-                MediaFormat format = mExtractor.getTrackFormat(i);
+                MediaFormat mediaFormat = mExtractor.getTrackFormat(i);
 
-                String mime = format.getString(MediaFormat.KEY_MIME);
+                String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
                 if (mime.startsWith(VIDEO)) {
                     mExtractor.selectTrack(i);
+                    videoWidth = mediaFormat.getInteger(MediaFormat.KEY_WIDTH);
+                    videoHeight = mediaFormat.getInteger(MediaFormat.KEY_HEIGHT);
+                    videoTime = mediaFormat.getLong(MediaFormat.KEY_DURATION);
+
                     mDecoder = MediaCodec.createDecoderByType(mime);
                     try {
-                        Log.d(TAG, "format : " + format);
-                        mDecoder.configure(format, surface, null, 0 /* Decoder */);
+
+                        Log.d(TAG, "format : " + mediaFormat + "--width : " + videoWidth + "--height : " + videoHeight);
+                        mDecoder.configure(mediaFormat, surface, null, 0 /* Decoder */);
 
                     } catch (IllegalStateException e) {
                         Log.e(TAG, "codec '" + mime + "' failed configuration. " + e);
@@ -57,7 +66,6 @@ public class VideoDecoderThread extends Thread {
     public void run() {
         BufferInfo info = new BufferInfo();
         ByteBuffer[] inputBuffers = mDecoder.getInputBuffers();
-        mDecoder.getOutputBuffers();
 
         boolean isInput = true;
         boolean first = false;
@@ -125,12 +133,23 @@ public class VideoDecoderThread extends Thread {
             }
         }
 
-        mDecoder.stop();
         mDecoder.release();
         mExtractor.release();
     }
 
     public void close() {
         eosReceived = true;
+    }
+
+    public int getVideoWidth() {
+        return videoWidth;
+    }
+
+    public int getVideoHeight() {
+        return videoHeight;
+    }
+
+    public long getVideoTime() {
+        return videoTime;
     }
 }

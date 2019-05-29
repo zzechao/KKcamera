@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Surface;
 
 import com.chan.mediacamera.camera.FBOVideoRenderer;
@@ -14,12 +15,11 @@ import com.chan.mediacamera.camera.decoder.VideoDecoderThread;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, MediaPlayer.OnVideoSizeChangedListener, SurfaceTexture.OnFrameAvailableListener {
+public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
 
     private FBOVideoRenderer mRenderer;
     private String mPath;
     private VideoDecoderThread mVideoDecoder;
-    private Surface mSurface;
 
     public VideoHardwareGLSurfaceView(Context context) {
         this(context, null);
@@ -44,17 +44,13 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
     }
 
     public void onDestroy() {
-        if (mVideoDecoder != null) {
-            mVideoDecoder.close();
-            mVideoDecoder = null;
-        }
-        if (mSurface != null) {
-            mSurface.release();
-            mSurface = null;
-        }
         if (mRenderer != null) {
             mRenderer.releaseSurfaceTexture();
             mRenderer = null;
+        }
+        if (mVideoDecoder != null) {
+            mVideoDecoder.close();
+            mVideoDecoder = null;
         }
     }
 
@@ -79,21 +75,22 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
 
         mRenderer.onSurfaceCreated(gl, config);
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
-        mSurface = new Surface(mRenderer.getSurfaceTexture());
+        Surface mSurface = new Surface(mRenderer.getSurfaceTexture());
+        if (mVideoDecoder != null) {
+            if (mVideoDecoder.init(mSurface, mPath)) {
+                Log.e("ttt", "1111width : " + mVideoDecoder.getVideoWidth() + "---height :" + mVideoDecoder.getVideoHeight());
+                mVideoDecoder.start();
+            } else {
+                mVideoDecoder = null;
+            }
+        }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         //创建视频格式信息
         mRenderer.onSurfaceChanged(gl, width, height);
-
-        if (mVideoDecoder != null) {
-            if (mVideoDecoder.init(mSurface, mPath)) {
-                mVideoDecoder.start();
-            } else {
-                mVideoDecoder = null;
-            }
-        }
+        mRenderer.setVideoSize(mVideoDecoder.getVideoWidth(),mVideoDecoder.getVideoHeight());
     }
 
     @Override
@@ -111,8 +108,4 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         mPath = path;
     }
 
-    @Override
-    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-        mRenderer.setVideoSize(width, height);
-    }
 }
