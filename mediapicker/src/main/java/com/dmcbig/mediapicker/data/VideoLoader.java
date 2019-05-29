@@ -1,14 +1,15 @@
 package com.dmcbig.mediapicker.data;
 
-import android.app.LoaderManager;
 import android.content.Context;
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 
 import com.dmcbig.mediapicker.R;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
  * Created by dmcBig on 2017/6/9.
  */
 
-public class VideoLoader extends LoaderM implements LoaderManager.LoaderCallbacks {
+public class VideoLoader extends LoaderM implements LoaderManager.LoaderCallbacks<Cursor> {
     String[] MEDIA_PROJECTION = {
             MediaStore.Files.FileColumns.DATA,
             MediaStore.Files.FileColumns.DISPLAY_NAME,
@@ -40,30 +41,15 @@ public class VideoLoader extends LoaderM implements LoaderManager.LoaderCallback
         this.mLoader = loader;
     }
 
-    @Override
-    public Loader onCreateLoader(int picker_type, Bundle bundle) {
-        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "="
-                + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 
-        Uri queryUri = MediaStore.Files.getContentUri("external");
-        CursorLoader cursorLoader = new CursorLoader(
-                mContext,
-                queryUri,
-                MEDIA_PROJECTION,
-                selection,
-                null, // Selection args (none).
-                MediaStore.Files.FileColumns.DATE_ADDED + " DESC" // Sort order.
-        );
-        return cursorLoader;
-    }
 
     @Override
-    public void onLoadFinished(Loader loader, Object o) {
+    public void onLoadFinished(Loader loader, Cursor o) {
         try {
             ArrayList<Folder> folders = new ArrayList<>();
             Folder allFolder = new Folder(mContext.getResources().getString(R.string.all_video));
             folders.add(allFolder);
-            Cursor cursor = (Cursor) o;
+            Cursor cursor = o;
             Log.e("dmc", cursor.getCount() + "数量数量");
             while (cursor.moveToNext()) {
                 String path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA));
@@ -99,5 +85,22 @@ public class VideoLoader extends LoaderM implements LoaderManager.LoaderCallback
     @Override
     public void onLoaderReset(Loader loader) {
 
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, @Nullable Bundle bundle) {
+        String selection = MediaStore.Files.FileColumns.MEDIA_TYPE + "="
+                + MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+
+        Uri queryUri = MediaStore.Files.getContentUri("external");
+        return new CursorLoader(
+                mContext,
+                queryUri,
+                MEDIA_PROJECTION,
+                selection,
+                null, // Selection args (none).
+                MediaStore.Files.FileColumns.DATE_ADDED + " DESC" // Sort order.
+        );
     }
 }

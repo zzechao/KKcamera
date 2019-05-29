@@ -1,14 +1,16 @@
 package com.dmcbig.mediapicker.data;
 
-import android.app.LoaderManager;
+
 import android.content.Context;
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 
 import com.dmcbig.mediapicker.R;
 import com.dmcbig.mediapicker.entity.Folder;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
  * Created by dmcBig on 2017/7/3.
  */
 
-public class ImageLoader extends LoaderM implements LoaderManager.LoaderCallbacks {
+public class ImageLoader extends LoaderM implements LoaderManager.LoaderCallbacks<Cursor> {
 
     String[] IMAGE_PROJECTION = {
             MediaStore.Images.Media.DATA,
@@ -38,22 +40,9 @@ public class ImageLoader extends LoaderM implements LoaderManager.LoaderCallback
         this.mLoader = loader;
     }
 
-    @Override
-    public Loader onCreateLoader(int picker_type, Bundle bundle) {
-        Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        CursorLoader cursorLoader = new CursorLoader(
-                mContext,
-                queryUri,
-                IMAGE_PROJECTION,
-                null,
-                null, // Selection args (none).
-                MediaStore.Images.Media.DATE_ADDED + " DESC" // Sort order.
-        );
-        return cursorLoader;
-    }
 
     @Override
-    public void onLoadFinished(Loader loader, Object o) {
+    public void onLoadFinished(Loader loader, Cursor o) {
         try {
             ArrayList<Folder> folders = new ArrayList<>();
             Folder allFolder = new Folder(mContext.getResources().getString(R.string.all_image));
@@ -96,4 +85,17 @@ public class ImageLoader extends LoaderM implements LoaderManager.LoaderCallback
     }
 
 
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, @Nullable Bundle bundle) {
+        Uri queryUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        return new CursorLoader(
+                mContext,
+                queryUri,
+                IMAGE_PROJECTION,
+                null,
+                null, // Selection args (none).
+                MediaStore.Images.Media.DATE_ADDED + " DESC" // Sort order.
+        );
+    }
 }
