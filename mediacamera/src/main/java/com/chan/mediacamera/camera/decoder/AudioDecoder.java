@@ -132,7 +132,6 @@ public class AudioDecoder extends Decoder {
             mDecoder = MediaCodec.createDecoderByType(mime);
             mDecoder.configure(mediaFormat, null, null, 0);
 
-
             mAudioTrack.play();
             mDecoder.start();
         } catch (IOException e) {

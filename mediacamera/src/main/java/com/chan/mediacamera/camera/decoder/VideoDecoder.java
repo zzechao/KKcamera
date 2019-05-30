@@ -21,11 +21,15 @@ public class VideoDecoder extends Decoder {
     private boolean mReady = false;
     private boolean mRunning = false;
     private boolean mStop = false;
+    private boolean mFirstTime = false;
+    private long mStartTime;
 
     private MediaExtractor mExtractor;
     private MediaCodec mDecoder;
     private MediaCodec.BufferInfo mBufferInfo;
     private DecoderListener mListener;
+
+
 
     public VideoDecoder(DecoderListener listener) {
         mListener = listener;
@@ -112,7 +116,12 @@ public class VideoDecoder extends Decoder {
         if (!mStop) {
             intputDecord();
             outputDecord();
-            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
+            if (!mFirstTime) {
+                mStartTime = System.currentTimeMillis();
+                mFirstTime = true;
+            }
+            long sleepTime = (mBufferInfo.presentationTimeUs / 1000) - (System.currentTimeMillis() - mStartTime);
+            mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_DECORD_STEP),sleepTime);
         } else {
             if (mDecoder != null) {
                 mDecoder.stop();
