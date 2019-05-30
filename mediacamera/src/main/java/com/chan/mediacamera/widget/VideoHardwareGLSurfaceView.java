@@ -2,24 +2,26 @@ package com.chan.mediacamera.widget;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Surface;
 
 import com.chan.mediacamera.camera.FBOVideoRenderer;
-import com.chan.mediacamera.camera.decoder.VideoDecoderThread;
+import com.chan.mediacamera.camera.decoder.AudioDecoder;
+import com.chan.mediacamera.camera.decoder.Decoder;
+import com.chan.mediacamera.camera.decoder.DecoderConfig;
+import com.chan.mediacamera.camera.decoder.VideoDecoder;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
+public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener, Decoder.DecoderListener {
 
     private FBOVideoRenderer mRenderer;
     private String mPath;
-    private VideoDecoderThread mVideoDecoder;
+    private VideoDecoder mVideoDecoder;
+    private AudioDecoder mAudioDecoder;
 
     public VideoHardwareGLSurfaceView(Context context) {
         this(context, null);
@@ -39,18 +41,21 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
 
     @Override
     public void onPause() {
-
         super.onPause();
     }
 
     public void onDestroy() {
+        if (mVideoDecoder != null) {
+            mVideoDecoder.stop();
+            mVideoDecoder = null;
+        }
+        if (mAudioDecoder != null) {
+            mAudioDecoder.stop();
+            mAudioDecoder = null;
+        }
         if (mRenderer != null) {
             mRenderer.releaseSurfaceTexture();
             mRenderer = null;
-        }
-        if (mVideoDecoder != null) {
-            mVideoDecoder.close();
-            mVideoDecoder = null;
         }
     }
 
@@ -65,7 +70,8 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
     }
 
     private void initDecoder() {
-        mVideoDecoder = new VideoDecoderThread();
+        mVideoDecoder = new VideoDecoder(this);
+        mAudioDecoder = new AudioDecoder(this);
     }
 
     @Override
@@ -77,12 +83,10 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
         Surface mSurface = new Surface(mRenderer.getSurfaceTexture());
         if (mVideoDecoder != null) {
-            if (mVideoDecoder.init(mSurface, mPath)) {
-                Log.e("ttt", "1111width : " + mVideoDecoder.getVideoWidth() + "---height :" + mVideoDecoder.getVideoHeight());
-                mVideoDecoder.start();
-            } else {
-                mVideoDecoder = null;
-            }
+            mVideoDecoder.start(new DecoderConfig(25, mPath, mSurface));
+        }
+        if (mAudioDecoder != null) {
+            mAudioDecoder.start(new DecoderConfig(25, mPath, null));
         }
     }
 
@@ -90,7 +94,7 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         //创建视频格式信息
         mRenderer.onSurfaceChanged(gl, width, height);
-        mRenderer.setVideoSize(mVideoDecoder.getVideoWidth(),mVideoDecoder.getVideoHeight());
+
     }
 
     @Override
@@ -108,4 +112,8 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         mPath = path;
     }
 
+    @Override
+    public void onVideoSizeChanged(int width, int height) {
+        mRenderer.setVideoSize(width, height);
+    }
 }

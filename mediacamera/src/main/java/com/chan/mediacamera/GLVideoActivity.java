@@ -51,8 +51,8 @@ public class GLVideoActivity extends AppCompatActivity implements View.OnClickLi
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         gl_video.onDestroy();
+        super.onDestroy();
     }
 
     @Override

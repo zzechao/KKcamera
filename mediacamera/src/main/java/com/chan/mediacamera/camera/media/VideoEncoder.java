@@ -48,7 +48,6 @@ public class VideoEncoder extends Encoder {
         mListener = listener;
     }
 
-
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public void run() {

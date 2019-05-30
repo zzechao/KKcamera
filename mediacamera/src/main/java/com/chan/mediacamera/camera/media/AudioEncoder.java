@@ -95,7 +95,7 @@ public class AudioEncoder extends Encoder {
     }
 
     private void recordEncorder() {
-        int inputBufIndex = mAudioCodes.dequeueInputBuffer(1000);
+        int inputBufIndex = mAudioCodes.dequeueInputBuffer(10000);
         if (inputBufIndex >= 0) {
             ByteBuffer mInputBuffer;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -104,6 +104,7 @@ public class AudioEncoder extends Encoder {
                 mInputBuffer = mAudioCodes.getInputBuffers()[inputBufIndex];
             }
             assert mInputBuffer != null;
+            mInputBuffer.clear();
             int length = mAudioRecorder.read(mInputBuffer, bufferSize); //读入数据
             if (length > 0) {
                 mAudioCodes.queueInputBuffer(inputBufIndex, 0, length, mListener.getPTSUs() - 2000, isStop ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
