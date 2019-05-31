@@ -23,9 +23,9 @@ public class AudioDecoder extends Decoder {
 
     private final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     //采样率
-    private final int SAMPLE_RATE = 48000;
+    private final int SAMPLE_RATE = 64200;
     //声道数
-    private final int CHANNEL_COUNT = 2;
+    private final int CHANNEL_COUNT = 1;
 
 
     private DecoderHandler mHandler;
@@ -108,25 +108,25 @@ public class AudioDecoder extends Decoder {
             mExtractor.selectTrack(selectTrack);
 
             // AudioTrack的初始化
-            int minBufferSize = AudioTrack.getMinBufferSize(samplerate, changelConfig, pmc);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build();
-                AudioFormat audioFormat = new AudioFormat.Builder()
-                        .setEncoding(pmc)
-                        .setChannelMask(channelMask)
-                        .setSampleRate(samplerate)
-                        .build();
+            int minBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT);
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                AudioAttributes audioAttributes = new AudioAttributes.Builder()
+//                        .setUsage(AudioAttributes.USAGE_MEDIA)
+//                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+//                        .build();
+//                AudioFormat audioFormat = new AudioFormat.Builder()
+//                        .setEncoding(pmc)
+//                        .setChannelMask(channelMask)
+//                        .setSampleRate(samplerate)
+//                        .build();
+//                mAudioTrack =
+//                        new AudioTrack(audioAttributes, audioFormat, minBufferSize,
+//                                AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+//            } else {
                 mAudioTrack =
-                        new AudioTrack(audioAttributes, audioFormat, minBufferSize,
-                                AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-            } else {
-                mAudioTrack =
-                        new AudioTrack(AudioManager.STREAM_MUSIC, samplerate, changelConfig,
-                                pmc, minBufferSize, AudioTrack.MODE_STREAM);
-            }
+                        new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
+                                AUDIO_FORMAT, minBufferSize, AudioTrack.MODE_STREAM);
+//            }
 
             // MediaCodec的初始化
             mDecoder = MediaCodec.createDecoderByType(mime);
