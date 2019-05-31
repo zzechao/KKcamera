@@ -502,12 +502,4 @@ public class FBOCameraRenderer implements GLSurfaceView.Renderer {
             //muxerEncoder.resumeRecording();
         }
     }
-
-
-    public void setVideoSize(int videoWidth, int videoHeight) {
-        float[] matrix = Gl2Utils.getOriginalMatrix();
-        Gl2Utils.getMatrix(matrix, Gl2Utils.TYPE_CENTERINSIDE, videoWidth, videoHeight, mWidth, mHeight);
-        Gl2Utils.flip(matrix, false, true);
-        drawFilter.setMatrix(matrix);
-    }
 }

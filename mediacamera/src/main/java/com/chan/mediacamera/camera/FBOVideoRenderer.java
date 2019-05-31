@@ -164,11 +164,9 @@ public class FBOVideoRenderer implements GLSurfaceView.Renderer {
     }
 
     public void setVideoSize(int width, int height) {
-        if (mVideoWidth != width && mVideoHeight != height) {
-            mVideoWidth = width;
-            mVideoHeight = height;
-            calculateMatrix();
-        }
+        mVideoWidth = width;
+        mVideoHeight = height;
+        calculateMatrix();
     }
 
     public void setViewSize(int width, int height) {

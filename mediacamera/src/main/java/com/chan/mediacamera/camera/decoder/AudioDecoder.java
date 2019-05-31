@@ -23,7 +23,7 @@ public class AudioDecoder extends Decoder {
 
     private final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     //采样率
-    private final int SAMPLE_RATE = 44100;
+    private final int SAMPLE_RATE = 65200;
     //声道数
     private final int CHANNEL_COUNT = AudioFormat.CHANNEL_OUT_MONO;
 
@@ -44,6 +44,7 @@ public class AudioDecoder extends Decoder {
     public AudioDecoder(DecoderListener listener) {
         mListener = listener;
     }
+
 
     @Override
     public void run() {
@@ -81,6 +82,29 @@ public class AudioDecoder extends Decoder {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
     }
 
+    public AudioTrack getAudioTrack() {
+        return mAudioTrack;
+    }
+
+    public void release() {
+        if (mAudioTrack != null) {
+            mAudioTrack.flush();
+            mAudioTrack.stop();
+            mAudioTrack.release();
+            mAudioTrack = null;
+        }
+        if (mDecoder != null) {
+            mDecoder.stop();
+            mDecoder.release();
+            mDecoder = null;
+        }
+        if (mExtractor != null) {
+            mExtractor.release();
+            mExtractor = null;
+        }
+        mBufferInfo = null;
+        mListener = null;
+    }
 
     @Override
     protected void handleStartDecoder(DecoderConfig config) {
@@ -128,21 +152,22 @@ public class AudioDecoder extends Decoder {
                         new AudioTrack(audioAttributes, audioFormat, minBufferSize,
                                 AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
             } else {
-                Log.e("ttt", "samplerate : " + samplerate + "---changelConfig : " + changelConfig);
-//                mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-//                        SAMPLE_RATE,
-//                        AudioFormat.CHANNEL_OUT_MONO,
-//                        AudioFormat.ENCODING_PCM_16BIT,
-//                        minBufferSize,
-//                        AudioTrack.MODE_STREAM);
+                final int minBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
+                        AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT);
+                mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                        SAMPLE_RATE,
+                        AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                        minBufferSize,
+                        AudioTrack.MODE_STREAM);
             }
 
             // MediaCodec的初始化
             mDecoder = MediaCodec.createDecoderByType(mime);
-            mDecoder.configure(mediaFormat, null, null, 0);
-
-            mAudioTrack.play();
-            mDecoder.start();
+            if (mListener != null) {
+                mListener.onStart(Decoder.DECODER_AUDIO, mDecoder, mediaFormat, config);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -165,23 +190,9 @@ public class AudioDecoder extends Decoder {
             long sleepTime = (mBufferInfo.presentationTimeUs / 1000) - (System.currentTimeMillis() - mStartTime);
             mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
         } else {
-            if (mAudioTrack != null) {
-                mAudioTrack.flush();
-                mAudioTrack.stop();
-                mAudioTrack.release();
-                mAudioTrack = null;
+            if (mListener != null) {
+                mListener.onStop(Decoder.DECODER_AUDIO);
             }
-            if (mDecoder != null) {
-                mDecoder.stop();
-                mDecoder.release();
-                mDecoder = null;
-            }
-            if (mExtractor != null) {
-                mExtractor.release();
-                mExtractor = null;
-            }
-            mBufferInfo = null;
-            mListener = null;
         }
     }
 
@@ -220,13 +231,20 @@ public class AudioDecoder extends Decoder {
             } else {
                 mOutputBuffer = mDecoder.getOutputBuffers()[outputIndex];
             }
-
             if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
                     && mBufferInfo.size > 0 && mOutputBuffer != null) {
-                byte[] chunkPCM = new byte[mBufferInfo.size];
-                mOutputBuffer.get(chunkPCM);
-                mOutputBuffer.clear();//不清空下次会得到同样的数据
-                mAudioTrack.write(chunkPCM, 0, mBufferInfo.size);// 将数据写入AudioTrack播放
+                ByteBuffer copyBuffer = ByteBuffer.allocate(mOutputBuffer.remaining());
+                copyBuffer.put(mOutputBuffer);
+                copyBuffer.flip();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (mListener != null) {
+                        mListener.queueAudio(copyBuffer, outputIndex, mBufferInfo.presentationTimeUs);
+                    }
+                } else {
+
+                }
+                //mAudioTrack.write(copyBuffer.array(), 0, mBufferInfo.size);
+
                 mDecoder.releaseOutputBuffer(outputIndex, false);
             }
 

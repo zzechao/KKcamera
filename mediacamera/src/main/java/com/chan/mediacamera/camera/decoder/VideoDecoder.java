@@ -29,8 +29,6 @@ public class VideoDecoder extends Decoder {
     private MediaCodec.BufferInfo mBufferInfo;
     private DecoderListener mListener;
 
-
-
     public VideoDecoder(DecoderListener listener) {
         mListener = listener;
     }
@@ -71,6 +69,19 @@ public class VideoDecoder extends Decoder {
         mHandler.sendMessage(mHandler.obtainMessage(MSG_QUIT));
     }
 
+    public void release(){
+        if (mDecoder != null) {
+            mDecoder.stop();
+            mDecoder.release();
+            mDecoder = null;
+        }
+        if (mExtractor != null) {
+            mExtractor.release();
+            mExtractor = null;
+        }
+        mBufferInfo = null;
+        mListener = null;
+    }
 
     @Override
     protected void handleStartDecoder(DecoderConfig config) {
@@ -90,14 +101,11 @@ public class VideoDecoder extends Decoder {
                         mListener.onVideoSizeChanged(videoWidth, videoHeight);
                     }
                     mDecoder = MediaCodec.createDecoderByType(mime);
-                    try {
-                        Log.d(TAG, "format : " + mediaFormat);
-                        mDecoder.configure(mediaFormat, config.mSurface, null, 0);
-                    } catch (IllegalStateException e) {
-                        Log.e(TAG, "codec '" + mime + "' failed configuration. " + e);
-                        return;
+
+                    Log.d(TAG, "format : " + mediaFormat);
+                    if (mListener != null) {
+                        mListener.onStart(Decoder.DECODER_VIDEO, mDecoder, mediaFormat, config);
                     }
-                    mDecoder.start();
                     break;
                 }
             }
@@ -120,20 +128,11 @@ public class VideoDecoder extends Decoder {
                 mStartTime = System.currentTimeMillis();
                 mFirstTime = true;
             }
-            long sleepTime = (mBufferInfo.presentationTimeUs / 1000) - (System.currentTimeMillis() - mStartTime);
-            mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_DECORD_STEP),sleepTime);
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
         } else {
-            if (mDecoder != null) {
-                mDecoder.stop();
-                mDecoder.release();
-                mDecoder = null;
+            if (mListener != null) {
+                mListener.onStop(Decoder.DECODER_VIDEO);
             }
-            if (mExtractor != null) {
-                mExtractor.release();
-                mExtractor = null;
-            }
-            mBufferInfo = null;
-            mListener = null;
         }
     }
 
