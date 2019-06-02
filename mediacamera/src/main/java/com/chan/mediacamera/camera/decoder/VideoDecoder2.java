@@ -10,9 +10,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class VideoDecoder extends Decoder {
+public class VideoDecoder2 extends Decoder {
 
-    private final String TAG = VideoDecoder.class.getSimpleName();
+    private final String TAG = VideoDecoder2.class.getSimpleName();
 
     private final String VIDEO = "video/";
     private final int TIMEOUT_USEC = 10000;
@@ -27,7 +27,7 @@ public class VideoDecoder extends Decoder {
     private MediaCodec.BufferInfo mBufferInfo;
     private DecoderListener mListener;
 
-    public VideoDecoder(DecoderListener listener) {
+    public VideoDecoder2(DecoderListener listener) {
         mListener = listener;
     }
 
@@ -115,41 +115,20 @@ public class VideoDecoder extends Decoder {
     @Override
     protected void handleStopDecoder() {
         mStop = true;
-        if (mListener != null) {
-            mListener.onStop(Decoder.DECODER_VIDEO);
-        }
     }
 
     @Override
     protected void handleStepDecoder() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mDecoder.setCallback(new MediaCodec.Callback() {
                 @Override
                 public void onInputBufferAvailable(MediaCodec codec, int index) {
-                    ByteBuffer buffer = codec.getInputBuffer(index);
-                    int size = mExtractor.readSampleData(buffer, 0);
-                    long timestampUs = mExtractor.getSampleTime();
-                    if (mExtractor.advance() && size > 0) {
-                        codec.queueInputBuffer(index, 0, size, timestampUs, 0);
-                    } else {
-                        codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-                    }
+
                 }
 
                 @Override
                 public void onOutputBufferAvailable(MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                            && info.size > 0) {
-                        codec.releaseOutputBuffer(index, info.presentationTimeUs * 1000);
-                    }
 
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        Log.d(TAG, "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
-                        mStop = true;
-                        if (mListener != null) {
-                            mListener.onStop(Decoder.DECODER_VIDEO);
-                        }
-                    }
                 }
 
                 @Override
@@ -161,19 +140,19 @@ public class VideoDecoder extends Decoder {
                 public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
 
                 }
-            });
+            }, mHandler);
         }
 
 
-//        if (!mStop) {
-//            intputDecord();
-//            outputDecord();
-//            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
-//        } else {
-//            if (mListener != null) {
-//                mListener.onStop(Decoder.DECODER_VIDEO);
-//            }
-//        }
+        if (!mStop) {
+            intputDecord();
+            outputDecord();
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
+        } else {
+            if (mListener != null) {
+                mListener.onStop(Decoder.DECODER_VIDEO);
+            }
+        }
     }
 
     /**

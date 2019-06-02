@@ -14,9 +14,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class AudioDecoder extends Decoder {
+public class AudioDecoder2 extends Decoder {
 
-    private final String TAG = AudioDecoder.class.getSimpleName();
+    private final String TAG = AudioDecoder2.class.getSimpleName();
 
     private final String AUDIO = "audio/";
     private final int TIMEOUT_USEC = 10000;
@@ -40,7 +40,7 @@ public class AudioDecoder extends Decoder {
     private MediaCodec.BufferInfo mBufferInfo;
     private DecoderListener mListener;
 
-    public AudioDecoder(DecoderListener listener) {
+    public AudioDecoder2(DecoderListener listener) {
         mListener = listener;
     }
 
@@ -179,67 +179,19 @@ public class AudioDecoder extends Decoder {
     @Override
     protected void handleStopDecoder() {
         mStop = true;
-        if(mListener != null){
-            mListener.onStop(Decoder.DECODER_AUDIO);
-        }
     }
 
     @Override
     protected void handleStepDecoder() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mDecoder.setCallback(new MediaCodec.Callback() {
-                @Override
-                public void onInputBufferAvailable(MediaCodec codec, int index) {
-                    ByteBuffer buffer = codec.getInputBuffer(index);
-                    int size = mExtractor.readSampleData(buffer, 0);
-                    long timestampUs = mExtractor.getSampleTime();
-                    if (mExtractor.advance() && size > 0) {
-                        codec.queueInputBuffer(index, 0, size, timestampUs, 0);
-                    } else {
-                        codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-                    }
-                }
-
-                @Override
-                public void onOutputBufferAvailable(MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                    ByteBuffer mOutputBuffer = codec.getOutputBuffer(index);
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                            && info.size > 0 && mOutputBuffer != null) {
-                        if (mListener != null) {
-                            mListener.queueAudio(mOutputBuffer, index, mBufferInfo.presentationTimeUs);
-                        }
-                    }
-
-                    if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        Log.d(TAG, "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
-                        mStop = true;
-                        if (mListener != null) {
-                            mListener.onStop(Decoder.DECODER_AUDIO);
-                        }
-                    }
-                }
-
-                @Override
-                public void onError(MediaCodec codec, MediaCodec.CodecException e) {
-
-                }
-
-                @Override
-                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
-
-                }
-            });
+        if (!mStop) {
+            intputDecord();
+            outputDecord();
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
+        } else {
+            if (mListener != null) {
+                mListener.onStop(Decoder.DECODER_AUDIO);
+            }
         }
-
-//        if (!mStop) {
-//            intputDecord();
-//            outputDecord();
-//            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
-//        } else {
-//            if (mListener != null) {
-//                mListener.onStop(Decoder.DECODER_AUDIO);
-//            }
-//        }
     }
 
     private void intputDecord() {
@@ -280,7 +232,7 @@ public class AudioDecoder extends Decoder {
             if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
                     && mBufferInfo.size > 0 && mOutputBuffer != null) {
                 if (mListener != null) {
-                    Log.e("ttt", "queueAudio");
+                    Log.e("ttt","queueAudio");
                     mListener.queueAudio(mOutputBuffer, outputIndex, mBufferInfo.presentationTimeUs);
                 }
             }
@@ -316,7 +268,7 @@ public class AudioDecoder extends Decoder {
      * @param bufferId
      */
     public void releaseOutputBuffer(int bufferId) {
-        Log.e("ttt", "releaseOutputBuffer");
+        Log.e("ttt","releaseOutputBuffer");
         mDecoder.releaseOutputBuffer(bufferId, false);
     }
 }
