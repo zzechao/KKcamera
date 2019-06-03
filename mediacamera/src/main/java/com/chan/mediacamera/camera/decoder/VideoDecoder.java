@@ -115,65 +115,19 @@ public class VideoDecoder extends Decoder {
     @Override
     protected void handleStopDecoder() {
         mStop = true;
-        if (mListener != null) {
-            mListener.onStop(Decoder.DECODER_VIDEO);
-        }
     }
 
     @Override
     protected void handleStepDecoder() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mDecoder.setCallback(new MediaCodec.Callback() {
-                @Override
-                public void onInputBufferAvailable(MediaCodec codec, int index) {
-                    ByteBuffer buffer = codec.getInputBuffer(index);
-                    int size = mExtractor.readSampleData(buffer, 0);
-                    long timestampUs = mExtractor.getSampleTime();
-                    if (mExtractor.advance() && size > 0) {
-                        codec.queueInputBuffer(index, 0, size, timestampUs, 0);
-                    } else {
-                        codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
-                    }
-                }
-
-                @Override
-                public void onOutputBufferAvailable(MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                            && info.size > 0) {
-                        codec.releaseOutputBuffer(index, info.presentationTimeUs * 1000);
-                    }
-
-                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        Log.d(TAG, "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
-                        mStop = true;
-                        if (mListener != null) {
-                            mListener.onStop(Decoder.DECODER_VIDEO);
-                        }
-                    }
-                }
-
-                @Override
-                public void onError(MediaCodec codec, MediaCodec.CodecException e) {
-
-                }
-
-                @Override
-                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
-
-                }
-            });
+        if (!mStop) {
+            intputDecord();
+            outputDecord();
+            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
+        } else {
+            if (mListener != null) {
+                mListener.onStop(Decoder.DECODER_VIDEO);
+            }
         }
-
-
-//        if (!mStop) {
-//            intputDecord();
-//            outputDecord();
-//            mHandler.sendMessage(mHandler.obtainMessage(MSG_DECORD_STEP));
-//        } else {
-//            if (mListener != null) {
-//                mListener.onStop(Decoder.DECODER_VIDEO);
-//            }
-//        }
     }
 
     /**

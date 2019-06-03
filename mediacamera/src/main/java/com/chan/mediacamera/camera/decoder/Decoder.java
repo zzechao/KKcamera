@@ -7,7 +7,6 @@ import android.os.Looper;
 import android.os.Message;
 
 import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
 
 public abstract class Decoder implements Runnable {
 
@@ -71,8 +70,6 @@ public abstract class Decoder implements Runnable {
         void onStart(int decoderStats, MediaCodec decoder, MediaFormat mediaFormat, DecoderConfig config);
 
         void onStop(int decoderStats);
-
-        void queueAudio(ByteBuffer copyBuffer, int outputIndex, long presentationTimeUs);
     }
 
     protected abstract void handleStartDecoder(DecoderConfig config);

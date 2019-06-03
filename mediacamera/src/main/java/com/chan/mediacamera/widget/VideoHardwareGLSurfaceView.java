@@ -5,24 +5,17 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaSync;
-import android.media.PlaybackParams;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Surface;
 
 import com.chan.mediacamera.camera.FBOVideoRenderer;
 import com.chan.mediacamera.camera.decoder.AudioDecoder;
 import com.chan.mediacamera.camera.decoder.Decoder;
 import com.chan.mediacamera.camera.decoder.DecoderConfig;
-import com.chan.mediacamera.camera.decoder.MediaSyncTest;
 import com.chan.mediacamera.camera.decoder.VideoDecoder;
-
-import java.nio.ByteBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -31,15 +24,17 @@ import javax.microedition.khronos.opengles.GL10;
  * https://blog.csdn.net/nonmarking/article/details/78747210 音视频同步的文章
  * 先用MediaSync处理音视频同步
  */
-public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
+public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener, Decoder.DecoderListener {
 
     private static final String TAG = "VideoHardwareGLSurfaceView";
 
     private FBOVideoRenderer mRenderer;
     private String mPath;
-    private Surface mSurface;
-    private MediaSyncTest mMediaSyncTest;
-
+    private VideoDecoder mVideoDecoder;
+    private AudioDecoder mAudioDecoder;
+    private MediaSync mSync;
+    private boolean mVideoStart = false;
+    private boolean mAudioStart = false;
 
     public VideoHardwareGLSurfaceView(Context context) {
         this(context, null);
@@ -62,15 +57,12 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         super.onPause();
     }
 
-
     public void onDestroy() {
-        if (mMediaSyncTest != null) {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    mMediaSyncTest.tearDown();
-                }
-                mMediaSyncTest = null;
-            }catch (Exception e){}
+        if (mVideoDecoder != null) {
+            mVideoDecoder.stop();
+        }
+        if (mAudioDecoder != null) {
+            mAudioDecoder.stop();
         }
         if (mRenderer != null) {
             mRenderer.releaseSurfaceTexture();
@@ -86,10 +78,15 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         setCameraDistance(100);
 
         mRenderer = new FBOVideoRenderer(getContext());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mSync = new MediaSync();
+        }
     }
 
     private void initDecoder() {
-
+        mVideoDecoder = new VideoDecoder(this);
+        mAudioDecoder = new AudioDecoder(this);
     }
 
     @Override
@@ -99,8 +96,13 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
 
         mRenderer.onSurfaceCreated(gl, config);
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
-        mSurface = new Surface(mRenderer.getSurfaceTexture());
-        new DecodeTask().execute();
+        Surface mSurface = new Surface(mRenderer.getSurfaceTexture());
+        if (mVideoDecoder != null) {
+            mVideoDecoder.start(new DecoderConfig(25, mPath, mSurface));
+        }
+        if (mAudioDecoder != null) {
+            mAudioDecoder.start(new DecoderConfig(25, mPath, null));
+        }
     }
 
     @Override
@@ -125,27 +127,34 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         mPath = path;
     }
 
-    public class DecodeTask extends AsyncTask<Void, Void, Boolean> {
+    @Override
+    public void onVideoSizeChanged(int width, int height) {
+        mRenderer.setVideoSize(width, height);
+    }
 
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            //this runs on a new thread
-            initializePlayer();
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            //this runs on ui thread
+    @Override
+    public void onStart(int decoderStats, MediaCodec decoder, MediaFormat mediaFormat, DecoderConfig config) {
+        if (decoderStats == Decoder.DECODER_VIDEO && !mVideoStart) {
+            decoder.configure(mediaFormat, config.mSurface, null, 0);
+            mVideoStart = true;
+            decoder.start();
+        } else if (decoderStats == Decoder.DECODER_AUDIO && !mAudioStart) {
+            mAudioDecoder.getAudioTrack().play();
+            decoder.configure(mediaFormat, null, null, 0);
+            mAudioStart = true;
+            decoder.start();
         }
     }
 
-    private void initializePlayer() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mMediaSyncTest = new MediaSyncTest(mSurface);
-            try {
-                mMediaSyncTest.testPlayAudioAndVideo(mPath);
-            } catch (InterruptedException e){}
+    @Override
+    public void onStop(int decoderStats) {
+        if (decoderStats == Decoder.DECODER_VIDEO) {
+            mVideoDecoder.release();
+            mVideoStart = false;
+        } else if (decoderStats == Decoder.DECODER_AUDIO) {
+            mAudioDecoder.release();
+            mAudioStart = false;
         }
+
     }
 }

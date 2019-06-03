@@ -7,12 +7,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
 
-import com.chan.mediacamera.widget.VideoHardwareGLSurfaceView;
+import com.chan.mediacamera.widget.VideoHardware2GLSurfaceView;
 import com.dmcbig.mediapicker.entity.Media;
 
 public class GLVideoActivity extends AppCompatActivity implements View.OnClickListener {
 
-    VideoHardwareGLSurfaceView gl_video;
+    VideoHardware2GLSurfaceView  gl_video;
     ImageButton tijiao;
 
     public static void startActivity(AppCompatActivity activity, Media media) {
