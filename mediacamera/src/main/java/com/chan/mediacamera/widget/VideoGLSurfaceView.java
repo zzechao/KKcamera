@@ -54,6 +54,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
     }
 
     public void onDestroy() {
+        setKeepScreenOn(false);
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();
@@ -73,6 +74,8 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
         setCameraDistance(100);
 
         mRenderer = new FBOVideoRenderer(getContext());
+
+        setKeepScreenOn(true);
     }
 
     private void initMediaPlayer() {

@@ -1,8 +1,6 @@
 package com.chan.mediacamera.camera.decoder;
 
-import android.media.AudioAttributes;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
@@ -20,7 +18,7 @@ public class AudioWapper {
     private final MediaExtractor mExtractor;
     private final String AUDIO = "audio/";
     private final int APPLICATION_AUDIO_PERIOD_MS = 200;
-    private AudioTrack mAudioTrack;
+    private NonBlockingAudioTrack mAudioTrack;
     private MediaCodec mDecoder;
     private boolean mStop;
 
@@ -41,6 +39,8 @@ public class AudioWapper {
         int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
         int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
         int channelMask = AudioFormat.CHANNEL_OUT_STEREO;
+        int channelCount = 0;
+
         String mime = "audio/mp4a-latm";
         MediaFormat mediaFormat = null;
 
@@ -52,6 +52,7 @@ public class AudioWapper {
                 sampleRateInHz = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);// 采样率
                 channelConfig = (mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) ?
                         AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO; // 声道数
+                channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
                 break;
             }
         }
@@ -65,30 +66,9 @@ public class AudioWapper {
         final int frameSizeInBytes = Integer.bitCount(channelConfig)
                 * getBytesPerSample(audioFormat);
 
-        minBufferSizeInBytes = Math.max(minBufferSizeInBytes, frameCount * frameSizeInBytes);
+        Log.e("ttt", "minBufferSizeInBytes:" + minBufferSizeInBytes + "--frameCount * frameSizeInBytes :" + frameCount * frameSizeInBytes);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build();
-            AudioFormat af = new AudioFormat.Builder()
-                    .setEncoding(audioFormat)
-                    .setChannelMask(channelMask)
-                    .setSampleRate(sampleRateInHz)
-                    .build();
-            mAudioTrack =
-                    new AudioTrack(audioAttributes, af, minBufferSizeInBytes,
-                            AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-        } else {
-            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-                    sampleRateInHz,
-                    AudioFormat.CHANNEL_OUT_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    minBufferSizeInBytes,
-                    AudioTrack.MODE_STREAM);
-        }
+        mAudioTrack = new NonBlockingAudioTrack(sampleRateInHz, channelCount);
 
         // MediaCodec的初始化
         try {
@@ -159,15 +139,10 @@ public class AudioWapper {
             }
             if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
                     && mBufferInfo.size > 0 && mOutputBuffer != null) {
-                byte[] chunkPCM = new byte[mBufferInfo.size];
-                mOutputBuffer.get(chunkPCM);
-                mOutputBuffer.clear();//不清空下次会得到同样的数据
-                mAudioTrack.write(chunkPCM, 0, mBufferInfo.size);// 将数据写入AudioTrack播放
                 ByteBuffer copyBuffer = ByteBuffer.allocate(mOutputBuffer.remaining());
                 copyBuffer.put(mOutputBuffer);
                 copyBuffer.flip();
-
-                mAudioTrack.write(copyBuffer.array(), 0, mBufferInfo.size);
+                mAudioTrack.write(copyBuffer, 0, mBufferInfo.size);
             }
 
             mDecoder.releaseOutputBuffer(outputIndex, false);
@@ -190,8 +165,16 @@ public class AudioWapper {
             mDecoder.stop();
             mDecoder.release();
         }
-        if(mExtractor != null){
+        if (mExtractor != null) {
             mExtractor.release();
         }
+    }
+
+    public long getAudioTimeUs() {
+        if (mAudioTrack == null) {
+            return 0;
+        }
+
+        return mAudioTrack.getAudioTimeUs();
     }
 }

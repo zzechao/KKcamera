@@ -1,15 +1,20 @@
 package com.chan.mediacamera.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.view.Surface;
 
+import com.chan.mediacamera.avplayer.MediaCodecPlayer;
 import com.chan.mediacamera.camera.FBOVideoRenderer;
-import com.chan.mediacamera.camera.decoder.DecoderConfig;
-import com.chan.mediacamera.camera.decoder.MediaDecoder;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -24,7 +29,9 @@ public class VideoHardware2GLSurfaceView extends GLSurfaceView implements GLSurf
 
     private FBOVideoRenderer mRenderer;
     private String mPath;
-    private MediaDecoder mMediaDecoder;
+    private MediaCodecPlayer mMediaCodecPlayer;
+    private static final int SLEEP_TIME_MS = 1000;
+    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(4, TimeUnit.MINUTES);
 
     public VideoHardware2GLSurfaceView(Context context) {
         this(context, null);
@@ -48,6 +55,10 @@ public class VideoHardware2GLSurfaceView extends GLSurfaceView implements GLSurf
     }
 
     public void onDestroy() {
+        setKeepScreenOn(false);
+        if (mMediaCodecPlayer != null) {
+            mMediaCodecPlayer.reset();
+        }
         if (mRenderer != null) {
             mRenderer.releaseSurfaceTexture();
         }
@@ -62,10 +73,12 @@ public class VideoHardware2GLSurfaceView extends GLSurfaceView implements GLSurf
         setCameraDistance(100);
 
         mRenderer = new FBOVideoRenderer(getContext());
+
+        setKeepScreenOn(true);
     }
 
     private void initDecoder() {
-        mMediaDecoder = new MediaDecoder();
+
     }
 
     @Override
@@ -76,16 +89,17 @@ public class VideoHardware2GLSurfaceView extends GLSurfaceView implements GLSurf
         mRenderer.onSurfaceCreated(gl, config);
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
         Surface mSurface = new Surface(mRenderer.getSurfaceTexture());
-        if (mMediaDecoder != null) {
-            mMediaDecoder.start(new DecoderConfig(25, mPath, mSurface));
-        }
+        mMediaCodecPlayer = new MediaCodecPlayer(mSurface);
+
+        DecodeTask task = new DecodeTask();
+        task.execute();
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         //创建视频格式信息
         mRenderer.onSurfaceChanged(gl, width, height);
-        mRenderer.setVideoSize(width, height);
+        mRenderer.setVideoSize(mMediaCodecPlayer.getmMediaFormatWidth(), mMediaCodecPlayer.getmMediaFormatHeight());
     }
 
     @Override
@@ -101,5 +115,59 @@ public class VideoHardware2GLSurfaceView extends GLSurfaceView implements GLSurf
 
     public void setPath(String path) {
         mPath = path;
+    }
+
+    public class DecodeTask extends AsyncTask<Void, Void, Boolean> {
+
+        @SuppressLint("WrongThread")
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            //this runs on a new thread
+            initializePlayer();
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            //this runs on ui thread
+        }
+    }
+
+    private void initializePlayer() {
+
+        /*取音频 取视频*/
+        mMediaCodecPlayer.setAudioDataSource(Uri.parse(mPath), null);
+        mMediaCodecPlayer.setVideoDataSource(Uri.parse(mPath), null);
+        mMediaCodecPlayer.start(); //from IDLE to PREPARING
+        try {
+            mMediaCodecPlayer.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        mRenderer.setVideoSize(mMediaCodecPlayer.getmMediaFormatWidth(), mMediaCodecPlayer.getmMediaFormatHeight());
+
+        // 开始播放视频
+        mMediaCodecPlayer.startThread();
+
+        long timeOut = System.currentTimeMillis() + 4 * PLAY_TIME_MS;
+        while (timeOut > System.currentTimeMillis() && !mMediaCodecPlayer.isEnded()) {
+            try {
+                Thread.sleep(SLEEP_TIME_MS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if (mMediaCodecPlayer.getCurrentPosition() >= mMediaCodecPlayer.getDuration()) {
+                break;
+            }
+        }
+
+        if (timeOut > System.currentTimeMillis()) {
+            return;
+        }
+
+        mMediaCodecPlayer.reset();
+
+        initializePlayer();
     }
 }

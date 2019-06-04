@@ -19,8 +19,13 @@ public class VideoWapper {
     private final MediaExtractor mExtractor;
     private MediaCodec mDecoder;
     private boolean mStop;
+    private MediaTimeProvider mMediaTimeProvider;
+    private long mSampleBaseTimeUs;
+    private long mPresentationTimeUs;
+    private boolean render;
 
-    public VideoWapper(String path) {
+    public VideoWapper(String path, MediaTimeProvider provider) {
+        mMediaTimeProvider = provider;
         mBufferInfo = new MediaCodec.BufferInfo();
         mExtractor = new MediaExtractor();
         try {
@@ -68,10 +73,27 @@ public class VideoWapper {
                 mInputBuffer = mDecoder.getInputBuffers()[inputBufIndex];
             }
             assert mInputBuffer != null;
+
             mInputBuffer.clear();
             int sampleSize = mExtractor.readSampleData(mInputBuffer, 0);
+            long sampleTime = mExtractor.getSampleTime();
+            int sampleFlags = mExtractor.getSampleFlags();
+            if (mSampleBaseTimeUs == -1) {
+                mSampleBaseTimeUs = sampleTime;
+            }
+            sampleTime -= mSampleBaseTimeUs;
+            // this is just used for getCurrentPosition, not used for avsync
+            mPresentationTimeUs = sampleTime;
             if (mExtractor.advance() && sampleSize > 0) {
-                mDecoder.queueInputBuffer(inputBufIndex, 0, sampleSize, mExtractor.getSampleTime(), 0);
+                if ((sampleFlags & MediaExtractor.SAMPLE_FLAG_ENCRYPTED) != 0) {
+                    MediaCodec.CryptoInfo info = new MediaCodec.CryptoInfo();
+                    mExtractor.getSampleCryptoInfo(info);
+                    mDecoder.queueSecureInputBuffer(
+                            inputBufIndex, 0, info, sampleTime, 0);
+                } else {
+                    mDecoder.queueInputBuffer(
+                            inputBufIndex, 0, sampleSize, sampleTime, 0);
+                }
             } else {
                 mDecoder.queueInputBuffer(inputBufIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             }
@@ -89,11 +111,28 @@ public class VideoWapper {
         } else {
             if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
                     && mBufferInfo.size > 0) {
-                mDecoder.releaseOutputBuffer(outputIndex, true);
+                long twiceVsyncDurationUs = 2 * mMediaTimeProvider.getVsyncDurationNs() / 1000;
+                long realTimeUs =
+                        mMediaTimeProvider.getRealTimeUsForMediaTime(mBufferInfo.presentationTimeUs); //映射到nowUs时间轴上
+                long nowUs = mMediaTimeProvider.getNowUs(); //audio play time
+                long lateUs = System.nanoTime() / 1000 - realTimeUs;
+                Log.d(TAG, "video late by " + lateUs + " us. nowUs :" + nowUs + "--realTimeUs : " + realTimeUs);
+                if (lateUs < -twiceVsyncDurationUs) {
+                    // too early;
+                    return false;
+                } else if (lateUs > 30000) {
+
+                    render = false;
+                } else {
+                    render = true;
+                    mPresentationTimeUs = mBufferInfo.presentationTimeUs;
+                }
+
+                //mDecoder.releaseOutputBuffer(outputIndex, render);
+                mDecoder.releaseOutputBuffer(outputIndex, realTimeUs * 1000);
             }
 
             if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                Log.d(TAG, "OutputBuffer BUFFER_FLAG_END_OF_STREAM");
                 mStop = true;
             }
         }
@@ -105,7 +144,7 @@ public class VideoWapper {
             mDecoder.stop();
             mDecoder.release();
         }
-        if(mExtractor != null){
+        if (mExtractor != null) {
             mExtractor.release();
         }
     }
