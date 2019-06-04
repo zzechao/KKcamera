@@ -94,7 +94,7 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GLES20.glEnable(GLES20.GL_TEXTURE_2D);
 
-        mRenderer.onSurfaceCreated(gl, config);
+        mRenderer.onSurfaceCreated();
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
         Surface mSurface = new Surface(mRenderer.getSurfaceTexture());
         if (mVideoDecoder != null) {
@@ -108,14 +108,14 @@ public class VideoHardwareGLSurfaceView extends GLSurfaceView implements GLSurfa
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         //创建视频格式信息
-        mRenderer.onSurfaceChanged(gl, width, height);
+        mRenderer.onSurfaceChanged(width, height);
         mRenderer.setVideoSize(width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        mRenderer.onDrawFrame(gl);
+        mRenderer.onDrawFrame();
     }
 
     @Override

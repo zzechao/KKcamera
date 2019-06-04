@@ -101,7 +101,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
             e.printStackTrace();
         }
 
-        mRenderer.onSurfaceCreated(gl, config);
+        mRenderer.onSurfaceCreated();
         mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
         Surface surface = new Surface(mRenderer.getSurfaceTexture());
         mediaPlayer.setSurface(surface);
@@ -120,13 +120,13 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
                 }
             });
         }
-        mRenderer.onSurfaceChanged(gl, width, height);
+        mRenderer.onSurfaceChanged(width, height);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        mRenderer.onDrawFrame(gl);
+        mRenderer.onDrawFrame();
     }
 
     @Override

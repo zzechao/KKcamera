@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.util.Log;
 
 import com.chan.mediacamera.R;
@@ -23,11 +22,8 @@ import com.chan.mediacamera.camera.filter.WaterMarkFilter;
 import com.chan.mediacamera.util.Gl2Utils;
 import com.seu.magicfilter.utils.OpenGlUtils;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
 
-
-public class FBOVideoRenderer implements GLSurfaceView.Renderer {
+public class FBOVideoRenderer{
 
 
     /**
@@ -93,8 +89,7 @@ public class FBOVideoRenderer implements GLSurfaceView.Renderer {
         groupFilter.addFilter(pkmFilter);
     }
 
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated() {
         mTextureId = OpenGlUtils.getExternalOESTextureID();
         mSurfaceTexture = new SurfaceTexture(mTextureId);
 
@@ -108,8 +103,7 @@ public class FBOVideoRenderer implements GLSurfaceView.Renderer {
         groupFilter.onSurfaceCreated();
     }
 
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceChanged(int width, int height) {
         Log.e("ttt", "onSurfaceChanged");
         if (mWidth != width && mHeight != height) {
             mFBObuffer = new FrameBuffer();
@@ -123,8 +117,7 @@ public class FBOVideoRenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    @Override
-    public void onDrawFrame(GL10 gl) {
+    public void onDrawFrame() {
         if (mSurfaceTexture != null) {
             //更新数据，其实也是消耗数据，将上一帧的数据处理或者抛弃掉，要不然SurfaceTexture是接收不到最新数据
             mSurfaceTexture.updateTexImage();
