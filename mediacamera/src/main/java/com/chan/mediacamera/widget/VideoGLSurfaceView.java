@@ -8,11 +8,15 @@ import android.media.MediaPlayer;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
+import android.widget.Toast;
 
 import com.chan.mediacamera.camera.FBOVideoRenderer;
+import com.chan.mediacamera.clip.VideoClipper;
 
 import java.io.IOException;
 
@@ -24,6 +28,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
     private FBOVideoRenderer mRenderer;
     private MediaPlayer mediaPlayer;
     private String mPath;
+    private VideoClipper videoClipper;
 
 
     public VideoGLSurfaceView(Context context) {
@@ -76,6 +81,19 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
         mRenderer = new FBOVideoRenderer(getContext());
 
         setKeepScreenOn(true);
+
+        videoClipper = new VideoClipper(getContext());
+        videoClipper.setOnVideoCutFinishListener(new VideoClipper.OnVideoCutFinishListener() {
+            @Override
+            public void onFinish() {
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getContext(), "完成", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
     }
 
     private void initMediaPlayer() {
@@ -97,6 +115,9 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
 
         try {
             mediaPlayer.setDataSource(mPath);
+            videoClipper.setInputVideoPath(mPath);
+
+            videoClipper.setOutputVideoPath("/storage/emulated/0/VOD_CCTV6--裸露在狼群-" + System.currentTimeMillis() + ".mp4");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -109,6 +130,7 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+        //videoClipper.setScreenSize(width,height);
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.prepareAsync();
             Log.e("ttt", "prepareAsync");
@@ -142,5 +164,13 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
         Log.e("ttt", "width : " + width + "---height :" + height);
         mRenderer.setVideoSize(width, height);
+    }
+
+    public void clipVideo() {
+        try {
+            videoClipper.clipVideo(0, mediaPlayer.getDuration() * 1000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

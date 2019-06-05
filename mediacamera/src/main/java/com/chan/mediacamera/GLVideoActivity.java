@@ -15,6 +15,8 @@ public class GLVideoActivity extends AppCompatActivity implements View.OnClickLi
     VideoGLSurfaceView gl_video;
     ImageButton tijiao;
 
+
+
     public static void startActivity(AppCompatActivity activity, Media media) {
         Intent intent = new Intent(activity, GLVideoActivity.class);
         intent.putExtra("media", media);
@@ -59,7 +61,7 @@ public class GLVideoActivity extends AppCompatActivity implements View.OnClickLi
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.tijiao) {
-
+            gl_video.clipVideo();
         }
     }
 }

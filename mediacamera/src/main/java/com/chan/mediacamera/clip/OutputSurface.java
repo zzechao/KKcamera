@@ -20,7 +20,9 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
-import com.chan.mediacamera.camera.FBOVideoRenderer;
+import com.chan.mediacamera.camera.filter.BaseFilter;
+import com.chan.mediacamera.camera.filter.ShowFilter;
+import com.seu.magicfilter.utils.OpenGlUtils;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLContext;
@@ -49,23 +51,24 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private EGLSurface eglSurface;
 
     private int textureId;
+
+    private int mScreenWidth;
+    private int mScreenHeight;
+
     private SurfaceTexture surfaceTexture;
     private Surface surface;
 
     private final Object isFrameAvailableSyncGuard = new Object();
     private boolean isFrameAvailable;
 
-    private FBOVideoRenderer textureRender;
-
+    private BaseFilter drawFilter;
 
     /**
      * Creates an OutputSurface using the current EGL context.  Creates a Surface that can be
      * passed to MediaCodec.setMediaFormat().
      */
     public OutputSurface(Context context) {
-        textureRender = new FBOVideoRenderer(context);
-        textureRender.onSurfaceCreated();
-
+        drawFilter = new ShowFilter(context);
         // Even if we don't access the SurfaceTexture after the constructor returns, we
         // still need to keep a reference to it.  The Surface doesn't retain a reference
         // at the Java level, so if we don't either then the object can get GCed, which
@@ -73,6 +76,11 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         //if (VERBOSE) //Log.d(TAG, "textureID=" + mTextureRender.getTextureId());
 //        textureId = this.eglUtil.createTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
 //        surfaceTexture = new SurfaceTexture(textureId);
+
+        textureId = OpenGlUtils.getExternalOESTextureID();
+        surfaceTexture = new SurfaceTexture(textureId);
+        drawFilter.setTextureId(textureId);
+        drawFilter.onSurfaceCreated();
 
         // This doesn't work if OutputSurface is created on the thread that CTS started for
         // these test cases.
@@ -90,7 +98,16 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
     public void setInputSize(int width, int height) {
-        textureRender.onSurfaceChanged(width, height);
+        mScreenWidth = width;
+        mScreenHeight = height;
+        drawFilter.setSize(width,height);
+    }
+
+    public void setVideoSize(int videoWidth, int videoHeight) {
+//        float[] matrix = Gl2Utils.getOriginalMatrix();
+//        Gl2Utils.getMatrix(matrix, Gl2Utils.TYPE_CENTERINSIDE, videoWidth, videoHeight, mScreenWidth, mScreenHeight);
+//        Gl2Utils.flip(matrix, false, true);
+//        drawFilter.setMatrix(matrix);
     }
 
     /**
@@ -101,7 +118,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             if (egl.eglGetCurrentContext().equals(eglContext)) {
                 // Clear the current context and surface to ensure they are discarded immediately.
                 egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE,
-                                   EGL10.EGL_NO_CONTEXT);
+                        EGL10.EGL_NO_CONTEXT);
             }
             egl.eglDestroySurface(eglDisplay, eglSurface);
             egl.eglDestroyContext(eglDisplay, eglContext);
@@ -125,7 +142,8 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         eglSurface = null;
         egl = null;
 
-        textureRender = null;
+        drawFilter.release();
+        //textureRender = null;
         surface = null;
         surfaceTexture = null;
     }
@@ -181,7 +199,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
                         timeout++;
                         //Log.w("OutputSurface", "awaitNewImage "+TIMEOUT_MS*timeout+"ms timeout");
 
-                        if (timeout>20) {
+                        if (timeout > 20) {
                             throw new RuntimeException("Frame wait timed out.");
                         }
                     }
@@ -202,7 +220,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Draws the data from SurfaceTexture onto the current EGL surface.
      */
     public void onDrawFrame() {
-        textureRender.onDrawFrame();
+        drawFilter.onDrawFrame();
     }
 
     @Override
@@ -217,6 +235,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
     }
 
-    public SurfaceTexture getSurfaceTexture() { return surfaceTexture;}
-
+    public SurfaceTexture getSurfaceTexture() {
+        return surfaceTexture;
+    }
 }
