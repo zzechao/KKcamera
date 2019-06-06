@@ -297,13 +297,30 @@ public class FBOCameraRenderer implements GLSurfaceView.Renderer {
      */
     public void releaseSurfaceTexture() {
         if (mSurfaceTexture != null) {
-            boolean shouldRelease = true;
-            if (shouldRelease) {
-                mSurfaceTexture.release();
-            }
+            mSurfaceTexture.release();
             mSurfaceTexture = null;
         }
-        groupFilter.clearAll();
+        if (showFilter != null) {
+            showFilter.release();
+            showFilter = null;
+        }
+        if (drawFilter != null) {
+            drawFilter.release();
+            drawFilter = null;
+        }
+        if (processColorFilter != null) {
+            processColorFilter.release();
+            processColorFilter = null;
+        }
+        if (beautyFilter != null) {
+            beautyFilter.release();
+            beautyFilter = null;
+        }
+        if (groupFilter != null) {
+            groupFilter.release();
+            groupFilter.clearAll();
+            groupFilter = null;
+        }
     }
 
     public void setPreviewSize(int width, int height) {

@@ -23,17 +23,18 @@ import com.chan.mediacamera.util.Gl2Utils;
 import com.seu.magicfilter.utils.OpenGlUtils;
 
 
-public class FBOVideoRenderer{
+public class FBOVideoRenderer {
 
 
     /**
      * 显示
      */
-    private final BaseFilter showFilter;
+    private BaseFilter showFilter;
 
-    private final BaseFilter drawFilter;
-    private final ProcessFilter processColorFilter;
-    private final ProcessBeautyFilter beautyFilter;
+    private BaseFilter drawFilter;
+    private ProcessFilter processColorFilter;
+    private ProcessBeautyFilter beautyFilter;
+    private GroupFilter groupFilter;
 
     protected Context mContext;
     private int mTextureId = OpenGlUtils.NO_TEXTURE;
@@ -45,7 +46,6 @@ public class FBOVideoRenderer{
     private int mHeight;
 
     private FrameBuffer mFBObuffer;
-    private GroupFilter groupFilter;
 
     private WaterMarkFilter waterMarkFilter;
     private int mImgWidth;
@@ -153,6 +153,27 @@ public class FBOVideoRenderer{
         if (mSurfaceTexture != null) {
             mSurfaceTexture.release();
             mSurfaceTexture = null;
+        }
+        if (showFilter != null) {
+            showFilter.release();
+            showFilter = null;
+        }
+        if (drawFilter != null) {
+            drawFilter.release();
+            drawFilter = null;
+        }
+        if (processColorFilter != null) {
+            processColorFilter.release();
+            processColorFilter = null;
+        }
+        if (beautyFilter != null) {
+            beautyFilter.release();
+            beautyFilter = null;
+        }
+        if (groupFilter != null) {
+            groupFilter.release();
+            groupFilter.clearAll();
+            groupFilter = null;
         }
     }
 

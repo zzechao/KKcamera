@@ -21,10 +21,7 @@ import android.graphics.SurfaceTexture;
 import android.util.Log;
 import android.view.Surface;
 
-import com.chan.mediacamera.camera.filter.BaseFilter;
-import com.chan.mediacamera.camera.filter.ShowFilter;
-import com.chan.mediacamera.util.Gl2Utils;
-import com.seu.magicfilter.utils.OpenGlUtils;
+import com.chan.mediacamera.camera.FBOVideoRenderer;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLContext;
@@ -58,20 +55,19 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private int mScreenWidth;
     private int mScreenHeight;
 
-    private SurfaceTexture mSurfaceTexture;
     private Surface surface;
 
     private final byte[] mFrameSyncObject = new byte[0];
     private boolean mFrameAvailable;
 
-    private BaseFilter drawFilter;
+    private FBOVideoRenderer mRenderer;
 
     /**
      * Creates an OutputSurface using the current EGL context.  Creates a Surface that can be
      * passed to MediaCodec.setMediaFormat().
      */
     public OutputSurface(Context context) {
-        drawFilter = new ShowFilter(context);
+        mRenderer = new FBOVideoRenderer(context);
         // Even if we don't access the SurfaceTexture after the constructor returns, we
         // still need to keep a reference to it.  The Surface doesn't retain a reference
         // at the Java level, so if we don't either then the object can get GCed, which
@@ -80,10 +76,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 //        textureId = this.eglUtil.createTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
 //        surfaceTexture = new SurfaceTexture(textureId);
 
-        mTextureId = OpenGlUtils.getExternalOESTextureID();
-        mSurfaceTexture = new SurfaceTexture(mTextureId);
-        drawFilter.setTextureId(mTextureId);
-        drawFilter.onSurfaceCreated();
+        mRenderer.onSurfaceCreated();
 
         // This doesn't work if OutputSurface is created on the thread that CTS started for
         // these test cases.
@@ -96,21 +89,18 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         //
         // Java language note: passing "this" out of a constructor is generally unwise,
         // but we should be able to get away with it here.
-        mSurfaceTexture.setOnFrameAvailableListener(this);
-        surface = new Surface(mSurfaceTexture);
+        mRenderer.getSurfaceTexture().setOnFrameAvailableListener(this);
+        surface = new Surface(mRenderer.getSurfaceTexture());
     }
 
     public void setInputSize(int width, int height) {
         mScreenWidth = width;
         mScreenHeight = height;
-        drawFilter.setSize(width,height);
+        mRenderer.onSurfaceChanged(width, height);
     }
 
     public void setVideoSize(int videoWidth, int videoHeight) {
-        float[] matrix = Gl2Utils.getOriginalMatrix();
-        Gl2Utils.getMatrix(matrix, Gl2Utils.TYPE_CENTERINSIDE, videoWidth, videoHeight, mScreenWidth, mScreenHeight);
-        Gl2Utils.flip(matrix, false, false);
-        drawFilter.setMatrix(matrix);
+        mRenderer.setVideoSize(videoWidth, videoHeight);
     }
 
     /**
@@ -137,7 +127,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         // this causes a bunch of warnings that appear harmless but might confuse someone:
         //  W BufferQueue: [unnamed-3997-2] cancelBuffer: BufferQueue has been abandoned!
         //mSurfaceTexture.release();
-        mSurfaceTexture.release();
+        mRenderer.releaseSurfaceTexture();
 
         // null everything out so future attempts to use this object will cause an NPE
         eglDisplay = null;
@@ -145,10 +135,8 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         eglSurface = null;
         mEGL = null;
 
-        drawFilter.release();
         //textureRender = null;
         surface = null;
-        mSurfaceTexture = null;
     }
 
     /**
@@ -202,7 +190,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         // Latch the data.
 //        mTextureRender.checkGlError("before updateTexImage");
 //        mDrawer.checkGlError("before updateTexImage");
-        mSurfaceTexture.updateTexImage();
+        mRenderer.getSurfaceTexture().updateTexImage();
     }
 
 
@@ -210,7 +198,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Draws the data from SurfaceTexture onto the current EGL surface.
      */
     public void onDrawFrame() {
-        drawFilter.onDrawFrame();
+        mRenderer.onDrawFrame();
     }
 
     @Override

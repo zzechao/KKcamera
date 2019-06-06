@@ -61,7 +61,7 @@ public class VideoClipper {
     private boolean released = false;
     private long before;
     private long after;
-    private Object lock = new Object();
+    private byte[] lock = new byte[0];
     private boolean muxStarted = false;
     private OnVideoCutFinishListener listener;
 
@@ -238,6 +238,7 @@ public class VideoClipper {
         MediaFormat format = MediaFormat.createAudioFormat("audio/mp4a-latm", sampleRate, channelCount);//这里一定要注意声道的问题
         format.setInteger(MediaFormat.KEY_BIT_RATE, mbitrate);//比特率
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
+        Log.e("ttt", sampleRate + "---" + channelCount + "---" + mbitrate);
         audioEncoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         audioEncoder.start();
     }
