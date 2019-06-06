@@ -130,7 +130,8 @@ public class VideoGLSurfaceView extends GLSurfaceView implements GLSurfaceView.R
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        //videoClipper.setScreenSize(width,height);
+        Log.d("ttt", "width : " + width + "---height : " + height);
+        videoClipper.setScreenSize(width, height);
         if (!mediaPlayer.isPlaying()) {
             mediaPlayer.prepareAsync();
             Log.e("ttt", "prepareAsync");

@@ -190,8 +190,30 @@ public class VideoClipper {
     }
 
     private void initVideoCodec() {
+        //不对视频进行压缩
+        MediaFormat mediaFormat;
+//        if (info.rotation == 0 || info.rotation == 180) {
+        mediaFormat = MediaFormat.createVideoFormat("video/avc", mScreenWidth, mScreenHeigh);
+//        }
+//        else {
+//            mediaFormat = MediaFormat.createVideoFormat("video/avc", info.height, info.width);
+//        }
+        //设置视频的编码参数
+
+        int mBitRate = (int) (videoWidth * videoHeight * 25 * 0.25 / 6);
+
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+        videoEncoder.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        inputSurface = new InputSurface(videoEncoder.createInputSurface());
+        inputSurface.makeCurrent();
+        videoEncoder.start();
+
+
         outputSurface = new OutputSurface(mContext);
-        //outputSurface.setInputSize(mScreenWidth, mScreenHeigh);
+        outputSurface.setInputSize(mScreenWidth, mScreenHeigh);
 //        outputSurface.isBeauty(isOpenBeauty);
 
 //        if (mFilter != null) {
@@ -199,38 +221,24 @@ public class VideoClipper {
 //            outputSurface.addGpuFilter(mFilter);
 //        }
         outputSurface.setVideoSize(videoWidth, videoHeight);
+        Log.d("ttt", "videoWidth : " + videoWidth + "-- videoHeight :" + videoHeight);
+        Log.d("ttt", "mScreenWidth : " + mScreenWidth + "-- mScreenHeigh :" + mScreenHeigh);
         videoDecoder.configure(videoFormat, outputSurface.getSurface(), null, 0);
         videoDecoder.start();//解码器启动
-
-
-        //不对视频进行压缩
-        MediaFormat mediaFormat;
-//        if (info.rotation == 0 || info.rotation == 180) {
-        mediaFormat = MediaFormat.createVideoFormat("video/avc", videoWidth, videoHeight);
-//        }
-//        else {
-//            mediaFormat = MediaFormat.createVideoFormat("video/avc", info.height, info.width);
-//        }
-        //设置视频的编码参数
-
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 3000000);
-        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-        videoEncoder.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        inputSurface = new InputSurface(videoEncoder.createInputSurface());
-        inputSurface.makeCurrent();
-        videoEncoder.start();
     }
 
     private void initAudioCodec() {
         audioDecoder.configure(audioFormat, null, null, 0);
         audioDecoder.start();
 
-        MediaFormat format = MediaFormat.createAudioFormat("audio/mp4a-latm", 65200, /*channelCount*/2);//这里一定要注意声道的问题
-        format.setInteger(MediaFormat.KEY_BIT_RATE, 128000);//比特率
+        int sampleRate = audioFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);// 采样率
+        int channelCount = audioFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+        int mbitrate = audioFormat.getInteger(MediaFormat.KEY_BIT_RATE);
+
+        MediaFormat format = MediaFormat.createAudioFormat("audio/mp4a-latm", sampleRate, channelCount);//这里一定要注意声道的问题
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mbitrate);//比特率
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
-        audioEncoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        audioEncoder.configure(audioFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         audioEncoder.start();
     }
 
@@ -247,6 +255,7 @@ public class VideoClipper {
      * @param duration        微秒级
      */
     private void startVideoCodec(MediaCodec decoder, MediaCodec encoder, MediaExtractor extractor, InputSurface inputSurface, OutputSurface outputSurface, long firstSampleTime, long startPosition, long duration) {
+        Log.d(TAG, "startVideoCodec");
         ByteBuffer[] decoderInputBuffers = decoder.getInputBuffers();
         ByteBuffer[] encoderOutputBuffers = encoder.getOutputBuffers();
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
@@ -267,6 +276,7 @@ public class VideoClipper {
                     inputBuffer.clear();
                     int readSampleData = extractor.readSampleData(inputBuffer, 0);
                     long dur = extractor.getSampleTime() - firstSampleTime - startPosition;//当前已经截取的视频长度
+                    Log.d(TAG, "decoder.queueInputBuffer");
                     if ((dur < duration) && readSampleData > 0) {
                         decoder.queueInputBuffer(inputIndex, 0, readSampleData, extractor.getSampleTime(), 0);
                         extractor.advance();
@@ -299,6 +309,7 @@ public class VideoClipper {
                     }
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         encoder.signalEndOfInputStream();
+                        Log.d(TAG, "encoder.signalEndOfInputStream");
                         decodeDone = true;
                     }
                 }
@@ -344,6 +355,7 @@ public class VideoClipper {
                                 }
                             }
                         }
+                        Log.d(TAG, "writeSampleData");
                         mMediaMuxer.writeSampleData(muxVideoTrack, encodedData, outputInfo);
                     }
 
