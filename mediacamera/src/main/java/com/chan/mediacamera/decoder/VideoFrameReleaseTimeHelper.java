@@ -1,4 +1,4 @@
-package com.chan.mediacamera.camera.decoder;
+package com.chan.mediacamera.decoder;
 
 import android.annotation.TargetApi;
 import android.content.Context;

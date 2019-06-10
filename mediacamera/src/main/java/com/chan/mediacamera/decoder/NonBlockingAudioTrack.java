@@ -1,4 +1,4 @@
-package com.chan.mediacamera.camera.decoder;
+package com.chan.mediacamera.decoder;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;

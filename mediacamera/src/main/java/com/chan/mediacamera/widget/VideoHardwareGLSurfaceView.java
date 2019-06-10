@@ -12,10 +12,10 @@ import android.util.AttributeSet;
 import android.view.Surface;
 
 import com.chan.mediacamera.camera.FBOVideoRenderer;
-import com.chan.mediacamera.camera.decoder.AudioDecoder;
-import com.chan.mediacamera.camera.decoder.Decoder;
-import com.chan.mediacamera.camera.decoder.DecoderConfig;
-import com.chan.mediacamera.camera.decoder.VideoDecoder;
+import com.chan.mediacamera.decoder.AudioDecoder;
+import com.chan.mediacamera.decoder.Decoder;
+import com.chan.mediacamera.decoder.DecoderConfig;
+import com.chan.mediacamera.decoder.VideoDecoder;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

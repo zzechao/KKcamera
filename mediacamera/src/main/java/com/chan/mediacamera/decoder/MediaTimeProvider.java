@@ -1,4 +1,4 @@
-package com.chan.mediacamera.camera.decoder;
+package com.chan.mediacamera.decoder;
 
 /*
  * Interface used by CodecState to retrieve Media timing info from parent Player
