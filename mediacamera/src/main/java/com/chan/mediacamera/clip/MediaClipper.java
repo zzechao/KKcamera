@@ -39,7 +39,33 @@ public class MediaClipper {
     private AudioClipper mAudioClipper;
     private String mInputPath;
     private String mOutputPath;
+    private int mOutputWidth;
+    private int mOutputHeight;
+    private int mVideoWidth;
+    private int mVideoHeight;
+    private int mVideoRotation;
     private MediaMuxer mMediaMuxer;
+
+    /**
+     * 开始剪辑
+     * @param context
+     * @param startPostion
+     * @param clipDur
+     */
+    public void startClip(Context context, long startPostion, long clipDur) {
+        try {
+            mMediaMuxer = new MediaMuxer(mOutputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            ClipperConfig config = new ClipperConfig(context, mInputPath, startPostion, clipDur,
+                    mOutputWidth, mOutputHeight, mVideoWidth, mVideoHeight);
+            mVideoClipper = new VideoClipper(mMediaMuxer);
+            mVideoClipper.start(config);
+
+            mAudioClipper = new AudioClipper(mMediaMuxer);
+            mAudioClipper.start(config);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void setOutputPath(String outputPath) {
         mOutputPath = outputPath;
@@ -47,26 +73,39 @@ public class MediaClipper {
 
     public void setInputPath(String inputPath) {
         mInputPath = inputPath;
+        MediaMetadataRetriever retr = new MediaMetadataRetriever();
+        retr.setDataSource(mInputPath);
+        String width = retr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        String height = retr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        String rotation = retr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        mVideoWidth = Integer.parseInt(width);
+        mVideoHeight = Integer.parseInt(height);
+        mVideoRotation = Integer.parseInt(rotation);
     }
 
-    public void startClip(long startPostion, long clipDur) {
-        try {
-            mMediaMuxer = new MediaMuxer(mOutputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            ClipperConfig config = new ClipperConfig(mInputPath, startPostion, clipDur);
-            mVideoClipper = new VideoClipper();
-            mVideoClipper.start(config);
-
-            mAudioClipper = new AudioClipper();
-            mAudioClipper.start(config);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void setOutputWidht(int mOutputWidht) {
+        this.mOutputWidth = mOutputWidht;
     }
 
+    public void setOutputHeight(int mOutputHeight) {
+        this.mOutputHeight = mOutputHeight;
+    }
 
+    /**
+     * 视频剪辑
+     */
     class VideoClipper extends Clipper {
 
         private MediaExtractor mVideoExtractor;
+        private MediaMuxer mMediaMuxer;
+        private MediaCodec mVideoEncoder;
+        private MediaCodec mVideoDecoder;
+        private InputSurface mInputSurface;
+        private OutputSurface mOutputSurface;
+
+        public VideoClipper(MediaMuxer mediaMuxer) {
+            mMediaMuxer = mediaMuxer;
+        }
 
         @Override
         public String getThreadName() {
@@ -79,7 +118,7 @@ public class MediaClipper {
                 mVideoExtractor = new MediaExtractor();
                 mVideoExtractor.setDataSource(config.mPath);
                 int mVideoTrackIndex = -1;
-                MediaFormat mVideoFormat;
+                MediaFormat mVideoFormat = null;
                 //音轨和视轨初始化
                 for (int i = 0; i < mVideoExtractor.getTrackCount(); i++) {
                     MediaFormat format = mVideoExtractor.getTrackFormat(i);
@@ -95,7 +134,29 @@ public class MediaClipper {
                 long firstVideoTime = mVideoExtractor.getSampleTime();
                 mVideoExtractor.seekTo(firstVideoTime + config.startPosition, SEEK_TO_PREVIOUS_SYNC);
 
+                mVideoEncoder = MediaCodec.createDecoderByType("video/avc");
+                mVideoDecoder = MediaCodec.createDecoderByType("video/avc");
 
+                // decoder
+                Context context = config.mWeakReference.get();
+                assert context != null;
+                mOutputSurface = new OutputSurface(context);
+                mOutputSurface.setInputSize(config.mOutputWidth, config.mOutputHeight);
+                mOutputSurface.setVideoSize(config.mVideoWidth, config.mVideoHeight);
+                mVideoDecoder.configure(mVideoFormat, mOutputSurface.getSurface(), null, 0);
+                mVideoDecoder.start();//解码器启动
+
+                // Encoder
+                MediaFormat mediaFormat = MediaFormat.createVideoFormat("video/avc", config.mOutputWidth, config.mOutputHeight);
+                int mBitRate = (int) (config.mVideoWidth * config.mVideoHeight * 25 * 0.25 / 6);
+                mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+                mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+                mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+                mVideoEncoder.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+                mInputSurface = new InputSurface(mVideoEncoder.createInputSurface());
+                mInputSurface.makeCurrent();
+                mVideoEncoder.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -107,9 +168,19 @@ public class MediaClipper {
         }
     }
 
+    /**
+     * 音频剪辑
+     */
     class AudioClipper extends Clipper {
 
         private MediaExtractor mAudioExtractor;
+        private MediaMuxer mMediaMuxer;
+        private MediaCodec mAudioEncoder;
+        private MediaCodec mAudioDecoder;
+
+        public AudioClipper(MediaMuxer mediaMuxer) {
+            mMediaMuxer = mediaMuxer;
+        }
 
         @Override
         public String getThreadName() {
@@ -117,10 +188,29 @@ public class MediaClipper {
         }
 
         @Override
-        protected void handleMsgStart(ClipperConfig obj) {
+        protected void handleMsgStart(ClipperConfig config) {
             try {
                 mAudioExtractor = new MediaExtractor();
-                mAudioExtractor.setDataSource(obj.mPath);
+                mAudioExtractor.setDataSource(config.mPath);
+                int mAudioTrackIndex = -1;
+                MediaFormat mAudioFormat = null;
+                //音轨和视轨初始化
+                for (int i = 0; i < mAudioExtractor.getTrackCount(); i++) {
+                    MediaFormat format = mAudioExtractor.getTrackFormat(i);
+                    if (format.getString(MediaFormat.KEY_MIME).startsWith("audio/")) {
+                        mAudioTrackIndex = i;
+                        mAudioFormat = format;
+                        break;
+                    }
+                }
+
+                assert mAudioTrackIndex != -1;
+                mAudioExtractor.selectTrack(mAudioTrackIndex);
+                long firstVideoTime = mAudioExtractor.getSampleTime();
+                mAudioExtractor.seekTo(firstVideoTime + config.startPosition, SEEK_TO_PREVIOUS_SYNC);
+
+
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -214,11 +304,22 @@ public class MediaClipper {
         String mPath;
         long startPosition;
         long clipDur;
+        int mOutputWidth;
+        int mOutputHeight;
+        int mVideoWidth;
+        int mVideoHeight;
+        WeakReference<Context> mWeakReference;
 
-        public ClipperConfig(String mPath, long startPosition, long clipDur) {
+        public ClipperConfig(Context context, String mPath, long startPosition, long clipDur, int outputWidth, int currentHeight, int videoWidth, int videoHeight) {
             this.mPath = mPath;
             this.startPosition = startPosition;
             this.clipDur = clipDur;
+            this.mOutputWidth = outputWidth;
+            this.mOutputHeight = currentHeight;
+            this.mVideoWidth = videoWidth;
+            this.mVideoHeight = videoHeight;
+            this.mWeakReference = new WeakReference<>(context);
         }
+
     }
 }
